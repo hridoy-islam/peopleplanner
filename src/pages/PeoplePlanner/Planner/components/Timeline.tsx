@@ -271,7 +271,7 @@ export function Timeline({
               ) : (
                 <>
                   <Calendar className="h-3 w-3" />
-                  {selectedUser.name} - Past 7 Days
+                  {selectedUser?.name} - Past 7 Days
                 </>
               )}
             </div>
@@ -326,7 +326,7 @@ export function Timeline({
 
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-medium text-gray-900">
-                          {item.name}
+                          {item?.name}
                         </p>
                         <div className="flex items-center gap-2">
                           <p className="text-xs text-gray-500">
