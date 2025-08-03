@@ -199,10 +199,10 @@ const MyStuff = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 ">
       <div className="">
         {/* Header */}
-        <div className="mb-8">
+        <div className="">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">My Stuff</h1>
         </div>
 

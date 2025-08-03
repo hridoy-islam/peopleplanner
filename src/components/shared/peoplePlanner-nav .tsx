@@ -30,7 +30,8 @@ import {
   FileCheck2,
   Settings,
   ReceiptText,
-  Mails
+  Mails,
+  UserCircle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
@@ -50,6 +51,7 @@ const navItems = [
     label: 'HR',
     subItems: [
       { icon: User2, label: 'My Stuff', href: 'my-stuff' },
+      { icon: UserCircle, label: 'Vacancy', href: 'vacancy' },
       {
         icon: UsersIcon,
         label: 'Employee',

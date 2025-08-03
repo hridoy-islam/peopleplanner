@@ -21,6 +21,16 @@ import DayOnOffTab from './scheduleTabs/tabs/DayOnOffTab';
 import NoteTab from './scheduleTabs/tabs/NoteTab';
 import PurchaseOrderTab from './scheduleTabs/tabs/PurchaseOrderTab';
 import BreakTab from './scheduleTabs/tabs/BreakTab';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from '@/components/ui/dialog';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
 
 interface ScheduleDetailDialogProps {
   schedule: schedule | null;
@@ -28,13 +38,29 @@ interface ScheduleDetailDialogProps {
   onClose: () => void;
 }
 
+const mockUser = {
+  id: '12345',
+  firstName: 'John',
+  lastName: 'Doe',
+  email: 'johndoe@example.com',
+  phone: '123-456-7890',
+  role: 'Admin',
+  scheduleId: 'schedule-001',
+  scheduleTitle: 'Weekly Team Meeting',
+  profilePicture: 'https://randomuser.me/api/portraits/men/1.jpg', // Mocked profile picture URL
+  createdAt: new Date('2022-06-15T14:48:00Z'),
+  updatedAt: new Date('2023-04-25T10:22:00Z')
+};
+
 export function ScheduleDetailComponent({
   schedule,
   isOpen,
   onClose
 }: ScheduleDetailDialogProps) {
   if (!isOpen || !schedule) return null;
-
+  const [cancelReason, setCancelReason] = useState('');
+  const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const {
     loading,
     activeTab,
@@ -142,7 +168,7 @@ export function ScheduleDetailComponent({
     },
     {
       id: 'break',
-      label:'Break',
+      label: 'Break',
       component: (
         <BreakTab
           formData={formData}
@@ -151,11 +177,24 @@ export function ScheduleDetailComponent({
           isFieldSaving={isFieldSaving}
         />
       )
-    },
+    }
   ];
 
   const handleTabNavigation = (tabId: string) => {
     setActiveTab(tabId);
+  };
+  const handleCancel = () => {
+    console.log(
+      `$${mockUser.firstName} ${mockUser.lastName} canceled the action. Reason: ${cancelReason}`
+    );
+    setIsCancelDialogOpen(false);
+  };
+
+  const handleDelete = () => {
+    console.log(
+      `${mockUser.firstName} ${mockUser.lastName} deleted the schedule with ID: ${schedule?.id}`
+    );
+    setIsDeleteDialogOpen(false);
   };
 
   return (
@@ -167,11 +206,10 @@ export function ScheduleDetailComponent({
         className="animate-scale-in flex h-[90vh] w-[90vw] max-w-6xl flex-col rounded-lg bg-white shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-200 p-2">
           <div className="flex items-center gap-3">
             <h1 className="text-lg font-semibold text-gray-900">
-              {schedule.title}
+              {schedule.title} <span className='font-medium text-xs'>Edited By: <span className='font-semibold'>{mockUser.firstName} {mockUser.lastName}</span></span>
             </h1>
           </div>
           <button
@@ -185,7 +223,6 @@ export function ScheduleDetailComponent({
 
         {/* Main Content */}
         <div className="flex flex-1 overflow-hidden">
-          {/* Tabs Content */}
           <div className="flex-1 overflow-auto p-2">
             <Tabs
               tabs={tabs}
@@ -201,9 +238,80 @@ export function ScheduleDetailComponent({
               validation={tabValidation}
               onTabClick={handleTabNavigation}
               userId={schedule.id}
+              onCancelClick={() => setIsCancelDialogOpen(true)}
+              onDeleteClick={() => setIsDeleteDialogOpen(true)}
             />
           </div>
         </div>
+
+        {/* Cancel Dialog */}
+        {isCancelDialogOpen && (
+          <Dialog
+            open={isCancelDialogOpen}
+            onOpenChange={setIsCancelDialogOpen}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Cancel Action</DialogTitle>
+                <DialogDescription>
+                  Please provide a reason for canceling the action.
+                </DialogDescription>
+              </DialogHeader>
+              <textarea
+                className="w-full rounded-md border p-2"
+                placeholder="Enter cancel reason"
+                value={cancelReason}
+                onChange={(e) => setCancelReason(e.target.value)}
+              />
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsCancelDialogOpen(false)}
+                >
+                  Close
+                </Button>
+                <Button
+                  onClick={handleCancel}
+                  className="bg-red-500 text-white hover:bg-red-500/80"
+                >
+                  Confirm Cancel
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {/* Delete Confirmation Dialog */}
+        {isDeleteDialogOpen && (
+          <Dialog
+            open={isDeleteDialogOpen}
+            onOpenChange={setIsDeleteDialogOpen}
+          >
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Delete Schedule</DialogTitle>
+                <DialogDescription>
+                  Are you sure you want to delete this schedule? This action
+                  cannot be undone.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDeleteDialogOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleDelete}
+                  className="bg-red-500 text-white hover:bg-red-500/80"
+                >
+                  Confirm Delete
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
     </div>
   );

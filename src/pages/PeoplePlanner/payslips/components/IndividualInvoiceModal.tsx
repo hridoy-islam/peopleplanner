@@ -23,6 +23,9 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import moment from 'moment';
 
 interface IndividualInvoiceFormProps {
   onClose: () => void;
@@ -110,21 +113,25 @@ const IndividualInvoiceForm: React.FC<IndividualInvoiceFormProps> = ({
     'create' | 'review' | 'finalized'
   >('create');
   const [selectedUserId, setSelectedUserId] = useState('');
-  const [selectedDate, setSelectedDate] = useState('');
+  const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([
+    null,
+    null
+  ]);
+  const [startDate, endDate] = dateRange;
   const [serviceLines, setServiceLines] = useState<ServiceLine[]>([]);
   const [editingLine, setEditingLine] = useState<string | null>(null);
 
   const selectedUser = mockUsers.find((user) => user.id === selectedUserId);
 
   const handleGenerate = () => {
-    if (!selectedUserId || !selectedDate) {
+    if (!selectedUserId || !startDate || !endDate) {
       return;
     }
     setServiceLines(mockServiceLines);
     setCurrentStep('review');
   };
 
-  const handleSavePayslip = () => {
+  const handleSaveInvoice = () => {
     setCurrentStep('finalized');
     setTimeout(() => {
       onClose();
@@ -167,13 +174,13 @@ const IndividualInvoiceForm: React.FC<IndividualInvoiceFormProps> = ({
   const totalAmount = serviceLines.reduce((sum, line) => sum + line.amount, 0);
   const totalHours = serviceLines.reduce((sum, line) => sum + line.duration, 0);
 
-  const isGenerateEnabled = selectedUserId && selectedDate;
+const isGenerateEnabled = selectedUserId && startDate && endDate;
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="sticky  ">
-        <div className=" ">
+        <div className=" py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button
@@ -188,28 +195,28 @@ const IndividualInvoiceForm: React.FC<IndividualInvoiceFormProps> = ({
               <div>
                 <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
                   <FileText className="h-6 w-6" />
-                  {currentStep === 'create' && 'Create Payslip'}
-                  {currentStep === 'review' && 'Review Payslip'}
-                  {currentStep === 'finalized' && 'Payslip Generated'}
+                  {currentStep === 'create' && 'Create Invoice'}
+                  {currentStep === 'review' && 'Review Invoice'}
+                  {currentStep === 'finalized' && 'Invoice Generated'}
                 </h1>
                 <p className="text-sm text-gray-600">
                   {currentStep === 'create' &&
                     'Enter staff and date information'}
                   {currentStep === 'review' &&
-                    'Review and edit payslip details'}
+                    'Review and edit Invoice details'}
                   {currentStep === 'finalized' &&
-                    'Payslip has been successfully generated'}
+                    'Invoice has been successfully generated'}
                 </p>
               </div>
             </div>
 
             {currentStep === 'review' && (
               <Button
-                onClick={handleSavePayslip}
+                onClick={handleSaveInvoice}
                 className="bg-supperagent text-white hover:bg-supperagent/90"
               >
                 <Save className="mr-2 h-4 w-4" />
-                Save Payslip
+                Save Invoice
               </Button>
             )}
           </div>
@@ -217,14 +224,14 @@ const IndividualInvoiceForm: React.FC<IndividualInvoiceFormProps> = ({
       </div>
 
       {/* Content */}
-      <div className=" py-6">
+      <div className="py-6">
         {currentStep === 'create' && (
           <div className="mx-auto max-w-2xl space-y-8">
             <Card>
               <CardHeader>
-                <CardTitle>Payslip Information</CardTitle>
+                <CardTitle>Invoice Information</CardTitle>
                 <CardDescription>
-                  Select the staff member and date period for the payslip
+                  Select the staff member and date period for the Invoice
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -247,30 +254,38 @@ const IndividualInvoiceForm: React.FC<IndividualInvoiceFormProps> = ({
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="date">Pay Period *</Label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
-                    <Input
-                      id="date"
-                      type="month"
-                      value={selectedDate}
-                      onChange={(e) => setSelectedDate(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-<div className='flex justify-end'>
+               <div className="space-y-2 w-full">
+  <Label>Pay Period *</Label>
+  <div className="relative w-full">
+    {/* <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 transform text-gray-400 z-10" /> */}
+    <DatePicker
+      selectsRange
+      startDate={startDate}
+      endDate={endDate}
+      onChange={(update: [Date | null, Date | null]) => {
+        setDateRange(update);
+      }}
+      isClearable
+      showMonthDropdown
+      showYearDropdown
+      dropdownMode="select"
+      placeholderText="Select date range"
+      wrapperClassName='w-full'
+      className="w-full px-8 py-2 border border-gray-300 rounded-md text-sm"
+    />
+  </div>
+</div>
 
-                {currentStep === 'create' && (
-                  <Button
-                  onClick={handleGenerate}
-                  disabled={!isGenerateEnabled}
-                  className="bg-supperagent text-white hover:bg-supperagent/90 disabled:bg-gray-300"
-                  >
-                    Generate Payslip
-                  </Button>
-                )}
+                <div className="flex justify-end">
+                  {currentStep === 'create' && (
+                    <Button
+                      onClick={handleGenerate}
+                      disabled={!isGenerateEnabled}
+                      className="bg-supperagent text-white hover:bg-supperagent/90 disabled:bg-gray-300"
+                    >
+                      Generate Invoice
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -283,15 +298,15 @@ const IndividualInvoiceForm: React.FC<IndividualInvoiceFormProps> = ({
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  <span>Payslip Summary</span>
+                  <span>Invoice Summary</span>
                   <Badge className="bg-blue-100 text-blue-800">Review</Badge>
                 </CardTitle>
                 <CardDescription>
                   {selectedUser?.name} •{' '}
-                  {new Date(selectedDate).toLocaleDateString('en-US', {
-                    month: 'long',
-                    year: 'numeric'
-                  })}
+                 {startDate && endDate
+  ? `${moment(startDate).format("MMM D, YYYY")} - ${moment(endDate).format("MMM D, YYYY")}`
+  : 'No date selected'}
+
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -411,10 +426,10 @@ const IndividualInvoiceForm: React.FC<IndividualInvoiceFormProps> = ({
                   <Check className="h-8 w-8 text-green-600" />
                 </div>
                 <CardTitle className="text-2xl text-green-900">
-                  Payslip Generated Successfully!
+                  Invoice Generated Successfully!
                 </CardTitle>
                 <CardDescription>
-                  The payslip for {selectedUser?.name} has been created and
+                  The Invoice for {selectedUser?.name} has been created and
                   saved.
                 </CardDescription>
               </CardHeader>
@@ -428,10 +443,11 @@ const IndividualInvoiceForm: React.FC<IndividualInvoiceFormProps> = ({
                     <div>
                       <div className="text-sm text-gray-600">Period</div>
                       <div className="font-medium">
-                        {new Date(selectedDate).toLocaleDateString('en-US', {
-                          month: 'long',
-                          year: 'numeric'
-                        })}
+                       {startDate && endDate
+  ? `${moment(startDate).format("MMM D, YYYY")} - ${moment(endDate).format("MMM D, YYYY")}`
+  : 'No date selected'}
+
+
                       </div>
                     </div>
                     <div>
@@ -447,7 +463,7 @@ const IndividualInvoiceForm: React.FC<IndividualInvoiceFormProps> = ({
                   </div>
                 </div>
                 <p className="text-center text-gray-600">
-                  Redirecting to payslips page...
+                  Redirecting to Invoices page...
                 </p>
               </CardContent>
             </Card>
@@ -474,7 +490,7 @@ const EditLineForm: React.FC<EditLineFormProps> = ({
     service: line.service,
     duration: line.duration,
     rate: line.rate,
-    amount:line.amount
+    amount: line.amount
   });
 
   const handleSave = () => {

@@ -23,6 +23,9 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import moment from 'moment';
 
 interface IndividualInvoiceFormProps {
   onClose: () => void;
@@ -110,14 +113,18 @@ const IndividualInvoiceForm: React.FC<IndividualInvoiceFormProps> = ({
     'create' | 'review' | 'finalized'
   >('create');
   const [selectedUserId, setSelectedUserId] = useState('');
-  const [selectedDate, setSelectedDate] = useState('');
+  const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([
+    null,
+    null
+  ]);
+  const [startDate, endDate] = dateRange;
   const [serviceLines, setServiceLines] = useState<ServiceLine[]>([]);
   const [editingLine, setEditingLine] = useState<string | null>(null);
 
   const selectedUser = mockUsers.find((user) => user.id === selectedUserId);
 
   const handleGenerate = () => {
-    if (!selectedUserId || !selectedDate) {
+    if (!selectedUserId || !startDate || !endDate) {
       return;
     }
     setServiceLines(mockServiceLines);
@@ -167,7 +174,7 @@ const IndividualInvoiceForm: React.FC<IndividualInvoiceFormProps> = ({
   const totalAmount = serviceLines.reduce((sum, line) => sum + line.amount, 0);
   const totalHours = serviceLines.reduce((sum, line) => sum + line.duration, 0);
 
-  const isGenerateEnabled = selectedUserId && selectedDate;
+  const isGenerateEnabled = selectedUserId && startDate && endDate;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -247,19 +254,28 @@ const IndividualInvoiceForm: React.FC<IndividualInvoiceFormProps> = ({
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="date">Pay Period *</Label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
-                    <Input
-                      id="date"
-                      type="month"
-                      value={selectedDate}
-                      onChange={(e) => setSelectedDate(e.target.value)}
-                      className="pl-10"
+                <div className="w-full space-y-2">
+                  <Label>Pay Period *</Label>
+                  <div className="relative w-full">
+                    {/* <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 transform text-gray-400 z-10" /> */}
+                    <DatePicker
+                      selectsRange
+                      startDate={startDate}
+                      endDate={endDate}
+                      onChange={(update: [Date | null, Date | null]) => {
+                        setDateRange(update);
+                      }}
+                      isClearable
+                      showMonthDropdown
+                      showYearDropdown
+                      dropdownMode="select"
+                      placeholderText="Select date range"
+                      wrapperClassName="w-full"
+                      className="w-full rounded-md border border-gray-300 px-8 py-2 text-sm"
                     />
                   </div>
                 </div>
+
                 <div className="flex justify-end">
                   {currentStep === 'create' && (
                     <Button
@@ -287,10 +303,9 @@ const IndividualInvoiceForm: React.FC<IndividualInvoiceFormProps> = ({
                 </CardTitle>
                 <CardDescription>
                   {selectedUser?.name} •{' '}
-                  {new Date(selectedDate).toLocaleDateString('en-US', {
-                    month: 'long',
-                    year: 'numeric'
-                  })}
+                  {startDate && endDate
+                    ? `${moment(startDate).format('MMM D, YYYY')} - ${moment(endDate).format('MMM D, YYYY')}`
+                    : 'No date selected'}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -427,10 +442,9 @@ const IndividualInvoiceForm: React.FC<IndividualInvoiceFormProps> = ({
                     <div>
                       <div className="text-sm text-gray-600">Period</div>
                       <div className="font-medium">
-                        {new Date(selectedDate).toLocaleDateString('en-US', {
-                          month: 'long',
-                          year: 'numeric'
-                        })}
+                        {startDate && endDate
+                          ? `${moment(startDate).format('MMM D, YYYY')} - ${moment(endDate).format('MMM D, YYYY')}`
+                          : 'No date selected'}
                       </div>
                     </div>
                     <div>
@@ -473,7 +487,7 @@ const EditLineForm: React.FC<EditLineFormProps> = ({
     service: line.service,
     duration: line.duration,
     rate: line.rate,
-    amount:line.amount
+    amount: line.amount
   });
 
   const handleSave = () => {

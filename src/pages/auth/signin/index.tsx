@@ -35,28 +35,29 @@ export default function SignInPage() {
           {/* Logo */}
           <div className="flex items-center gap-2 text-white">
             <Layers className="h-6 w-6" />
-            <span className="text-lg font-semibold">MultiPurpose</span>
+            <span className="text-lg font-semibold">People Planner</span>
           </div>
 
           {/* Main Content */}
-          <div className="relative z-10 ml-auto">
+          <div className='flex flex-col items-center justify-center h-full'>
+
+          <div className="flex flex-col items-center z-10 ">
             <div className="mb-4 ">
               <img
                 src={signIn}
                 alt="Desk illustration"
                 width={350}
                 height={200}
-              />
+                />
             </div>
 
             <h1 className="mb-3 text-3xl font-bold text-white">
-              A few more clicks to <br />
+              A few more clicks to 
               sign in to your account.
             </h1>
-            <p className="text-lg text-gray-300">
-              Manage all your admission accounts in one place.
-            </p>
+           
           </div>
+                </div>
         </div>
 
         {/* Curved Edge */}

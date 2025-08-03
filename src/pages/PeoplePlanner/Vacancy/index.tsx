@@ -143,15 +143,15 @@ export default function Vacancy() {
             <TableBody>
               {vacancy.map((vacancy) => (
                 <TableRow key={vacancy._id}>
-                  <TableCell>{vacancy.title}</TableCell>
-                  <TableCell>{vacancy.employmentType}</TableCell>
+                  <TableCell>{vacancy?.title}</TableCell>
+                  <TableCell>{vacancy?.employmentType}</TableCell>
                   <TableCell>
-                    {moment(vacancy.applicationDeadline).format('MMMM Do YYYY')}
+                    {moment(vacancy?.applicationDeadline).format('MMMM Do YYYY')}
                   </TableCell>
-                  <TableCell>{vacancy.postedBy.name}</TableCell>
+                  <TableCell>{vacancy?.postedBy?.name}</TableCell>
                   <TableCell>
                     <Switch
-                      checked={vacancy.status == 'active'}
+                      checked={vacancy?.status == 'active'}
                       onCheckedChange={(checked) =>
                         handleStatusChange(vacancy._id, checked)
                       }

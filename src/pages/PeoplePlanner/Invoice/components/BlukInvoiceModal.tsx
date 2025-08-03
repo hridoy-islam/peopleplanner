@@ -10,6 +10,7 @@ import {
   DialogDescription,
   DialogFooter
 } from '@/components/ui/dialog';
+import moment from 'moment';
 
 interface BulkInvoiceModalProps {
   isOpen: boolean;
@@ -17,16 +18,25 @@ interface BulkInvoiceModalProps {
 }
 
 const BulkInvoiceModal = ({ isOpen, onClose }: BulkInvoiceModalProps) => {
-  const [selectedDate, setSelectedDate] = useState<Date | null>(new Date());
+  const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([
+    null,
+    null
+  ]);
+  const [startDate, endDate] = dateRange;
   const [isGenerating, setIsGenerating] = useState(false);
 
   const handleGenerate = () => {
-    if (!selectedDate) return;
+    if (!startDate || !endDate) return;
 
     setIsGenerating(true);
     // Simulate API call
     setTimeout(() => {
-      console.log('Generating invoices for:', selectedDate);
+      console.log(
+        'Generating invoices from:',
+        moment(startDate).format('MMMM D, YYYY'),
+        'to',
+        moment(endDate).format('MMMM D, YYYY')
+      );
       setIsGenerating(false);
       onClose();
     }, 1500);
@@ -38,27 +48,35 @@ const BulkInvoiceModal = ({ isOpen, onClose }: BulkInvoiceModalProps) => {
         <DialogHeader>
           <DialogTitle>Generate Bulk Invoices</DialogTitle>
           <DialogDescription>
-            Select month and year to generate Invoices for all active service
+            Select a date range to generate Invoices for all active service
             users.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 py-4">
-          <div className="space-y-2">
-            <label
-              htmlFor="month-year"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Select Month and Year
-            </label>
+        <div className="w-full space-y-2">
+          <label
+            htmlFor="month-year"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Select Date Range
+          </label>
+          <div className="relative w-full">
             <DatePicker
-              selected={selectedDate}
-              onChange={(date) => setSelectedDate(date)}
-              dateFormat="MMMM yyyy"
-              showMonthYearPicker
-              showFullMonthYearPicker
-              preventOpenOnFocus={true} // prevents auto open on focus
-              className="flex h-10 w-full rounded-md border border-gray-300 px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              selectsRange
+              startDate={startDate}
+              endDate={endDate}
+              onChange={(update: [Date | null, Date | null]) => {
+                setDateRange(update);
+              }}
+              isClearable
+              dateFormat="MMMM d, yyyy"
+              placeholderText="Select date range"
+              wrapperClassName="w-full"
+              preventOpenOnFocus
+              showMonthDropdown
+              showYearDropdown
+              dropdownMode="select"
+              className="h-10 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             />
           </div>
         </div>
@@ -69,7 +87,7 @@ const BulkInvoiceModal = ({ isOpen, onClose }: BulkInvoiceModalProps) => {
           </Button>
           <Button
             onClick={handleGenerate}
-            disabled={!selectedDate || isGenerating}
+            disabled={!startDate || !endDate || isGenerating}
             className="bg-supperagent text-white hover:bg-supperagent/90"
           >
             {isGenerating ? 'Generating...' : 'Generate Invoices'}
