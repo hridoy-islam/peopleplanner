@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import UserAuthForm from './components/user-auth-form';
-import signIn from "../../../assets/imges/home/signIn.png"
+import signIn from "../../../assets/imges/home/authImg.png"
 
 export default function SignInPage() {
   const { user } = useSelector((state: any) => state.auth);
@@ -46,7 +46,7 @@ export default function SignInPage() {
               <img
                 src={signIn}
                 alt="Desk illustration"
-                width={350}
+                width={550}
                 height={200}
                 />
             </div>

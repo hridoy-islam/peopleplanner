@@ -31,7 +31,8 @@ import {
   Settings,
   ReceiptText,
   Mails,
-  UserCircle
+  UserCircle,
+  DoorOpen
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
@@ -181,10 +182,17 @@ export function PeoplePlannerSideNav() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
-  const user = useSelector((state) => state.auth?.user) || null;
+  const user = useSelector((state:any) => state.auth?.user) || null;
   const [expandedItems, setExpandedItems] = useState({}); // Object-based state
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+
+   const handleLogout = async () => {
+    await dispatch(logout());
+    navigate('/');
+  };
+
+  
   useEffect(() => {
     if (!user) {
       dispatch(logout());
@@ -251,6 +259,15 @@ export function PeoplePlannerSideNav() {
           />
         ))}
       </nav>
+      <div className="px-3 pb-3">
+        <button
+          onClick={handleLogout}
+          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-red-600 transition-colors hover:bg-red-100 hover:text-red-700"
+        >
+          <DoorOpen className="h-4 w-4" />
+          <span className="font-medium">Logout</span>
+        </button>
+      </div>
     </div>
   );
 
