@@ -12,7 +12,9 @@ import { ScheduleDetailComponent } from './components/ScheduleDetail';
 import { ExtraCallComponent } from './components/ExtraCall';
 
 export default function PlannerPage() {
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(
+    new Date()
+  );
   const [filterBy, setFilterBy] = useState('Service User');
   const [designation, setDesignation] = useState('All');
   const [department, setDepartment] = useState('All');
@@ -23,10 +25,12 @@ export default function PlannerPage() {
     left: true,
     right: true
   });
-  const [selectedSchedule, setSelectedSchedule] = useState<schedule | null>(null);
+  const [selectedSchedule, setSelectedSchedule] = useState<schedule | null>(
+    null
+  );
   const contentRef = React.useRef<HTMLDivElement>(null);
   const [isDateSelected, setIsDateSelected] = useState(false);
-const [isExtraCallOpen, setIsExtraCallOpen] = useState(false);
+  const [isExtraCallOpen, setIsExtraCallOpen] = useState(false);
   const handleZoomIn = () => setZoomLevel((prev) => Math.min(prev + 1, 8));
   const handleZoomOut = () => setZoomLevel((prev) => Math.max(prev - 1, 2));
   const handleSearch = () => {};
@@ -34,10 +38,9 @@ const [isExtraCallOpen, setIsExtraCallOpen] = useState(false);
   const handleScheduleClick = (schedule: schedule) => {
     setSelectedSchedule(schedule);
   };
- const handleExtraScheduleClick = () => {
-  setIsExtraCallOpen(true);
-};
-
+  const handleExtraScheduleClick = () => {
+    setIsExtraCallOpen(true);
+  };
 
   const handleCloseScheduleModal = () => {
     setSelectedSchedule(null);
@@ -77,9 +80,10 @@ const [isExtraCallOpen, setIsExtraCallOpen] = useState(false);
 
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      result = result.filter((user) =>
-        user.name.toLowerCase().includes(term) ||
-        ('email' in user && user.email.toLowerCase().includes(term))
+      result = result.filter(
+        (user) =>
+          user.name.toLowerCase().includes(term) ||
+          ('email' in user && user.email.toLowerCase().includes(term))
       );
     }
 
@@ -102,13 +106,16 @@ const [isExtraCallOpen, setIsExtraCallOpen] = useState(false);
     return Array.from({ length: 7 }).map((_, i) => {
       const currentDay = startOfWeek.clone().add(i, 'days');
       const dayString = currentDay.format('YYYY-MM-DD');
-      const dayschedules = schedules.filter((schedule) => schedule.date === dayString);
+      const dayschedules = schedules.filter(
+        (schedule) => schedule.date === dayString
+      );
 
       return {
         date: currentDay.format('DD/MM'),
         day: currentDay.format('dddd'),
         allocated: dayschedules.filter((t) => t.status === 'allocated').length,
-        unallocated: dayschedules.filter((t) => t.status === 'unallocated').length,
+        unallocated: dayschedules.filter((t) => t.status === 'unallocated')
+          .length,
         total: dayschedules.length
       };
     });
@@ -166,10 +173,10 @@ const [isExtraCallOpen, setIsExtraCallOpen] = useState(false);
             onClose={handleCloseScheduleModal}
           />
 
-          <ExtraCallComponent 
-  isOpen={isExtraCallOpen} 
-  onClose={() => setIsExtraCallOpen(false)} 
-/>
+          <ExtraCallComponent
+            isOpen={isExtraCallOpen}
+            onClose={() => setIsExtraCallOpen(false)}
+          />
         </div>
       </TooltipProvider>
     </div>

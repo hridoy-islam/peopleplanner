@@ -209,7 +209,7 @@ export function TopControls({
             }
           >
             <Plus className="h-4 w-4" />
-            Extra Call
+            Add Schedule
           </Button>
         </div>
         </div>

@@ -19,6 +19,13 @@ import {
   DialogDescription,
   DialogFooter
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import ExpenseTab from './scheduleTabs/tabs/ExpenseTab';
@@ -251,15 +258,53 @@ export function ScheduleDetailComponent({
               <DialogHeader>
                 <DialogTitle>Cancel Action</DialogTitle>
                 <DialogDescription>
-                  Please provide a reason for canceling the action.
+                  Please select a reason for canceling the action.
                 </DialogDescription>
               </DialogHeader>
-              <textarea
-                className="w-full rounded-md border p-2"
-                placeholder="Enter cancel reason"
-                value={cancelReason}
-                onChange={(e) => setCancelReason(e.target.value)}
-              />
+
+              {/* shadcn/ui Select Component */}
+              <div className="py-2">
+                <Select
+                  value={cancelReason}
+                  onValueChange={setCancelReason}
+                  required
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a reason..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Cancelled on Arrival">
+                      Cancelled on Arrival
+                    </SelectItem>
+                    <SelectItem value="Coronavirus - Concerns">
+                      Coronavirus - Concerns
+                    </SelectItem>
+                    <SelectItem value="Coronavirus - Financial Reasons">
+                      Coronavirus - Financial Reasons
+                    </SelectItem>
+                    <SelectItem value="Coronavirus - Hospitalised">
+                      Coronavirus - Hospitalised
+                    </SelectItem>
+                    <SelectItem value="Coronavirus - Self Isolating">
+                      Coronavirus - Self Isolating
+                    </SelectItem>
+                    <SelectItem value="Coronavirus - Shielding">
+                      Coronavirus - Shielding
+                    </SelectItem>
+                    <SelectItem value="Less Than 24 Hours Notice (With Pay)">
+                      Less Than 24 Hours Notice (With Pay)
+                    </SelectItem>
+                    <SelectItem value="Less Than 24 Hours Notice (Without Pay)">
+                      Less Than 24 Hours Notice (Without Pay)
+                    </SelectItem>
+                    <SelectItem value="More Than 24 Hours Notice">
+                      More Than 24 Hours Notice
+                    </SelectItem>
+                    <SelectItem value="Zero">Zero</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               <DialogFooter>
                 <Button
                   variant="outline"
@@ -270,6 +315,7 @@ export function ScheduleDetailComponent({
                 <Button
                   onClick={handleCancel}
                   className="bg-red-500 text-white hover:bg-red-500/80"
+                  disabled={!cancelReason} // Prevent confirm if no reason selected
                 >
                   Confirm Cancel
                 </Button>

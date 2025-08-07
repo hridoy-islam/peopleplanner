@@ -478,65 +478,7 @@ export function Timeline({
                                 </TooltipTrigger>
                               </ContextMenuTrigger>
 
-                              <ContextMenuContent className="z-[9999] w-36 border-none bg-white text-black shadow-lg">
-                                <ContextMenuSub>
-                                  <ContextMenuSubTrigger className="text-xs">
-                                    Allocate
-                                  </ContextMenuSubTrigger>
-                                  <ContextMenuSubContent className="w-48 border-none bg-white text-black shadow-lg">
-                                    {employees.map((employee) => (
-                                      <ContextMenuSub key={employee.id}>
-                                        <ContextMenuSubTrigger className="text-xs">
-                                          {employee.name}
-                                        </ContextMenuSubTrigger>
-                                        <ContextMenuSubContent className="w-48 space-y-1 border-none bg-white text-black shadow-lg">
-                                          <ContextMenuItem className="text-xs">
-                                            Maintenance
-                                          </ContextMenuItem>
-
-                                          <ContextMenuSub>
-                                            <ContextMenuSubTrigger className="text-xs">
-                                              Show Routes
-                                            </ContextMenuSubTrigger>
-                                            <ContextMenuSubContent className="w-48 border-none bg-white text-black shadow-lg">
-                                              <ContextMenuItem className="text-xs">
-                                                Send Email
-                                              </ContextMenuItem>
-                                              <ContextMenuItem className="text-xs">
-                                                Send Message
-                                              </ContextMenuItem>
-                                            </ContextMenuSubContent>
-                                          </ContextMenuSub>
-
-                                          <ContextMenuSub>
-                                            <ContextMenuSubTrigger className="text-xs">
-                                              Allocate
-                                            </ContextMenuSubTrigger>
-                                            <ContextMenuSubContent className="w-48 border-none bg-white text-black shadow-lg">
-                                              <ContextMenuItem className="text-xs">
-                                                Single
-                                              </ContextMenuItem>
-                                              <ContextMenuItem className="text-xs">
-                                                Batch
-                                              </ContextMenuItem>
-                                            </ContextMenuSubContent>
-                                          </ContextMenuSub>
-                                        </ContextMenuSubContent>
-                                      </ContextMenuSub>
-                                    ))}
-                                  </ContextMenuSubContent>
-                                </ContextMenuSub>
-
-                                <ContextMenuItem className="text-xs">
-                                  Copy
-                                </ContextMenuItem>
-                                <ContextMenuItem className="text-xs">
-                                  Cancel
-                                </ContextMenuItem>
-                                <ContextMenuItem className="text-xs">
-                                  Delete
-                                </ContextMenuItem>
-                              </ContextMenuContent>
+                              
                             </ContextMenu>
                             <TooltipContent className="z-50 w-auto rounded-md bg-white p-4 shadow-lg">
                               <div className="space-y-3 text-sm text-gray-700">
@@ -809,65 +751,7 @@ export function Timeline({
                               </div>
                             </ContextMenuTrigger>
 
-                            <ContextMenuContent className="z-[9999] w-36 border-none bg-white text-black shadow-lg">
-                              <ContextMenuSub>
-                                <ContextMenuSubTrigger className="text-xs">
-                                  Allocate
-                                </ContextMenuSubTrigger>
-                                <ContextMenuSubContent className="w-48 border-none bg-white text-black shadow-lg">
-                                  {employees.map((employee) => (
-                                    <ContextMenuSub key={employee.id}>
-                                      <ContextMenuSubTrigger className="text-xs">
-                                        {employee.name}
-                                      </ContextMenuSubTrigger>
-                                      <ContextMenuSubContent className="w-48 space-y-1 border-none bg-white text-black shadow-lg">
-                                        <ContextMenuItem className="text-xs">
-                                          Maintenance
-                                        </ContextMenuItem>
-
-                                        <ContextMenuSub>
-                                          <ContextMenuSubTrigger className="text-xs">
-                                            Show Routes
-                                          </ContextMenuSubTrigger>
-                                          <ContextMenuSubContent className="w-48 border-none bg-white text-black shadow-lg">
-                                            <ContextMenuItem className="text-xs">
-                                              Send Email
-                                            </ContextMenuItem>
-                                            <ContextMenuItem className="text-xs">
-                                              Send Message
-                                            </ContextMenuItem>
-                                          </ContextMenuSubContent>
-                                        </ContextMenuSub>
-
-                                        <ContextMenuSub>
-                                          <ContextMenuSubTrigger className="text-xs">
-                                            Allocate
-                                          </ContextMenuSubTrigger>
-                                          <ContextMenuSubContent className="w-48 border-none bg-white text-black shadow-lg">
-                                            <ContextMenuItem className="text-xs">
-                                              Single
-                                            </ContextMenuItem>
-                                            <ContextMenuItem className="text-xs">
-                                              Batch
-                                            </ContextMenuItem>
-                                          </ContextMenuSubContent>
-                                        </ContextMenuSub>
-                                      </ContextMenuSubContent>
-                                    </ContextMenuSub>
-                                  ))}
-                                </ContextMenuSubContent>
-                              </ContextMenuSub>
-
-                              <ContextMenuItem className="text-xs">
-                                Copy
-                              </ContextMenuItem>
-                              <ContextMenuItem className="text-xs">
-                                Cancel
-                              </ContextMenuItem>
-                              <ContextMenuItem className="text-xs">
-                                Delete
-                              </ContextMenuItem>
-                            </ContextMenuContent>
+                            
                           </ContextMenu>
                         );
                       })}
