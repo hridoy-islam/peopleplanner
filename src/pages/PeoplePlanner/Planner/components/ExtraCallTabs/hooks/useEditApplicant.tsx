@@ -126,8 +126,7 @@ export const useEditApplicant = () => {
         area: '',
         note: ''
       }
-    ],
-    logs:[]
+    ]
   });
 
   // Define required fields for each tab
@@ -165,8 +164,7 @@ export const useEditApplicant = () => {
     primaryBranch: [],
     note: [],
     po: [{ field: 'purchaseOrder', label: 'Requires Purchase Order?' }],
-    break:[],
-    logs:[]
+    break:[]
   };
 
   const getMissingFields = (

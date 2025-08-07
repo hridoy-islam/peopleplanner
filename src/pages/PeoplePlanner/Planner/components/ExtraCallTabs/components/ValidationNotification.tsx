@@ -17,8 +17,7 @@ const tabLabels: { [key: string]: string } = {
   dayOnOff: 'Day ON/OFF',
   note: 'Note',
   po: 'PO',
-  break: 'Break',
-  logs: 'Logs' 
+  break: 'Break'
 };
 
 export const ValidationNotification: React.FC<ValidationNotificationProps> = ({
@@ -54,25 +53,25 @@ export const ValidationNotification: React.FC<ValidationNotificationProps> = ({
         })}
         
         {/* Delete Button */}
-        <div
+        {/* <div
           className="group cursor-pointer rounded-md border border-gray-300 px-2 py-1 transition-all duration-200 hover:border-destructive"
-          onClick={onDeleteClick} // Trigger delete action
+          onClick={onDeleteClick} 
         >
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium text-destructive transition-transform group-hover:translate-x-1 group-hover:text-destructive">Delete</span>
           </div>
-        </div>
+        </div> */}
 
         {/* Cancel Button */}
-        <div
+        {/* <div
           className="group cursor-pointer rounded-md border border-gray-300 px-2 py-1 transition-all duration-200 hover:border-destructive"
-          onClick={onCancelClick} // Trigger cancel action
+          onClick={onCancelClick} 
         >
           <div className="flex items-center justify-start gap-2">
             <X className="h-4 w-4 text-destructive transition-transform group-hover:translate-x-1" />
             <span className="text-sm font-medium text-destructive transition-transform group-hover:translate-x-1">Cancel</span>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );

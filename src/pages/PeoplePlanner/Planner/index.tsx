@@ -9,6 +9,7 @@ import { serviceUsers, employees, schedules } from '@/data/plannerData';
 import type { SidebarState, schedule } from '@/types/planner';
 import moment from 'moment';
 import { ScheduleDetailComponent } from './components/ScheduleDetail';
+import { ExtraCallComponent } from './components/ExtraCall';
 
 export default function PlannerPage() {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
@@ -25,7 +26,7 @@ export default function PlannerPage() {
   const [selectedSchedule, setSelectedSchedule] = useState<schedule | null>(null);
   const contentRef = React.useRef<HTMLDivElement>(null);
   const [isDateSelected, setIsDateSelected] = useState(false);
-
+const [isExtraCallOpen, setIsExtraCallOpen] = useState(false);
   const handleZoomIn = () => setZoomLevel((prev) => Math.min(prev + 1, 8));
   const handleZoomOut = () => setZoomLevel((prev) => Math.max(prev - 1, 2));
   const handleSearch = () => {};
@@ -33,6 +34,10 @@ export default function PlannerPage() {
   const handleScheduleClick = (schedule: schedule) => {
     setSelectedSchedule(schedule);
   };
+ const handleExtraScheduleClick = () => {
+  setIsExtraCallOpen(true);
+};
+
 
   const handleCloseScheduleModal = () => {
     setSelectedSchedule(null);
@@ -132,6 +137,7 @@ export default function PlannerPage() {
               searchTerm={searchTerm}
               setSearchTerm={setSearchTerm}
               handleSearch={handleSearch}
+              onScheduleClick={handleExtraScheduleClick}
             />
 
             <Timeline
@@ -159,6 +165,11 @@ export default function PlannerPage() {
             isOpen={!!selectedSchedule}
             onClose={handleCloseScheduleModal}
           />
+
+          <ExtraCallComponent 
+  isOpen={isExtraCallOpen} 
+  onClose={() => setIsExtraCallOpen(false)} 
+/>
         </div>
       </TooltipProvider>
     </div>

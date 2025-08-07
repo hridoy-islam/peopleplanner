@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { Minus, Plus } from 'lucide-react';
+import { Minus, Phone, Plus } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
 interface TopControlsProps {
@@ -16,6 +16,16 @@ interface TopControlsProps {
   zoomLevel: number;
   handleZoomIn: () => void;
   handleZoomOut: () => void;
+  onScheduleClick: () => void;
+  designation: string;
+  setDesignation: (value: string) => void;
+  department: string;
+  setDepartment: (value: string) => void;
+  status: string;
+  setStatus: (value: string) => void;
+  searchTerm: string;
+  setSearchTerm: (value: string) => void;
+  handleSearch: () => void;
 }
 
 export function TopControls({
@@ -32,8 +42,9 @@ export function TopControls({
   setStatus,
   searchTerm,
   setSearchTerm,
-  handleSearch
-}) {
+  handleSearch,
+  onScheduleClick
+}: TopControlsProps) {
   return (
     <div className="w-full border-b border-gray-200 bg-white p-2">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -189,6 +200,18 @@ export function TopControls({
                 <span className="text-xs text-gray-500">{zoomLevel}x</span>
                   </div>
               </div>
+
+              <div className="flex items-end">
+          <Button
+            variant="default"
+            className="bg-supperagent hover:bg-supperagent/90 text-white text-xs h-9 px-3 flex items-center gap-1"
+            onClick={() =>  onScheduleClick()
+            }
+          >
+            <Plus className="h-4 w-4" />
+            Extra Call
+          </Button>
+        </div>
         </div>
       </div>
     </div>

@@ -79,13 +79,13 @@ const ExpenseTab: React.FC<ExpenseTabProps> = ({
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-3">
       {expenses.map((expense, index) => (
         <div
           key={index}
           className="rounded-lg border border-gray-300 bg-white p-6 shadow-sm"
         >
-          <div className="flex justify-between items-center mb-4">
+          <div className="mb-4 flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900">
               Expense #{index + 1}
             </h3>
@@ -108,7 +108,7 @@ const ExpenseTab: React.FC<ExpenseTabProps> = ({
               isSaving={isFieldSaving[`expenseType-${index}`]}
               required
             />
-            
+
             <EditableField
               id={`distance-${index}`}
               label="Distance "
@@ -123,8 +123,8 @@ const ExpenseTab: React.FC<ExpenseTabProps> = ({
               id={`payEmployee-${index}`}
               label="Pay Employee"
               value={expense.payEmployee}
-             type="number"
-              
+              type="select"
+              options={booleanOptions}
               onUpdate={(val) => updateExpenseField(index, 'payEmployee', val)}
               isSaving={isFieldSaving[`payEmployee-${index}`]}
             />
@@ -135,7 +135,9 @@ const ExpenseTab: React.FC<ExpenseTabProps> = ({
               value={expense.invoiceCustomer}
               type="select"
               options={booleanOptions}
-              onUpdate={(val) => updateExpenseField(index, 'invoiceCustomer', val)}
+              onUpdate={(val) =>
+                updateExpenseField(index, 'invoiceCustomer', val)
+              }
               isSaving={isFieldSaving[`invoiceCustomer-${index}`]}
             />
 
@@ -144,7 +146,9 @@ const ExpenseTab: React.FC<ExpenseTabProps> = ({
               label="Pay Amount"
               value={expense.payAmount}
               type="number"
-              onUpdate={(val) => updateExpenseField(index, 'payAmount', Number(val) || null)}
+              onUpdate={(val) =>
+                updateExpenseField(index, 'payAmount', Number(val) || null)
+              }
               isSaving={isFieldSaving[`payAmount-${index}`]}
             />
 
@@ -153,7 +157,9 @@ const ExpenseTab: React.FC<ExpenseTabProps> = ({
               label="Invoice Amount"
               value={expense.invoiceAmount}
               type="number"
-              onUpdate={(val) => updateExpenseField(index, 'invoiceAmount', Number(val) || null)}
+              onUpdate={(val) =>
+                updateExpenseField(index, 'invoiceAmount', Number(val) || null)
+              }
               isSaving={isFieldSaving[`invoiceAmount-${index}`]}
             />
 
@@ -174,7 +180,7 @@ const ExpenseTab: React.FC<ExpenseTabProps> = ({
       <div className="flex justify-end">
         <button
           onClick={addNewExpense}
-          className="mt-4 rounded bg-supperagent px-4 py-2 text-white hoverbg-supperagent/90"
+          className=" hoverbg-supperagent/90 rounded bg-supperagent px-4 py-1 text-white"
         >
           Add Expense
         </button>

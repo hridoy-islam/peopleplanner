@@ -10,15 +10,32 @@ import {
   MoreHorizontal
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
 import BulkInvoiceModal from './BlukInvoiceModal';
 import PaymentModal from './PaymentModal';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-
-
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table';
+import { downloadInvoicePDF } from './InvoicePDF';
 
 interface Invoice {
   id: string;
@@ -129,14 +146,24 @@ export default function Invoice({ onCreateInvoice }: InvoicesPageProps) {
     .reduce((sum, invoice) => sum + invoice.amount, 0);
   const pendingAmount = totalAmount - paidAmount;
 
+
+   const handleDownloadPDF = async (invoice: Invoice) => {
+    try {
+      await downloadInvoicePDF(invoice);
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+    }
+  };
+
+
+  
+
   return (
     <div className="space-y-6 ">
       {/* Header */}
       <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Invoice 
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900">Invoice</h1>
         </div>
         <div className="flex gap-3">
           <Button
@@ -224,74 +251,76 @@ export default function Invoice({ onCreateInvoice }: InvoicesPageProps) {
           </div>
         </CardHeader>
         <CardContent>
-         <Table>
-  <TableHeader>
-    <TableRow>
-      <TableHead>ID</TableHead>
-      <TableHead>Status</TableHead>
-      <TableHead>User</TableHead>
-      <TableHead>Services</TableHead>
-      <TableHead>Period</TableHead>
-      <TableHead>Created</TableHead>
-      <TableHead>Due</TableHead>
-      <TableHead>Amount</TableHead>
-      <TableHead className="text-right">Actions</TableHead>
-    </TableRow>
-  </TableHeader>
-  <TableBody>
-    {filteredInvoices.map((invoice) => (
-      <TableRow key={invoice.id}>
-        <TableCell className="font-semibold">{invoice.id}</TableCell>
-        <TableCell>
-          <Badge className={getStatusColor(invoice.status)}>
-            {getStatusText(invoice.status)}
-          </Badge>
-        </TableCell>
-        <TableCell>{invoice.userName}</TableCell>
-        <TableCell>{invoice.serviceCount}</TableCell>
-        <TableCell>{invoice.period}</TableCell>
-        <TableCell>
-          {new Date(invoice.createdDate).toLocaleDateString()}
-        </TableCell>
-        <TableCell>
-          {new Date(invoice.dueDate).toLocaleDateString()}
-        </TableCell>
-        <TableCell className="font-bold text-gray-900">
-          ${invoice.amount.toLocaleString()}
-        </TableCell>
-        <TableCell className="flex justify-end gap-2">
-          <Button
-            size="sm"
-            className="bg-supperagent text-white hover:bg-supperagent/90"
-            onClick={() => {
-              setSelectedUser({
-                id: invoice.userId,
-                name: invoice.userName
-              });
-              setShowPaymentModal(true);
-            }}
-          >
-            Pay
-          </Button>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className='bg-white border-gray-300 text-black '>
-              <DropdownMenuItem>Download PDF</DropdownMenuItem>
-              <DropdownMenuItem className="text-red-600 hover:text-red-600">
-                Delete Invoice
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </TableCell>
-      </TableRow>
-    ))}
-  </TableBody>
-</Table>
-
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>ID</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>User</TableHead>
+                <TableHead>Services</TableHead>
+                <TableHead>Period</TableHead>
+                <TableHead>Created</TableHead>
+                <TableHead>Due</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredInvoices.map((invoice) => (
+                <TableRow key={invoice.id}>
+                  <TableCell className="font-semibold">{invoice.id}</TableCell>
+                  <TableCell>
+                    <Badge className={getStatusColor(invoice.status)}>
+                      {getStatusText(invoice.status)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{invoice.userName}</TableCell>
+                  <TableCell>{invoice.serviceCount}</TableCell>
+                  <TableCell>{invoice.period}</TableCell>
+                  <TableCell>
+                    {new Date(invoice.createdDate).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    {new Date(invoice.dueDate).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell className="font-bold text-gray-900">
+                    ${invoice.amount.toLocaleString()}
+                  </TableCell>
+                  <TableCell className="flex justify-end gap-2">
+                    <Button
+                      size="sm"
+                      className="bg-supperagent text-white hover:bg-supperagent/90"
+                      onClick={() => {
+                        setSelectedUser({
+                          id: invoice.userId,
+                          name: invoice.userName
+                        });
+                        setShowPaymentModal(true);
+                      }}
+                    >
+                      Pay
+                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent
+                        align="end"
+                        className="border-gray-300 bg-white text-black "
+                      >
+                        <DropdownMenuItem onClick={() => handleDownloadPDF(invoice)}>Download PDF</DropdownMenuItem>
+                        <DropdownMenuItem className="text-red-600 hover:text-red-600">
+                          Delete Invoice
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
 

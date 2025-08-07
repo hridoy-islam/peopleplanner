@@ -1,25 +1,9 @@
 import {
-  ArrowLeft,
   X,
-  Clock,
-  User,
-  Calendar,
-  ClipboardList,
-  CheckCircle2,
-  AlertCircle
-} from 'lucide-react';
-import { ValidationNotification } from './scheduleTabs/components/ValidationNotification';
 
-import { useEditApplicant } from './scheduleTabs/hooks/useEditApplicant';
-import type { schedule } from '@/types/planner';
-import GeneralInfoTab from './scheduleTabs/tabs/GeneralInfoTab';
-import EquipmentTab from './scheduleTabs/tabs/EquipmentTab';
-import { Tabs } from './scheduleTabs/components/Tabs';
-import TagTab from './scheduleTabs/tabs/TagTab';
-import DayOnOffTab from './scheduleTabs/tabs/DayOnOffTab';
-import NoteTab from './scheduleTabs/tabs/NoteTab';
-import PurchaseOrderTab from './scheduleTabs/tabs/PurchaseOrderTab';
-import BreakTab from './scheduleTabs/tabs/BreakTab';
+} from 'lucide-react';
+
+
 import {
   Dialog,
   DialogContent,
@@ -30,35 +14,30 @@ import {
 } from '@/components/ui/dialog';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import ExpenseTab from './scheduleTabs/tabs/ExpenseTab';
-import LogTab from './scheduleTabs/tabs/Logtab';
+import { useEditApplicant } from './ExtraCallTabs/hooks/useEditApplicant';
+import GeneralInfoTab from './ExtraCallTabs/tabs/GeneralInfoTab';
+import EquipmentTab from './ExtraCallTabs/tabs/EquipmentTab';
+import ExpenseTab from './ExtraCallTabs/tabs/ExpenseTab';
+import TagTab from './ExtraCallTabs/tabs/TagTab';
+import DayOnOffTab from './ExtraCallTabs/tabs/DayOnOffTab';
+import NoteTab from './ExtraCallTabs/tabs/NoteTab';
+import PurchaseOrderTab from './ExtraCallTabs/tabs/PurchaseOrderTab';
+import BreakTab from './ExtraCallTabs/tabs/BreakTab';
+import { Tabs } from './ExtraCallTabs/components/Tabs';
+import { ValidationNotification } from './ExtraCallTabs/components/ValidationNotification';
 
-interface ScheduleDetailDialogProps {
-  schedule: schedule | null;
+interface ExtraCallComponentDialogProps {
+
   isOpen: boolean;
   onClose: () => void;
 }
 
-const mockUser = {
-  id: '12345',
-  firstName: 'John',
-  lastName: 'Doe',
-  email: 'johndoe@example.com',
-  phone: '123-456-7890',
-  role: 'Admin',
-  scheduleId: 'schedule-001',
-  scheduleTitle: 'Weekly Team Meeting',
-  profilePicture: 'https://randomuser.me/api/portraits/men/1.jpg', // Mocked profile picture URL
-  createdAt: new Date('2022-06-15T14:48:00Z'),
-  updatedAt: new Date('2023-04-25T10:22:00Z')
-};
 
-export function ScheduleDetailComponent({
-  schedule,
+export function ExtraCallComponent({
   isOpen,
   onClose
-}: ScheduleDetailDialogProps) {
-  if (!isOpen || !schedule) return null;
+}: ExtraCallComponentDialogProps) {
+  if (!isOpen) return null;
   const [cancelReason, setCancelReason] = useState('');
   const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -178,15 +157,6 @@ export function ScheduleDetailComponent({
           isFieldSaving={isFieldSaving}
         />
       )
-    },
-    {
-      id: 'logs',
-      label: 'Logs',
-      component: (
-        <LogTab
-        
-        />
-      )
     }
   ];
 
@@ -218,9 +188,7 @@ export function ScheduleDetailComponent({
       >
         <div className="flex items-center justify-between border-b border-gray-200 p-2">
           <div className="flex items-center gap-3">
-            <h1 className="text-lg font-semibold text-gray-900">
-              {schedule.title} 
-            </h1>
+            
           </div>
           <button
             onClick={onClose}
@@ -247,7 +215,6 @@ export function ScheduleDetailComponent({
             <ValidationNotification
               validation={tabValidation}
               onTabClick={handleTabNavigation}
-              userId={schedule.id}
               onCancelClick={() => setIsCancelDialogOpen(true)}
               onDeleteClick={() => setIsDeleteDialogOpen(true)}
             />
