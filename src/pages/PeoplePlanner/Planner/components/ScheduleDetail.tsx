@@ -1,13 +1,4 @@
-import {
-  ArrowLeft,
-  X,
-  Clock,
-  User,
-  Calendar,
-  ClipboardList,
-  CheckCircle2,
-  AlertCircle
-} from 'lucide-react';
+import { X } from 'lucide-react';
 import { ValidationNotification } from './scheduleTabs/components/ValidationNotification';
 
 import { useEditApplicant } from './scheduleTabs/hooks/useEditApplicant';
@@ -31,7 +22,7 @@ import {
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import ExpenseTab from './scheduleTabs/tabs/ExpenseTab';
-import LogTab from './scheduleTabs/tabs/Logtab';
+import LogTab from './scheduleTabs/tabs/LogTab';
 
 interface ScheduleDetailDialogProps {
   schedule: schedule | null;
@@ -182,11 +173,7 @@ export function ScheduleDetailComponent({
     {
       id: 'logs',
       label: 'Logs',
-      component: (
-        <LogTab
-        
-        />
-      )
+      component: <LogTab />
     }
   ];
 
@@ -219,7 +206,7 @@ export function ScheduleDetailComponent({
         <div className="flex items-center justify-between border-b border-gray-200 p-2">
           <div className="flex items-center gap-3">
             <h1 className="text-lg font-semibold text-gray-900">
-              {schedule.title} 
+              {schedule.title}
             </h1>
           </div>
           <button
