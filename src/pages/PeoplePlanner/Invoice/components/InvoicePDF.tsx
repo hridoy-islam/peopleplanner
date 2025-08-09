@@ -7,60 +7,56 @@ import {
   StyleSheet,
   pdf,
 } from '@react-pdf/renderer';
-
-interface Invoice {
-  id: string;
-  userId: string;
-  userName: string;
-  amount: number;
-  status: 'draft' | 'ready' | 'finalized' | 'paid' | 'partially_paid' | 'unpaid';
-  createdDate: string;
-  dueDate: string;
-  serviceCount: number;
-  period: string;
-}
+import { Invoice, Service } from '../types/invoice';
 
 interface InvoicePDFProps {
   invoice: Invoice;
+  isDetailed?: boolean;
 }
 
 const styles = StyleSheet.create({
   page: {
     flexDirection: 'column',
     backgroundColor: '#FFFFFF',
-    padding: 20, // Reduced from 40
+    padding: 20,
     fontFamily: 'Helvetica',
-    fontSize: 9, // Base font size
+    fontSize: 9,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 15, // Reduced
+    marginBottom: 15,
   },
   logo: {
     flexDirection: 'column',
   },
   companyName: {
-    fontSize: 16, // Reduced from 24
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#1F2937',
-    marginBottom: 3, // Reduced
+    marginBottom: 3,
   },
   companyDetails: {
-    fontSize: 8, // Reduced from 10
+    fontSize: 8,
     color: '#6B7280',
-    lineHeight: 1.2, // Tighter lines
+    lineHeight: 1.2,
   },
   invoiceTitle: {
-    fontSize: 20, // Reduced from 32
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#DC2626',
     textAlign: 'right',
   },
+  invoiceType: {
+    fontSize: 10,
+    color: '#6B7280',
+    textAlign: 'right',
+    marginTop: 2,
+  },
   invoiceDetails: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 15, // Reduced
+    marginBottom: 15,
   },
   invoiceInfo: {
     width: '45%',
@@ -69,83 +65,83 @@ const styles = StyleSheet.create({
     width: '45%',
   },
   sectionTitle: {
-    fontSize: 11, // Reduced from 14
+    fontSize: 11,
     fontWeight: 'bold',
     color: '#374151',
-    marginBottom: 6, // Reduced
+    marginBottom: 6,
     textTransform: 'uppercase',
   },
   detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 3, // Reduced
+    marginBottom: 3,
   },
   detailLabel: {
-    fontSize: 8, // Reduced
+    fontSize: 8,
     color: '#6B7280',
     width: '50%',
   },
   detailValue: {
-    fontSize: 8, // Reduced
+    fontSize: 8,
     color: '#1F2937',
     fontWeight: 'bold',
     width: '50%',
     textAlign: 'right',
   },
   clientName: {
-    fontSize: 12, // Reduced from 16
+    fontSize: 12,
     fontWeight: 'bold',
     color: '#1F2937',
-    marginBottom: 3, // Reduced
+    marginBottom: 3,
   },
   clientDetails: {
-    fontSize: 8, // Reduced
+    fontSize: 8,
     color: '#6B7280',
-    lineHeight: 1.2, // Reduced
+    lineHeight: 1.2,
   },
   servicesTable: {
-    marginBottom: 15, // Reduced
+    marginBottom: 15,
   },
   tableHeader: {
     flexDirection: 'row',
     backgroundColor: '#F3F4F6',
-    padding: 6, // Reduced
+    padding: 6,
     borderBottomWidth: 1,
     borderBottomColor: '#D1D5DB',
   },
   tableRow: {
     flexDirection: 'row',
-    padding: 6, // Reduced
+    padding: 6,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
   },
   tableHeaderText: {
-    fontSize: 9, // Reduced from 11
+    fontSize: 9,
     fontWeight: 'bold',
     color: '#374151',
     textTransform: 'uppercase',
   },
   tableCellText: {
-    fontSize: 8, // Reduced from 10
+    fontSize: 8,
     color: '#1F2937',
   },
   summary: {
     flexDirection: 'column',
     alignItems: 'flex-end',
-    marginTop: 10, // Reduced
+    marginTop: 10,
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '40%',
-    marginBottom: 5, // Reduced
+    marginBottom: 5,
   },
   summaryLabel: {
-    fontSize: 9, // Reduced
+    fontSize: 9,
     color: '#6B7280',
   },
   summaryValue: {
-    fontSize: 9, // Reduced
+    fontSize: 9,
     color: '#1F2937',
     fontWeight: 'bold',
   },
@@ -154,89 +150,117 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '40%',
     backgroundColor: '#F3F4F6',
-    padding: 6, // Reduced
+    padding: 6,
     borderRadius: 4,
-    marginTop: 8, // Reduced
+    marginTop: 8,
   },
   totalLabel: {
-    fontSize: 11, // Reduced from 14
+    fontSize: 11,
     fontWeight: 'bold',
     color: '#1F2937',
   },
   totalValue: {
-    fontSize: 12, // Reduced from 16
+    fontSize: 12,
     fontWeight: 'bold',
     color: '#DC2626',
   },
   footer: {
-    marginTop: 20, // Reduced
-    paddingTop: 10, // Reduced
+    marginTop: 20,
+    paddingTop: 10,
     borderTopWidth: 1,
     borderTopColor: '#E5E7EB',
   },
   footerText: {
-    fontSize: 8, // Reduced
+    fontSize: 8,
     color: '#6B7280',
     textAlign: 'center',
-    lineHeight: 1.2, // Reduced
+    lineHeight: 1.2,
   },
 });
 
-const getStatusColor = (status: Invoice['status']) => {
-  switch (status) {
-    case 'paid':
-      return { backgroundColor: '#D1FAE5', color: '#065F46' };
-    case 'draft':
-      return { backgroundColor: '#F3F4F6', color: '#374151' };
-    case 'finalized':
-      return { backgroundColor: '#E0E7FF', color: '#3730A3' };
-    case 'unpaid':
-      return { backgroundColor: '#FEE2E2', color: '#991B1B' };
-    case 'partially_paid':
-      return { backgroundColor: '#FEF3C7', color: '#92400E' };
-    default:
-      return { backgroundColor: '#EBF8FF', color: '#1E40AF' };
-  }
-};
-
-const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice }) => {
-  const statusColors = getStatusColor(invoice.status);
-
-  // Sample services data - in real app, this would come from props or API
-  const services = [
-    {
-      date: '05/05/2023',
-      hours: 4,
-      type: 'Care',
-      rate: 36.6,
-      value: 146.4,
-    },
-    {
-      date: '12/05/2023',
-      hours: 4,
-      type: 'Care',
-      rate: 18.3,
-      value: 73.2,
-    },
-    {
-      date: '19/05/2023',
-      hours: 4,
-      type: 'Care',
-      rate: 18.3,
-      value: 73.2,
-    },
-    {
-      date: '26/05/2023',
-      hours: 4,
-      type: 'Care',
-      rate: 36.6,
-      value: 146.4,
-    },
-  ];
-
-  const subtotal = services.reduce((total, service) => total + service.value, 0);
+const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice, isDetailed = false }) => {
+  const subtotal = invoice.services.reduce((total, service) => total + service.value, 0);
   const tax = subtotal * 0.1; // 10% tax
   const total = subtotal + tax;
+
+  const renderTableHeaders = () => {
+    if (invoice.type === 'time_based' && isDetailed) {
+      return (
+        <View style={styles.tableHeader}>
+          <Text style={[styles.tableHeaderText, { width: '15%' }]}>Date</Text>
+          <Text style={[styles.tableHeaderText, { width: '12%' }]}>Start</Text>
+          <Text style={[styles.tableHeaderText, { width: '12%' }]}>End</Text>
+          <Text style={[styles.tableHeaderText, { width: '12%' }]}>Hours</Text>
+          <Text style={[styles.tableHeaderText, { width: '15%' }]}>Type</Text>
+          <Text style={[styles.tableHeaderText, { width: '17%' }]}>Rate</Text>
+          <Text style={[styles.tableHeaderText, { width: '17%' }]}>Value</Text>
+        </View>
+      );
+    } else {
+      return (
+        <View style={styles.tableHeader}>
+          <Text style={[styles.tableHeaderText, { width: '20%' }]}>Date</Text>
+          <Text style={[styles.tableHeaderText, { width: '20%' }]}>Hours</Text>
+          <Text style={[styles.tableHeaderText, { width: '20%' }]}>Type</Text>
+          <Text style={[styles.tableHeaderText, { width: '20%' }]}>Rate</Text>
+          <Text style={[styles.tableHeaderText, { width: '20%' }]}>Value</Text>
+        </View>
+      );
+    }
+  };
+
+  const renderTableRow = (service: Service, index: number) => {
+    if (invoice.type === 'time_based' && isDetailed) {
+      return (
+        <View key={index} style={styles.tableRow}>
+          <Text style={[styles.tableCellText, { width: '15%' }]}>
+            {new Date(service.date).toLocaleDateString()}
+          </Text>
+          <Text style={[styles.tableCellText, { width: '12%' }]}>
+            {service.startTime || 'N/A'}
+          </Text>
+          <Text style={[styles.tableCellText, { width: '12%' }]}>
+            {service.endTime || 'N/A'}
+          </Text>
+          <Text style={[styles.tableCellText, { width: '12%' }]}>
+            {service.hours}
+          </Text>
+          <Text style={[styles.tableCellText, { width: '15%' }]}>
+            {service.type}
+          </Text>
+          <Text style={[styles.tableCellText, { width: '17%' }]}>
+            £{service.rate.toFixed(2)}
+          </Text>
+          <Text style={[styles.tableCellText, { width: '17%' }]}>
+            £{service.value.toFixed(2)}
+          </Text>
+        </View>
+      );
+    } else {
+      return (
+        <View key={index} style={styles.tableRow}>
+          <Text style={[styles.tableCellText, { width: '20%' }]}>
+            {new Date(service.date).toLocaleDateString()}
+          </Text>
+          <Text style={[styles.tableCellText, { width: '20%' }]}>
+            {service.hours}
+          </Text>
+          <Text style={[styles.tableCellText, { width: '20%' }]}>
+            {service.type}
+          </Text>
+          <Text style={[styles.tableCellText, { width: '20%' }]}>
+            £{service.rate.toFixed(2)}
+          </Text>
+          <Text style={[styles.tableCellText, { width: '20%' }]}>
+            £{service.value.toFixed(2)}
+          </Text>
+        </View>
+      );
+    }
+  };
+
+  const totalDays = invoice.services.length;
+  const totalHours = invoice.services.reduce((total, service) => total + service.hours, 0);
 
   return (
     <Document>
@@ -251,24 +275,43 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice }) => {
               RM1 1JL
             </Text>
           </View>
-          <Text style={styles.invoiceTitle}>Invoice</Text>
+          <View>
+            <Text style={styles.invoiceTitle}>Invoice</Text>
+            <Text style={styles.invoiceType}>
+              {invoice.type === 'time_based' && isDetailed ? 'Time-Based Invoice (Detailed)' : 
+               invoice.type === 'time_based' ? 'Time-Based Invoice' : 'Standard Invoice'}
+            </Text>
+          </View>
         </View>
 
         {/* Invoice Details */}
         <View style={styles.invoiceDetails}>
           <View style={styles.invoiceInfo}>
-            <Text style={styles.sectionTitle}>Invoice Address:</Text>
-            <Text style={styles.clientName}>Independent Living Agency</Text>
-            <Text style={styles.clientDetails}>
-              15 Dagenham Business Centre{'\n'}
-              123 Rainham rd{'\n'}
-              Rainham{'\n'}
-              RM10 7FD
-            </Text>
+            <Text style={styles.sectionTitle}>Invoice Details:</Text>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Invoice #:</Text>
+              <Text style={styles.detailValue}>{invoice.id}</Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Issue Date:</Text>
+              <Text style={styles.detailValue}>
+                {new Date(invoice.createdDate).toLocaleDateString()}
+              </Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Due Date:</Text>
+              <Text style={styles.detailValue}>
+                {new Date(invoice.dueDate).toLocaleDateString()}
+              </Text>
+            </View>
+            <View style={styles.detailRow}>
+              <Text style={styles.detailLabel}>Period:</Text>
+              <Text style={styles.detailValue}>{invoice.period}</Text>
+            </View>
           </View>
           <View style={styles.billingInfo}>
-            <Text style={styles.sectionTitle}>Service User Address:</Text>
-            <Text style={styles.clientName}>Saleha Begum</Text>
+            <Text style={styles.sectionTitle}>Service User:</Text>
+            <Text style={styles.clientName}>{invoice.userName}</Text>
             <Text style={styles.clientDetails}>
               24, Martin Drive,{'\n'}
               Rainham{'\n'}
@@ -301,8 +344,8 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice }) => {
             </Text>
           </View>
           <View style={styles.tableRow}>
-            <Text style={[styles.tableCellText, { width: '20%' }]}>4</Text>
-            <Text style={[styles.tableCellText, { width: '20%' }]}>16</Text>
+            <Text style={[styles.tableCellText, { width: '20%' }]}>{totalDays}</Text>
+            <Text style={[styles.tableCellText, { width: '20%' }]}>{totalHours}</Text>
             <Text style={[styles.tableCellText, { width: '20%' }]}>
               £{subtotal.toFixed(2)}
             </Text>
@@ -315,43 +358,24 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice }) => {
           </View>
         </View>
 
-        {/* Details */}
+        {/* Services Details */}
         <View style={styles.servicesTable}>
           <Text style={{ fontSize: 14, fontWeight: 'bold', marginBottom: 10 }}>
-            Details
+            Service Details
           </Text>
-          <View style={styles.tableHeader}>
-            <Text style={[styles.tableHeaderText, { width: '20%' }]}>Date</Text>
-            <Text style={[styles.tableHeaderText, { width: '20%' }]}>Hours</Text>
-            <Text style={[styles.tableHeaderText, { width: '20%' }]}>Type</Text>
-            <Text style={[styles.tableHeaderText, { width: '20%' }]}>Rate</Text>
-            <Text style={[styles.tableHeaderText, { width: '20%' }]}>Value</Text>
-          </View>
-          {services.map((service, index) => (
-            <View key={index} style={styles.tableRow}>
-              <Text style={[styles.tableCellText, { width: '20%' }]}>
-                {service.date}
-              </Text>
-              <Text style={[styles.tableCellText, { width: '20%' }]}>
-                {service.hours}
-              </Text>
-              <Text style={[styles.tableCellText, { width: '20%' }]}>
-                {service.type}
-              </Text>
-              <Text style={[styles.tableCellText, { width: '20%' }]}>
-                £{service.rate.toFixed(2)}
-              </Text>
-              <Text style={[styles.tableCellText, { width: '20%' }]}>
-                £{service.value.toFixed(2)}
-              </Text>
-            </View>
-          ))}
+          {renderTableHeaders()}
+          {invoice.services.map((service, index) => renderTableRow(service, index))}
           <View style={styles.tableRow}>
-            <Text style={[styles.tableCellText, { width: '20%' }]}>Total</Text>
+            <Text style={[styles.tableCellText, { 
+              width: invoice.type === 'time_based' && isDetailed ? '56%' : '60%' 
+            }]}>
+              Total
+            </Text>
+            {invoice.type === 'time_based' && isDetailed && (
+              <Text style={[styles.tableCellText, { width: '12%' }]}></Text>
+            )}
             <Text style={[styles.tableCellText, { width: '20%' }]}></Text>
-            <Text style={[styles.tableCellText, { width: '20%' }]}></Text>
-            <Text style={[styles.tableCellText, { width: '20%' }]}></Text>
-            <Text style={[styles.tableCellText, { width: '20%' }]}>
+            <Text style={[styles.tableCellText, { width: invoice.type === 'time_based' && isDetailed ? '17%' : '20%' }]}>
               £{subtotal.toFixed(2)}
             </Text>
           </View>
@@ -372,10 +396,10 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice }) => {
           </View>
           <View style={{ width: '45%' }}>
             <Text style={styles.clientDetails}>
-              Customer name: Saleha Begum{'\n'}
-              Service user name: Saleha Begum{'\n'}
-              Invoice date: 09/08/2023{'\n'}
-              Invoice no: SB9025-17{'\n'}
+              Customer name: {invoice.userName}{'\n'}
+              Service user name: {invoice.userName}{'\n'}
+              Invoice date: {new Date(invoice.createdDate).toLocaleDateString()}{'\n'}
+              Invoice no: {invoice.id}{'\n'}
               Invoice value: £{subtotal.toFixed(2)}
             </Text>
           </View>
@@ -407,11 +431,12 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice }) => {
   );
 };
 
-export const downloadInvoicePDF = async (invoice: Invoice) => {
-  const blob = await pdf(<InvoicePDF invoice={invoice} />).toBlob();
+export const downloadInvoicePDF = async (invoice: Invoice, isDetailed: boolean = false) => {
+  const blob = await pdf(<InvoicePDF invoice={invoice} isDetailed={isDetailed} />).toBlob();
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
+  const suffix = isDetailed ? 'detailed' : 'normal';
   link.download = `Invoice-${invoice.id}.pdf`;
   document.body.appendChild(link);
   link.click();

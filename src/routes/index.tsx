@@ -65,6 +65,14 @@ import EmailSetup from '@/pages/PeoplePlanner/Email-Setup';
 import RecruitApplicantForm from '@/pages/PeoplePlanner/Recruitment';
 import ViewApplicant from '@/pages/PeoplePlanner/Vacancy/ViewApplicants';
 import ApplicantDetailPage from '@/pages/PeoplePlanner/Vacancy/viewApplicant';
+import DevicePage from '@/pages/PeoplePlanner/Device';
+import NeedPage from '@/pages/PeoplePlanner/Needs';
+import ImportantPeoplePage from '@/pages/PeoplePlanner/ImportantPeople';
+import PersonalForm from '@/pages/PeoplePlanner/ImportantPeople/components/personalForm';
+import ProfessionalForm from '@/pages/PeoplePlanner/ImportantPeople/components/professionalForm';
+import AboutMe from '@/pages/PeoplePlanner/AboutMe';
+import ContingencyPlan from '@/pages/PeoplePlanner/Contingency-Plan';
+import DailyLogs from '@/pages/DailyLogs';
 
 const SignInPage = lazy(() => import('@/pages/auth/signin'));
 
@@ -159,6 +167,34 @@ export default function AppRouter() {
               element: <ProfilePage />
             },
             {
+              path: 'needs',
+              element: <NeedPage />
+            },
+            {
+              path: 'important-people',
+              element: <ImportantPeoplePage />
+            },
+            {
+              path: 'important-people/personal-form',
+              element: <PersonalForm />
+            },
+            {
+              path: 'important-people/professional-form',
+              element: <ProfessionalForm />
+            },
+            {
+              path: 'about-me',
+              element: <AboutMe />
+            },
+            {
+              path: 'contingency-plan',
+              element: <ContingencyPlan />
+            },
+            {
+              path: 'daily-logs',
+              element: <DailyLogs />
+            },
+            {
               path: 'notice',
               element: <NoticeBoard />
             },
@@ -226,6 +262,10 @@ export default function AppRouter() {
             {
               path: 'my-stuff',
               element: <MyStuff />
+            },
+            {
+              path: 'devices',
+              element: <DevicePage />
             },
 
             {
