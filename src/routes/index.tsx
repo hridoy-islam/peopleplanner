@@ -73,6 +73,25 @@ import ProfessionalForm from '@/pages/PeoplePlanner/ImportantPeople/components/p
 import AboutMe from '@/pages/PeoplePlanner/AboutMe';
 import ContingencyPlan from '@/pages/PeoplePlanner/Contingency-Plan';
 import DailyLogs from '@/pages/DailyLogs';
+import GeneralCharts from '@/pages/PeoplePlanner/General-Charts';
+import RiskAssessmentScorePage from '@/pages/PeoplePlanner/RiskAssessmentScore';
+import ChartDetailPage from '@/pages/PeoplePlanner/General-Charts/components/ChartDetailPage';
+import DocumentPage from '@/pages/PeoplePlanner/Documents';
+import SupportPlanPage from '@/pages/PeoplePlanner/SupportPlan';
+import SupportPlanDetailPage from '@/pages/PeoplePlanner/SupportPlan/components/SupportPlanDetailPage';
+import InitialAssessmentPage from '@/pages/PeoplePlanner/InitialAssessment';
+import InitialAssessmentDetailPage from '@/pages/PeoplePlanner/InitialAssessment/components/InitialAssessmentDetailPage';
+import RiskAssessmentPage from '@/pages/PeoplePlanner/RiskAssessment';
+import CreateRiskAssessmentPage from '@/pages/PeoplePlanner/RiskAssessment/createPage';
+import AssessmentDetailPage from '@/pages/PeoplePlanner/RiskAssessment/components/AssessmentDetailPage';
+import RiskAssessmentDetailPage from '@/pages/PeoplePlanner/RiskAssessment/components/AssessmentDetailPage';
+import MarChartPage from '@/pages/PeoplePlanner/MARChart';
+import AddMedicationPage from '@/pages/PeoplePlanner/MARChart/addMedicine';
+import StockPage from '@/pages/PeoplePlanner/Stock';
+import StockDetailPage from '@/pages/PeoplePlanner/Stock/components/StockDetailPage';
+import ConsentPage from '@/pages/PeoplePlanner/Consent';
+import AddCapacityFormPage from '@/pages/PeoplePlanner/Consent/components/add-capacity-form';
+import AddConsentFormPage from '@/pages/PeoplePlanner/Consent/components/add-consent-form';
 
 const SignInPage = lazy(() => import('@/pages/auth/signin'));
 
@@ -339,6 +358,78 @@ export default function AppRouter() {
             {
               path: 'email-setup',
               element: <EmailSetup />
+            },
+            {
+              path: 'charts/general-charts',
+              element: <GeneralCharts />
+            },
+            {
+              path: 'charts/general-charts/:id',
+              element: <ChartDetailPage />
+            },
+            {
+              path: 'charts/risk-assessment-scores',
+              element: <RiskAssessmentScorePage />
+            },
+            {
+              path: 'documents',
+              element: <DocumentPage />
+            },
+            {
+              path: 'support-plans',
+              element: <SupportPlanPage />
+            },
+            {
+              path: 'support-plans/:id',
+              element: <SupportPlanDetailPage />
+            },
+            {
+              path: 'initial-assessment',
+              element: <InitialAssessmentPage />
+            },
+            {
+              path: 'initial-assessment/:id',
+              element: <InitialAssessmentDetailPage />
+            },
+            {
+              path: 'risk-assessments',
+              element: <RiskAssessmentPage />
+            },
+            {
+              path: 'risk-assessments/create',
+              element: <CreateRiskAssessmentPage />
+            },
+            {
+              path: 'risk-assessments/:id',
+              element: <RiskAssessmentDetailPage />
+            },
+            {
+              path: 'mar-chart',
+              element: <MarChartPage />
+            },
+            {
+              path: 'mar-chart/add-medication',
+              element: <AddMedicationPage />
+            },
+            {
+              path: 'stock',
+              element: <StockPage />
+            },
+            {
+              path: 'stock/:id',
+              element: <StockDetailPage />
+            },
+              {
+              path: 'consents',
+              element: <ConsentPage />
+            },
+              {
+              path: 'consents/add-capacity-form',
+              element: <AddCapacityFormPage />
+            },
+            {
+              path: 'consents/add-consent-form',
+              element: <AddConsentFormPage />
             }
           ]
         }

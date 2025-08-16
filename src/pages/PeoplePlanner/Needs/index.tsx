@@ -32,6 +32,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { DynamicPagination } from '@/components/shared/DynamicPagination';
 import moment from 'moment';
 import { Input } from '@/components/ui/input';
+import { BlinkingDots } from '@/components/shared/blinking-dots';
 
 // Predefined list of need titles (used as dropdown options)
 const needTitles = [
@@ -197,13 +198,9 @@ export default function NeedPage() {
 
       <div className="rounded-md bg-white p-4 shadow">
         {initialLoading ? (
-          <div className="flex justify-center py-6">
-            <div className="flex items-center space-x-2 text-primary">
-              <div className="h-3 w-3 rounded-full bg-primary animate-pulse"></div>
-              <div className="h-3 w-3 rounded-full bg-primary animate-pulse delay-150"></div>
-              <div className="h-3 w-3 rounded-full bg-primary animate-pulse delay-300"></div>
-            </div>
-          </div>
+           <div className="flex justify-center py-6">
+                      <BlinkingDots size="large" color="bg-supperagent" />
+                    </div>
         ) : filteredNeeds.length === 0 ? (
           <div className="flex justify-center py-6 text-gray-500">
             No needs found.
