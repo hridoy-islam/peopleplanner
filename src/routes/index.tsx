@@ -28,7 +28,6 @@ import CreateServiceUserFunderPage from '@/pages/PeoplePlanner/ServiceUser/funde
 import { ReportPage } from '@/pages/PeoplePlanner/reports';
 import ProfilePage from '@/pages/PeoplePlanner/profilePage';
 import SchedulePage from '@/pages/PeoplePlanner/Schedule';
-import DocumentRequestPage from '@/pages/PeoplePlanner/RequestDocument';
 import InvoicePage from '@/pages/PeoplePlanner/Invoice';
 import ServiceUserPlannerPage from '@/pages/PeoplePlanner/ServiceUser/planner';
 import ServiceUserTask from '@/pages/PeoplePlanner/ServiceUser/task';
@@ -92,6 +91,8 @@ import StockDetailPage from '@/pages/PeoplePlanner/Stock/components/StockDetailP
 import ConsentPage from '@/pages/PeoplePlanner/Consent';
 import AddCapacityFormPage from '@/pages/PeoplePlanner/Consent/components/add-capacity-form';
 import AddConsentFormPage from '@/pages/PeoplePlanner/Consent/components/add-consent-form';
+import ServiceUserRequestDocument from '@/pages/PeoplePlanner/RequestDocument';
+import StaffAttendancePage from '@/pages/PeoplePlanner/StaffAttendance';
 
 const SignInPage = lazy(() => import('@/pages/auth/signin'));
 
@@ -231,7 +232,7 @@ export default function AppRouter() {
             },
             {
               path: 'request/document',
-              element: <DocumentRequestPage />
+              element: <ServiceUserRequestDocument />
             },
             {
               path: 'invoice',
@@ -351,6 +352,10 @@ export default function AppRouter() {
               path: 'attendance-report',
               element: <AttendanceReport />
             },
+            {
+              path: 'staff-attendance',
+              element: <StaffAttendancePage />
+            },
              {
               path: 'company-details',
               element: <CompanyDetails />
@@ -430,6 +435,10 @@ export default function AppRouter() {
             {
               path: 'consents/add-consent-form',
               element: <AddConsentFormPage />
+            },
+            {
+              path: 'holiday',
+              element: <Holiday />
             }
           ]
         }

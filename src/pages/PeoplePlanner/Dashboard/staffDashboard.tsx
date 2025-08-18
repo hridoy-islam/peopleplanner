@@ -1,12 +1,10 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Announcements } from '../components/Announcements';
 import { PendingRequests } from '../components/PendingRequests';
-import { QuickActions } from './components/QuickActions';
 import { StatCards } from '../components/StatCards';
 import { TrainingDue } from '../components/TrainingDue';
 import { UpcomingShifts } from '../components/UpcomingShifts';
 
-const StaffDashboardPage = (user) => {
+const StaffDashboardPage = ({user}) => {
   return (
     <div className="min-h-screen ">
       <div className=" ">
@@ -15,9 +13,8 @@ const StaffDashboardPage = (user) => {
            
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                Welcome back, John
+                Welcome back, {user?.name}
               </h1>
-              <p className="text-gray-600">Senior Sales Associate</p>
             </div>
           </div>
         </div>

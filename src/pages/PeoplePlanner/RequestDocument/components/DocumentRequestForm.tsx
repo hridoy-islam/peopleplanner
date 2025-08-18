@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 import {
   FileText,
   Send,
@@ -7,8 +9,7 @@ import {
   Building,
   MessageSquare
 } from 'lucide-react';
-import moment from 'moment';
-import { DocumentRequest, DocumentTemplate } from '../types/DocumentTypes';
+import { DocumentRequest, DocumentTemplate } from '@/types/DocumentTypes';
 import { Button } from '@/components/ui/button';
 
 interface DocumentRequestFormProps {
@@ -25,6 +26,8 @@ const DocumentRequestForm: React.FC<DocumentRequestFormProps> = ({
   const [selectedDocument, setSelectedDocument] = useState<string>('');
   const [reason, setReason] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
 
   const documentTypes: DocumentTemplate[] = [
     {
@@ -60,6 +63,9 @@ const DocumentRequestForm: React.FC<DocumentRequestFormProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedDocument || !reason.trim()) return;
+    
+    // If payslip is selected, ensure dates are provided
+    if (selectedDocument === 'payslip' && (!startDate || !endDate)) return;
 
     setIsSubmitting(true);
 
@@ -72,7 +78,9 @@ const DocumentRequestForm: React.FC<DocumentRequestFormProps> = ({
       staffEmail: 'john.smith@company.com',
       department: 'Care Services',
       documentType: selectedDocument as any,
-      reason: reason.trim()
+      reason: reason.trim(),
+      // Include start/end dates only for payslip
+      ...(selectedDocument === 'payslip' && { startDate, endDate })
     };
 
     onSubmitRequest(newRequest);
@@ -80,6 +88,8 @@ const DocumentRequestForm: React.FC<DocumentRequestFormProps> = ({
     // Reset form
     setSelectedDocument('');
     setReason('');
+    setStartDate(null);
+    setEndDate(null);
     setIsSubmitting(false);
   };
 
@@ -165,6 +175,39 @@ const DocumentRequestForm: React.FC<DocumentRequestFormProps> = ({
           </div>
         </div>
 
+        {/* Payslip Date Range */}
+        {selectedDocument === 'payslip' && (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                Start Date *
+              </label>
+              <DatePicker
+                selected={startDate}
+                onChange={(date: Date) => setStartDate(date)}
+                dateFormat="yyyy-MM-dd"
+                className="w-full rounded-md border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholderText="Select start date"
+                                wrapperClassName='w-full'
+
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">
+                End Date *
+              </label>
+              <DatePicker
+                selected={endDate}
+                onChange={(date: Date) => setEndDate(date)}
+                dateFormat="yyyy-MM-dd"
+                className="w-full rounded-md border border-gray-300 py-2 px-3 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholderText="Select end date"
+                wrapperClassName='w-full'
+              />
+            </div>
+          </div>
+        )}
+
         {/* Reason for Request */}
         <div>
           <label className="mb-2 block text-sm font-medium text-gray-700">
@@ -199,7 +242,10 @@ const DocumentRequestForm: React.FC<DocumentRequestFormProps> = ({
           <Button
             type="submit"
             disabled={
-              !selectedDocument || reason.trim().length < 10 || isSubmitting
+              !selectedDocument ||
+              reason.trim().length < 10 ||
+              (selectedDocument === 'payslip' && (!startDate || !endDate)) ||
+              isSubmitting
             }
             className="inline-flex items-center space-x-2 rounded-md bg-supperagent px-6 py-3 text-white transition-colors duration-200 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           >

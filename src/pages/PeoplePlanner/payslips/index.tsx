@@ -1,20 +1,20 @@
-import React, { useState } from 'react';
-import Payslip from './components/payslipPage';
-import IndividualInvoiceForm from './components/IndividualInvoiceModal';
+import { useSelector } from "react-redux";
+import AdminPayslipPage from "./components/AdminPayslip";
+import StaffPayslipPage from "./components/StaffPayslip";
 
 function PayslipPage() {
-  const [currentView, setCurrentView] = useState<'payslips' | 'create-payslip'>('payslips');
+  const { user } = useSelector((state: any) => state.auth);
 
-  return (
-    <div className="min-h-screen ">
-      {currentView === 'payslips' && (
-        <Payslip onCreatePayslip={() => setCurrentView('create-payslip')} />
-      )}
-      {currentView === 'create-payslip' && (
-        <IndividualInvoiceForm onClose={() => setCurrentView('payslips')} />
-      )}
-    </div>
-  );
+
+  if (user.role === 'admin') {
+    return <AdminPayslipPage />;
+  }
+
+  if (user.role === 'staff') {
+    return <StaffPayslipPage />;
+  }
+
+  return null;
 }
 
 export default PayslipPage;

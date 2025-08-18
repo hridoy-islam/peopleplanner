@@ -1,13 +1,14 @@
 import AdminDashboardPage from './Dashboard/adminDhasboard';
-import StaffDashboardPage from './Dashboard/serviceUserDashboard';
-import ServiceUserDashboardPage from './Dashboard/serviceUserDashboard';
+
 import { useSelector } from 'react-redux';
+import StaffDashboardPage from './Dashboard/staffDashboard';
+import ServiceUserDashboardPage from './Dashboard/serviceUserDashboard';
 
 const PeoplePlannerPage = () => {
   const { user } = useSelector((state: any) => state.auth);
 
   if (user.role === 'staff') {
-    return <div className="min-h-screen"><StaffDashboardPage  /> </div>;
+    return <div className="min-h-screen"><StaffDashboardPage user={user} /> </div>;
   }
   if (user.role === 'serviceUser') {
     return (
@@ -17,12 +18,13 @@ const PeoplePlannerPage = () => {
   if (user.role === 'admin') {
     return (
       <div className="min-h-screen ">
-        <AdminDashboardPage  />
-        {/* <StaffDashboardPage  /> */}
-        {/* <ServiceUserDashboardPage /> */}
+        <AdminDashboardPage   />
+
       </div>
     );
   }
+
+  return null;
 };
 
 export default PeoplePlannerPage;

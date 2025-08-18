@@ -149,7 +149,7 @@ const ServiceUserRequestDocument: React.FC = () => {
 
   // Otherwise render the service user page
   return (
-    <div className="min-h-screen  ">
+    <div className="min-h-screen">
       <div>
         {/* Header */}
         <div className="mb-4 rounded-lg bg-white p-6 shadow-sm">
@@ -158,9 +158,7 @@ const ServiceUserRequestDocument: React.FC = () => {
               <h1 className="text-3xl font-bold text-gray-900">
                 Document Requests
               </h1>
-              <p className="mt-2 text-gray-600">
-                Request and manage your HR documents
-              </p>
+              
             </div>
             <div className="mt-4 sm:mt-0">
               <Button

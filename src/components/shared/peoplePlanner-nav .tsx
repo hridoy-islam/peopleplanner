@@ -1,5 +1,3 @@
-
-
 import {
   ChevronDown,
   ChevronRight,
@@ -49,7 +47,9 @@ import {
   SquareAsterisk,
   FileMinus,
   AlignCenterHorizontal,
-  FileArchive
+  FileArchive,
+  FileSearch,
+  Clock4
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
@@ -57,13 +57,18 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
 import { logout } from '@/redux/features/authSlice';
 
-// === Define Navigation Items with Role-Based Access ===
 const navItems = [
   {
     icon: LayoutDashboard,
     label: 'Dashboard',
     href: '/admin/people-planner',
-    roles: ['admin', 'serviceUser']
+    roles: ['admin', 'serviceUser', 'staff']
+  },
+  {
+    icon: UserCircleIcon,
+    label: 'Profile',
+    href: 'profile',
+    roles: ['staff']
   },
   {
     icon: Calendar,
@@ -75,19 +80,19 @@ const navItems = [
     icon: Newspaper,
     label: 'Notice',
     href: 'notice',
-    roles: ['admin']
+    roles: ['admin', 'staff']
   },
   {
     icon: Clock,
     label: 'Schedule',
     href: 'schedule',
-    roles: ['admin']
+    roles: ['staff']
   },
   {
     icon: FileBadge,
     label: 'Payslip',
     href: 'payslip',
-    roles: ['admin']
+    roles: ['admin', 'staff']
   },
   {
     icon: Wallet,
@@ -187,11 +192,11 @@ const navItems = [
         roles: ['admin']
       },
       {
-        icon: Smartphone ,
+        icon: Smartphone,
         label: 'Devices',
         href: 'devices',
         roles: ['admin']
-      },
+      }
     ]
   },
   {
@@ -212,6 +217,24 @@ const navItems = [
         roles: ['admin']
       }
     ]
+  },
+  {
+    icon: Clock4,
+    label: 'Attendance',
+    href: 'staff-attendance',
+    roles: ['staff']
+  },
+  {
+    icon: NotebookTabs,
+    label: 'Holiday',
+    href: 'holiday',
+    roles: ['staff']
+  },
+  {
+    icon: FileSearch,
+    label: 'Document Requests',
+    href: 'request/document',
+    roles: ['staff']
   },
   {
     icon: File,
@@ -284,18 +307,18 @@ const navItems = [
     roles: ['serviceUser']
   },
   {
-    icon: AlignEndHorizontal   ,
+    icon: AlignEndHorizontal,
     label: 'Charts',
     roles: ['serviceUser'],
     subItems: [
       {
-        icon: SquareKanban ,
+        icon: SquareKanban,
         label: 'General Charts',
         href: 'charts/general-charts',
         roles: ['serviceUser']
       },
       {
-        icon: ShieldAlert ,
+        icon: ShieldAlert,
         label: 'Risk Assessment Score',
         href: 'charts/risk-assessment-scores',
         roles: ['serviceUser']
@@ -310,7 +333,7 @@ const navItems = [
   },
 
   {
-    icon: FileText ,
+    icon: FileText,
     label: 'Care Planning',
     roles: ['serviceUser'],
     subItems: [
@@ -321,13 +344,13 @@ const navItems = [
         roles: ['serviceUser']
       },
       {
-        icon: FileBox  ,
+        icon: FileBox,
         label: 'Initial Assessments',
         href: 'initial-assessment',
         roles: ['serviceUser']
       },
       {
-        icon: SquareAsterisk ,
+        icon: SquareAsterisk,
         label: 'Risk Assessments',
         href: 'risk-assessments',
         roles: ['serviceUser']
@@ -340,13 +363,13 @@ const navItems = [
     roles: ['serviceUser'],
     subItems: [
       {
-        icon: FileMinus ,
+        icon: FileMinus,
         label: 'MAR Chart',
         href: 'mar-chart',
         roles: ['serviceUser']
       },
       {
-        icon: AlignCenterHorizontal ,
+        icon: AlignCenterHorizontal,
         label: 'Stock',
         href: 'stock',
         roles: ['serviceUser']
@@ -354,7 +377,7 @@ const navItems = [
     ]
   },
   {
-    icon: FileArchive ,
+    icon: FileArchive,
     label: 'Consents',
     href: 'consents',
     roles: ['serviceUser']
@@ -572,14 +595,15 @@ export function PeoplePlannerSideNav() {
       </nav>
 
       {/* Logout Button */}
-      <div className="px-3 pb-3">
+      <div className="flex items-center justify-between px-3 pb-3">
         <button
           onClick={handleLogout}
-          className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-red-600 transition-colors hover:bg-red-100 hover:text-red-700"
+          className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-red-600 transition-colors hover:bg-red-100 hover:text-red-700"
         >
           <DoorOpen className="h-4 w-4" />
           <span className="font-medium">Logout</span>
         </button>
+        <h1 className="text-sm font-semibold text-black">{user?.name} </h1>
       </div>
     </div>
   );

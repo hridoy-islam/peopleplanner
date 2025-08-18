@@ -179,7 +179,7 @@ const Holiday: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen ">
       <div className="">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           {/* My Holidays Section */}
