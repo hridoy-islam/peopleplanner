@@ -1,7 +1,7 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
 import moment from 'moment';
-import { DocumentRequest } from '../types/DocumentTypes';
+import { DocumentRequest } from '@/types/DocumentTypes';
 
 // Define styles for PDF
 const styles = StyleSheet.create({

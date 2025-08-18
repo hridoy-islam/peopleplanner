@@ -1,7 +1,7 @@
 import React from 'react';
 import { FileText, Clock, CheckCircle, XCircle, Download, Eye, Calendar, User } from 'lucide-react';
 import moment from 'moment';
-import { DocumentRequest } from '../types/DocumentTypes';
+import { DocumentRequest } from '@/types/DocumentTypes';
 import { Button } from '@/components/ui/button';
 
 interface DocumentRequestListProps {
