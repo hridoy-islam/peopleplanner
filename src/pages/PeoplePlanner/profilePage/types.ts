@@ -1,4 +1,4 @@
-import { User } from '../../types/user.types';
+
 
 export type TabType = 
   | 'personalDetails'
@@ -26,7 +26,7 @@ export interface TabListProps {
 
 export interface TabContentProps {
   activeTab: TabType;
-  userData: User;
+  userData: any;
   refreshData: any;
   loading: any;
 }

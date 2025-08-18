@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import TabSection from '../TabSection';
-import { User } from '../../../types/user.types';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -15,14 +14,14 @@ const EmploymentData = ({
   onCancel,
   onEdit
 }) => {
-  const [localData, setLocalData] = useState<User>(userData);
+  const [localData, setLocalData] = useState<any>(userData);
 
   // Update local data when userData changes
   useEffect(() => {
     setLocalData(userData);
   }, [userData]);
 
-  const handleInputChange = (field: keyof User, value: any) => {
+  const handleInputChange = (field: keyof any, value: any) => {
     setLocalData((prevData) => ({
       ...prevData,
       [field]: value

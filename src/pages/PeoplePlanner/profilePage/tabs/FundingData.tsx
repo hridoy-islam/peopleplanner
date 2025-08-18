@@ -1,14 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import Select from 'react-select';
 import TabSection from '../TabSection';
-import { User } from '../../../types/user.types';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
 interface FundingDataProps {
-  userData: User;
+  userData: any;
   isEditing?: boolean;
-  onSave?: (data: User) => void;
+  onSave?: (data: any) => void;
   onCancel?: () => void;
   onEdit?: () => void;
 }
@@ -27,11 +26,11 @@ const FundingData: React.FC<FundingDataProps> = ({
   onCancel,
   onEdit
 }) => {
-  const [localData, setLocalData] = useState<User>(userData);
+  const [localData, setLocalData] = useState<any>(userData);
 
-  const handleInputChange = <K extends keyof User>(
+  const handleInputChange = <K extends keyof any>(
     field: K,
-    value: User[K]
+    value: any[K]
   ) => {
     setLocalData((prevData) => ({
       ...prevData,

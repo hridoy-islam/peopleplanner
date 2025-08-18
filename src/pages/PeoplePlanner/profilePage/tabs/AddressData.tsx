@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import TabSection from '../TabSection';
-import { User } from '../../../types/user.types';
 import { Input } from '@/components/ui/input';
 
 interface AddressDataProps {
-  userData: User;
+  userData: any;
   isEditing?: boolean;
-  onSave?: (data: User) => void;
+  onSave?: (data: any) => void;
   onCancel?: () => void;
   onEdit?: () => void;
 }
@@ -18,9 +17,9 @@ const AddressData: React.FC<AddressDataProps> = ({
   onCancel,
   onEdit
 }) => {
-  const [localData, setLocalData] = useState<User>(userData);
+  const [localData, setLocalData] = useState<any>(userData);
 
-  const handleInputChange = (field: keyof User['addressData'], value: any) => {
+  const handleInputChange = (field: keyof any['addressData'], value: any) => {
     setLocalData(prevData => ({
       ...prevData,
  

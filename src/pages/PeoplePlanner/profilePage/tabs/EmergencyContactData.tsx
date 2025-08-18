@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import TabSection from '../TabSection';
-import { User } from '../../../types/user.types';
 import { Input } from '@/components/ui/input';
 
 const EmergencyContactData = ({
@@ -10,9 +9,9 @@ const EmergencyContactData = ({
   onCancel,
   onEdit
 }) => {
-  const [localData, setLocalData] = useState<User>(userData);
+  const [localData, setLocalData] = useState<any>(userData);
 
-  const handleInputChange = (field: keyof User[''], value: any) => {
+  const handleInputChange = (field: keyof any[''], value: any) => {
     setLocalData((prevData) => ({
       ...prevData,
 

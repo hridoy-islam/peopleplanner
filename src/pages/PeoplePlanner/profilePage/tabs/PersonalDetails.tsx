@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Camera } from 'lucide-react';
 import Select from 'react-select';
-import { User } from '../../../types/user.types';
 import { CustomDatePicker } from '@/components/shared/CustomDatePicker';
 import TabSection from '../TabSection';
 import { Input } from '@/components/ui/input';
@@ -10,9 +9,9 @@ import { useSelector } from 'react-redux';
 import { ImageUploader } from '../components/userImage-uploader';
 
 interface PersonalDetailsProps {
-  userData: User;
+  userData: any;
   isEditing?: boolean;
-  onSave?: (data: User) => void; // Updated to accept data parameter
+  onSave?: (data: any) => void; // Updated to accept data parameter
   onCancel?: () => void;
   onEdit?: () => void;
   refreshData;
@@ -21,11 +20,11 @@ interface PersonalDetailsProps {
 const PersonalDetails: React.FC<PersonalDetailsProps> = (props) => {
   const { userData, isEditing, onSave, onCancel, onEdit, refreshData } = props;
 
-  const [localData, setLocalData] = useState<User>(userData);
+  const [localData, setLocalData] = useState<any>(userData);
   const { user } = useSelector((state: any) => state.auth);
   const [uploadOpen, setUploadOpen] = useState(false);
 
-  const handleInputChange = (field: keyof User, value: any) => {
+  const handleInputChange = (field: keyof any, value: any) => {
     setLocalData((prevData) => ({
       ...prevData,
       [field]: value

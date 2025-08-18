@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import TabSection from '../TabSection';
-import { User } from '../../../types/user.types';
+
 import { Input } from '@/components/ui/input';
 import { CustomDatePicker } from '@/components/shared/CustomDatePicker';
 import { useSelector } from 'react-redux';
@@ -14,7 +14,7 @@ const EducationData = ({
   onCancel,
   onEdit
 }) => {
-  const [localData, setLocalData] = useState<User>(userData);
+  const [localData, setLocalData] = useState<any>(userData);
   const [uploadState, setUploadState] = useState({
     isOpen: false,
     field: ''
@@ -27,7 +27,7 @@ const EducationData = ({
     setLocalData(userData);
   }, [userData]);
 
-  const handleInputChange = (field: keyof User, value: any) => {
+  const handleInputChange = (field: keyof any, value: any) => {
     setLocalData((prevData) => ({
       ...prevData,
       [field]: value
@@ -35,7 +35,7 @@ const EducationData = ({
   };
 
   const handleNestedChange = (
-    section: keyof User,
+    section: keyof any,
     index: number,
     field: string,
     value: any

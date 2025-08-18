@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import TabSection from '../TabSection';
-import { User } from '../../../types/user.types';
 import Select from 'react-select';
 import { Input } from '@/components/ui/input';
-import { CustomDatePicker } from '@/components/shared/CustomDatePicker';
 import { Textarea } from '@/components/ui/textarea';
 
 const ComplianceData = ({
@@ -13,10 +11,10 @@ const ComplianceData = ({
   onCancel,
   onEdit
 }) => {
-  const [localData, setLocalData] = useState<User>(userData);
+  const [localData, setLocalData] = useState<any>(userData);
 
   // Handle input changes for all fields
-  const handleInputChange = (field: keyof User, value: any) => {
+  const handleInputChange = (field: keyof any, value: any) => {
     setLocalData(prev => ({
       ...prev,
       [field]: value
@@ -42,20 +40,7 @@ const ComplianceData = ({
     { value: 'yes', label: 'Yes' },
     { value: 'no', label: 'No' }
   ];
-  const enteredUKOptions = [
-    { value: 'yes', label: 'Yes' },
-    { value: 'no', label: 'No' }
-  ];
-
-  const completedUKCourseOptions = [
-    { value: 'yes', label: 'Yes' },
-    { value: 'no', label: 'No' }
-  ];
-
-  const visaRefusalOptions = [
-    { value: 'yes', label: 'Yes' },
-    { value: 'no', label: 'No' }
-  ];
+ 
 
   const hearAboutUsOptions = [
     { label: 'Google Search', value: 'google' },
