@@ -7,10 +7,9 @@ import {
   StyleSheet,
   pdf,
 } from '@react-pdf/renderer';
-import { Invoice, Service } from '../types/invoice';
 
 interface InvoicePDFProps {
-  invoice: Invoice;
+  invoice: any;
   isDetailed?: boolean;
 }
 
@@ -209,7 +208,7 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice, isDetailed = false }) 
     }
   };
 
-  const renderTableRow = (service: Service, index: number) => {
+  const renderTableRow = (service, index: number) => {
     if (invoice.type === 'time_based' && isDetailed) {
       return (
         <View key={index} style={styles.tableRow}>
@@ -431,7 +430,7 @@ const InvoicePDF: React.FC<InvoicePDFProps> = ({ invoice, isDetailed = false }) 
   );
 };
 
-export const downloadInvoicePDF = async (invoice: Invoice, isDetailed: boolean = false) => {
+export const downloadInvoicePDF = async (invoice, isDetailed: boolean = false) => {
   const blob = await pdf(<InvoicePDF invoice={invoice} isDetailed={isDetailed} />).toBlob();
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');

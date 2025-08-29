@@ -92,23 +92,23 @@ export default function ConsentPage() {
           <div className="space-y-4">
             {existingConsents.map((consent) => (
               <Card
-                key={consent.id}
+                key={consent?.id}
                 className="cursor-pointer transition-shadow hover:shadow-md"
               >
                 <CardContent className="p-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="font-semibold">{consent.title}</h3>
+                      <h3 className="font-semibold">{consent?.title}</h3>
                       <p className="text-sm text-muted-foreground">
-                        {consent.type}
+                        {consent?.type}
                       </p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm text-muted-foreground">
-                        Created: {consent.createdDate}
+                        Created: {consent?.createdDate}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        Status: {consent.status}
+                        Status: {consent?.status}
                       </p>
                     </div>
                   </div>
