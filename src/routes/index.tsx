@@ -82,7 +82,6 @@ import InitialAssessmentPage from '@/pages/PeoplePlanner/InitialAssessment';
 import InitialAssessmentDetailPage from '@/pages/PeoplePlanner/InitialAssessment/components/InitialAssessmentDetailPage';
 import RiskAssessmentPage from '@/pages/PeoplePlanner/RiskAssessment';
 import CreateRiskAssessmentPage from '@/pages/PeoplePlanner/RiskAssessment/createPage';
-import AssessmentDetailPage from '@/pages/PeoplePlanner/RiskAssessment/components/AssessmentDetailPage';
 import RiskAssessmentDetailPage from '@/pages/PeoplePlanner/RiskAssessment/components/AssessmentDetailPage';
 import MarChartPage from '@/pages/PeoplePlanner/MARChart';
 import AddMedicationPage from '@/pages/PeoplePlanner/MARChart/addMedicine';

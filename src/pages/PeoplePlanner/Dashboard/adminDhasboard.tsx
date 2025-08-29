@@ -28,7 +28,7 @@ const mockServices = [
     startTime: '09:00',
     endTime: '11:00',
     duration: 2,
-    status: 'confirmed',
+    status: 'pending',
     notes: 'Morning routine assistance'
   },
   {
@@ -40,7 +40,7 @@ const mockServices = [
     startTime: '14:00',
     endTime: '14:30',
     duration: 0.5,
-    status: 'confirmed',
+    status: 'pending',
     notes: 'Afternoon medication reminder'
   },
   {
@@ -52,7 +52,7 @@ const mockServices = [
     startTime: '10:00',
     endTime: '12:00',
     duration: 2,
-    status: 'scheduled',
+    status: 'pending',
     notes: 'Social visit and light activities'
   },
   {
@@ -76,7 +76,7 @@ const mockServices = [
     startTime: '08:30',
     endTime: '10:30',
     duration: 2,
-    status: 'scheduled',
+    status: 'pending',
     notes: 'Morning care routine'
   },
   {
@@ -280,69 +280,101 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Overview Cards */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Today's Services
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
-                {todaysServices.length}
-              </div>
-              <p className="mt-1 text-xs text-gray-500">
-                {totalHoursToday} hours total
-              </p>
-            </CardContent>
-          </Card>
+        {/* Overview Cards */}
+<div className="grid grid-cols-1 gap-4 md:grid-cols-6">
+  <Card>
+    <CardHeader className="pb-2">
+      <CardTitle className="text-sm font-medium text-gray-600">
+        Today's Services
+      </CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="text-2xl font-bold text-blue-600">
+        {todaysServices.length}
+      </div>
+      <p className="mt-1 text-xs text-gray-500">
+        {totalHoursToday} hours total
+      </p>
+    </CardContent>
+  </Card>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Upcoming Services
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">
-                {upcomingServices.length}
-              </div>
-              <p className="mt-1 text-xs text-gray-500">
-                {totalHoursUpcoming} hours total
-              </p>
-            </CardContent>
-          </Card>
+  <Card>
+    <CardHeader className="pb-2">
+      <CardTitle className="text-sm font-medium text-gray-600">
+        Upcoming Services
+      </CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="text-2xl font-bold text-green-600">
+        {upcomingServices.length}
+      </div>
+      <p className="mt-1 text-xs text-gray-500">
+        {totalHoursUpcoming} hours total
+      </p>
+    </CardContent>
+  </Card>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Completed Services
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-purple-600">
-                {completedServices.length}
-              </div>
-              <p className="mt-1 text-xs text-gray-500">
-                {totalHoursCompleted} hours total
-              </p>
-            </CardContent>
-          </Card>
+  <Card>
+    <CardHeader className="pb-2">
+      <CardTitle className="text-sm font-medium text-gray-600">
+        Completed Services
+      </CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="text-2xl font-bold text-purple-600">
+        {completedServices.length}
+      </div>
+      <p className="mt-1 text-xs text-gray-500">
+        {totalHoursCompleted} hours total
+      </p>
+    </CardContent>
+  </Card>
 
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                Active Carers
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-orange-600">
-                {new Set(mockServices.map((s) => s.carerName)).size}
-              </div>
-              <p className="mt-1 text-xs text-gray-500">Assigned to you</p>
-            </CardContent>
-          </Card>
-        </div>
+  <Card>
+    <CardHeader className="pb-2">
+      <CardTitle className="text-sm font-medium text-gray-600">
+        Active Carers
+      </CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="text-2xl font-bold text-orange-600">
+        {new Set(mockServices.map((s) => s.carerName)).size}
+      </div>
+      <p className="mt-1 text-xs text-gray-500">Assigned to you</p>
+    </CardContent>
+  </Card>
+
+  {/* NEW CARD: Service Users Count */}
+  <Card>
+    <CardHeader className="pb-2">
+      <CardTitle className="text-sm font-medium text-gray-600">
+        Service Users
+      </CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="text-2xl font-bold text-pink-600">
+        {new Set(mockServices.map((s) => s.carerName)).size}
+      </div>
+      <p className="mt-1 text-xs text-gray-500">Unique service users</p>
+    </CardContent>
+  </Card>
+
+  {/* NEW CARD: Pending Tasks */}
+  <Card>
+    <CardHeader className="pb-2">
+      <CardTitle className="text-sm font-medium text-gray-600">
+        Pending Tasks
+      </CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="text-2xl font-bold text-red-600">
+        {mockServices.filter((s) => s.status === 'pending').length}
+      </div>
+      <p className="mt-1 text-xs text-gray-500">Awaiting confirmation</p>
+    </CardContent>
+  </Card>
+</div>
+
 
         {/* Filters */}
         <Card>
@@ -530,245 +562,135 @@ export default function AdminDashboardPage() {
             </div>
           </CardContent>
         </Card>
-        {/* Services List */}
+
+        {/* Upcoming Services Card */}
         <Card>
           <CardHeader>
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
               <div>
-                <CardTitle>Your Care Services</CardTitle>
+                <CardTitle>Upcoming Services</CardTitle>
                 <p className="text-sm text-gray-600">
-                  {filteredServices.length} service
-                  {filteredServices.length !== 1 ? 's' : ''} scheduled
+                  {
+                    mockServices.filter((s) =>
+                      moment(s.date).isSameOrAfter(moment(), 'day')
+                    ).length
+                  }{' '}
+                  upcoming service
+                  {mockServices.filter((s) =>
+                    moment(s.date).isSameOrAfter(moment(), 'day')
+                  ).length !== 1
+                    ? 's'
+                    : ''}
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant="default" className="bg-blue-50 text-blue-700">
-                  {totalHoursFiltered} total hours
+                <Badge variant="default" className="bg-green-50 text-green-700">
+                  {mockServices
+                    .filter((s) => moment(s.date).isAfter(moment(), 'day'))
+                    .reduce((sum, s) => sum + s.duration, 0)}{' '}
+                  upcoming hours
                 </Badge>
               </div>
             </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {filteredServices.length === 0 ? (
+              {mockServices.filter((s) =>
+                moment(s.date).isAfter(moment(), 'day')
+              ).length === 0 ? (
                 <div className="py-12 text-center text-gray-500">
                   <Calendar className="mx-auto mb-4 h-12 w-12 opacity-50" />
                   <h3 className="text-lg font-medium text-gray-700">
-                    No services found
+                    No upcoming services found
                   </h3>
-                  <p className="mt-1">
-                    Try adjusting your filters to see more results
-                  </p>
                 </div>
               ) : (
-                filteredServices.map((service) => (
-                  <div key={service.id}>
-                    <div className="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 transition-shadow hover:shadow-md md:flex-row md:items-center">
-                      <div className="flex min-w-[200px] items-center gap-3">
-                        <Avatar className="h-12 w-12">
-                          <AvatarImage
-                            src={service.carerImage || '/placeholder.svg'}
-                            alt={service.carerName}
-                          />
-                          <AvatarFallback>
-                            {service.carerName
-                              .split(' ')
-                              .map((n) => n[0])
-                              .join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <h3 className="font-semibold text-gray-900">
-                            {service.carerName}
-                          </h3>
-                          <p className="flex items-center gap-1 text-sm text-gray-600">
-                            <span>
-                              {getServiceTypeIcon(service.serviceType)}
-                            </span>
-                            {service.serviceType}
-                          </p>
+                mockServices
+                  .filter((service) =>
+                    moment(service.date).isAfter(moment(), 'day')
+                  )
+                  .map((service) => (
+                    <div key={service.id}>
+                      <div className="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 transition-shadow hover:shadow-md md:flex-row md:items-center">
+                        <div className="flex min-w-[200px] items-center gap-3">
+                          <Avatar className="h-12 w-12">
+                            <AvatarImage
+                              src={service.carerImage || '/placeholder.svg'}
+                              alt={service.carerName}
+                            />
+                            <AvatarFallback>
+                              {service.carerName
+                                .split(' ')
+                                .map((n) => n[0])
+                                .join('')}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <h3 className="font-semibold text-gray-900">
+                              {service.carerName}
+                            </h3>
+                            <p className="flex items-center gap-1 text-sm text-gray-600">
+                              <span>
+                                {getServiceTypeIcon(service.serviceType)}
+                              </span>
+                              {service.serviceType}
+                            </p>
+                          </div>
                         </div>
+
+                        <div className="grid flex-1 grid-cols-1 gap-4 md:grid-cols-3">
+                          <div>
+                            <p className="text-sm font-medium text-gray-700">
+                              Date & Time
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {moment(service.date).format('MMM DD, YYYY')}
+                            </p>
+                            <p className="text-sm text-gray-600">
+                              {service.startTime} - {service.endTime}
+                            </p>
+                          </div>
+
+                          <div>
+                            <p className="text-sm font-medium text-gray-700">
+                              Duration
+                            </p>
+                            <p className="flex items-center gap-1 text-sm text-gray-600">
+                              <Clock className="h-3 w-3" />
+                              {service.duration} hour
+                              {service.duration !== 1 ? 's' : ''}
+                            </p>
+                          </div>
+
+                          <div>
+                            <p className="text-sm font-medium text-gray-700">
+                              Status
+                            </p>
+                            <Badge
+                              className={`${getStatusColor(service.status)} capitalize`}
+                            >
+                              {service.status}
+                            </Badge>
+                          </div>
+                        </div>
+
+                        {service.notes && (
+                          <div className="md:w-64">
+                            <p className="text-sm font-medium text-gray-700">
+                              Notes
+                            </p>
+                            <p className="line-clamp-2 text-sm text-gray-600">
+                              {service.notes}
+                            </p>
+                          </div>
+                        )}
                       </div>
-
-                      <div className="grid flex-1 grid-cols-1 gap-4 md:grid-cols-3">
-                        <div>
-                          <p className="text-sm font-medium text-gray-700">
-                            Date & Time
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            {moment(service.date).format('MMM DD, YYYY')}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            {service.startTime} - {service.endTime}
-                          </p>
-                        </div>
-
-                        <div>
-                          <p className="text-sm font-medium text-gray-700">
-                            Duration
-                          </p>
-                          <p className="flex items-center gap-1 text-sm text-gray-600">
-                            <Clock className="h-3 w-3" />
-                            {service.duration} hour
-                            {service.duration !== 1 ? 's' : ''}
-                          </p>
-                        </div>
-
-                        <div>
-                          <p className="text-sm font-medium text-gray-700">
-                            Status
-                          </p>
-                          <Badge
-                            className={`${getStatusColor(service.status)} capitalize`}
-                          >
-                            {service.status}
-                          </Badge>
-                        </div>
-                      </div>
-
-                      {service.notes && (
-                        <div className="md:w-64">
-                          <p className="text-sm font-medium text-gray-700">
-                            Notes
-                          </p>
-                          <p className="line-clamp-2 text-sm text-gray-600">
-                            {service.notes}
-                          </p>
-                        </div>
-                      )}
                     </div>
-                  </div>
-                ))
+                  ))
               )}
             </div>
           </CardContent>
         </Card>
-
-        {/* Upcoming Services Card */}
-<Card>
-  <CardHeader>
-    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-      <div>
-        <CardTitle>Upcoming Services</CardTitle>
-        <p className="text-sm text-gray-600">
-          {
-            mockServices.filter((s) =>
-              moment(s.date).isSameOrAfter(moment(), 'day')
-            ).length
-          }{' '}
-          upcoming service
-          {
-            mockServices.filter((s) =>
-              moment(s.date).isSameOrAfter(moment(), 'day')
-            ).length !== 1
-              ? 's'
-              : ''
-          }
-        </p>
-      </div>
-      <div className="flex items-center gap-2">
-        <Badge variant="default" className="bg-green-50 text-green-700">
-           {
-            mockServices
-              .filter((s) => moment(s.date).isAfter(moment(), 'day'))
-              .reduce((sum, s) => sum + s.duration, 0)
-          }{' '}
-          upcoming hours
-        </Badge>
-      </div>
-    </div>
-  </CardHeader>
-  <CardContent>
-    <div className="space-y-4">
-     {mockServices.filter((s) =>
-        moment(s.date).isAfter(moment(), 'day')
-      ).length === 0 ? (
-        <div className="py-12 text-center text-gray-500">
-          <Calendar className="mx-auto mb-4 h-12 w-12 opacity-50" />
-          <h3 className="text-lg font-medium text-gray-700">
-            No upcoming services found
-          </h3>
-        </div>
-      ) : (
-           mockServices
-          .filter((service) => moment(service.date).isAfter(moment(), 'day'))
-          .map((service) => (
-            <div key={service.id}>
-              <div className="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 transition-shadow hover:shadow-md md:flex-row md:items-center">
-                <div className="flex min-w-[200px] items-center gap-3">
-                  <Avatar className="h-12 w-12">
-                    <AvatarImage
-                      src={service.carerImage || '/placeholder.svg'}
-                      alt={service.carerName}
-                    />
-                    <AvatarFallback>
-                      {service.carerName
-                        .split(' ')
-                        .map((n) => n[0])
-                        .join('')}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h3 className="font-semibold text-gray-900">
-                      {service.carerName}
-                    </h3>
-                    <p className="flex items-center gap-1 text-sm text-gray-600">
-                      <span>{getServiceTypeIcon(service.serviceType)}</span>
-                      {service.serviceType}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid flex-1 grid-cols-1 gap-4 md:grid-cols-3">
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">
-                      Date & Time
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {moment(service.date).format('MMM DD, YYYY')}
-                    </p>
-                    <p className="text-sm text-gray-600">
-                      {service.startTime} - {service.endTime}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">
-                      Duration
-                    </p>
-                    <p className="flex items-center gap-1 text-sm text-gray-600">
-                      <Clock className="h-3 w-3" />
-                      {service.duration} hour
-                      {service.duration !== 1 ? 's' : ''}
-                    </p>
-                  </div>
-
-                  <div>
-                    <p className="text-sm font-medium text-gray-700">Status</p>
-                    <Badge
-                      className={`${getStatusColor(service.status)} capitalize`}
-                    >
-                      {service.status}
-                    </Badge>
-                  </div>
-                </div>
-
-                {service.notes && (
-                  <div className="md:w-64">
-                    <p className="text-sm font-medium text-gray-700">Notes</p>
-                    <p className="line-clamp-2 text-sm text-gray-600">
-                      {service.notes}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          ))
-      )}
-    </div>
-  </CardContent>
-</Card>
-
       </div>
     </div>
   );

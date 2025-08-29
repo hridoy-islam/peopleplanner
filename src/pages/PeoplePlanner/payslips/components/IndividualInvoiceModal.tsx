@@ -174,13 +174,13 @@ const IndividualInvoiceForm: React.FC<IndividualInvoiceFormProps> = ({
   const totalAmount = serviceLines.reduce((sum, line) => sum + line.amount, 0);
   const totalHours = serviceLines.reduce((sum, line) => sum + line.duration, 0);
 
-const isGenerateEnabled = selectedUserId && startDate && endDate;
+  const isGenerateEnabled = selectedUserId && startDate && endDate;
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="sticky  ">
-        <div className=" py-4">
+        <div className=" ">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button
@@ -195,17 +195,17 @@ const isGenerateEnabled = selectedUserId && startDate && endDate;
               <div>
                 <h1 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
                   <FileText className="h-6 w-6" />
-                  {currentStep === 'create' && 'Create Invoice'}
-                  {currentStep === 'review' && 'Review Invoice'}
-                  {currentStep === 'finalized' && 'Invoice Generated'}
+                  {currentStep === 'create' && 'Create Payslip'}
+                  {currentStep === 'review' && 'Review Payslip'}
+                  {currentStep === 'finalized' && 'Payslip Generated'}
                 </h1>
                 <p className="text-sm text-gray-600">
                   {currentStep === 'create' &&
                     'Enter staff and date information'}
                   {currentStep === 'review' &&
-                    'Review and edit Invoice details'}
+                    'Review and edit Payslip details'}
                   {currentStep === 'finalized' &&
-                    'Invoice has been successfully generated'}
+                    'Payslip has been successfully generated'}
                 </p>
               </div>
             </div>
@@ -216,7 +216,7 @@ const isGenerateEnabled = selectedUserId && startDate && endDate;
                 className="bg-supperagent text-white hover:bg-supperagent/90"
               >
                 <Save className="mr-2 h-4 w-4" />
-                Save Invoice
+                Save Payslip
               </Button>
             )}
           </div>
@@ -229,9 +229,9 @@ const isGenerateEnabled = selectedUserId && startDate && endDate;
           <div className="mx-auto max-w-2xl space-y-8">
             <Card>
               <CardHeader>
-                <CardTitle>Invoice Information</CardTitle>
+                <CardTitle>Payslip Information</CardTitle>
                 <CardDescription>
-                  Select the staff member and date period for the Invoice
+                  Select the staff member and date period for the Payslip
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -254,27 +254,27 @@ const isGenerateEnabled = selectedUserId && startDate && endDate;
                   />
                 </div>
 
-               <div className="space-y-2 w-full">
-  <Label>Pay Period *</Label>
-  <div className="relative w-full">
-    {/* <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 transform text-gray-400 z-10" /> */}
-    <DatePicker
-      selectsRange
-      startDate={startDate}
-      endDate={endDate}
-      onChange={(update: [Date | null, Date | null]) => {
-        setDateRange(update);
-      }}
-      isClearable
-      showMonthDropdown
-      showYearDropdown
-      dropdownMode="select"
-      placeholderText="Select date range"
-      wrapperClassName='w-full'
-      className="w-full px-8 py-2 border border-gray-300 rounded-md text-sm"
-    />
-  </div>
-</div>
+                <div className="w-full space-y-2">
+                  <Label>Pay Period *</Label>
+                  <div className="relative w-full">
+                    {/* <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 transform text-gray-400 z-10" /> */}
+                    <DatePicker
+                      selectsRange
+                      startDate={startDate}
+                      endDate={endDate}
+                      onChange={(update: [Date | null, Date | null]) => {
+                        setDateRange(update);
+                      }}
+                      isClearable
+                      showMonthDropdown
+                      showYearDropdown
+                      dropdownMode="select"
+                      placeholderText="Select date range"
+                      wrapperClassName="w-full"
+                      className="w-full rounded-md border border-gray-300 px-8 py-2 text-sm"
+                    />
+                  </div>
+                </div>
 
                 <div className="flex justify-end">
                   {currentStep === 'create' && (
@@ -283,7 +283,7 @@ const isGenerateEnabled = selectedUserId && startDate && endDate;
                       disabled={!isGenerateEnabled}
                       className="bg-supperagent text-white hover:bg-supperagent/90 disabled:bg-gray-300"
                     >
-                      Generate Invoice
+                      Generate Payslip
                     </Button>
                   )}
                 </div>
@@ -298,15 +298,14 @@ const isGenerateEnabled = selectedUserId && startDate && endDate;
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center justify-between">
-                  <span>Invoice Summary</span>
+                  <span>Payslip Summary</span>
                   <Badge className="bg-blue-100 text-blue-800">Review</Badge>
                 </CardTitle>
                 <CardDescription>
                   {selectedUser?.name} •{' '}
-                 {startDate && endDate
-  ? `${moment(startDate).format("MMM D, YYYY")} - ${moment(endDate).format("MMM D, YYYY")}`
-  : 'No date selected'}
-
+                  {startDate && endDate
+                    ? `${moment(startDate).format('MMM D, YYYY')} - ${moment(endDate).format('MMM D, YYYY')}`
+                    : 'No date selected'}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -426,10 +425,10 @@ const isGenerateEnabled = selectedUserId && startDate && endDate;
                   <Check className="h-8 w-8 text-green-600" />
                 </div>
                 <CardTitle className="text-2xl text-green-900">
-                  Invoice Generated Successfully!
+                  Payslip Generated Successfully!
                 </CardTitle>
                 <CardDescription>
-                  The Invoice for {selectedUser?.name} has been created and
+                  The Payslip for {selectedUser?.name} has been created and
                   saved.
                 </CardDescription>
               </CardHeader>
@@ -443,11 +442,9 @@ const isGenerateEnabled = selectedUserId && startDate && endDate;
                     <div>
                       <div className="text-sm text-gray-600">Period</div>
                       <div className="font-medium">
-                       {startDate && endDate
-  ? `${moment(startDate).format("MMM D, YYYY")} - ${moment(endDate).format("MMM D, YYYY")}`
-  : 'No date selected'}
-
-
+                        {startDate && endDate
+                          ? `${moment(startDate).format('MMM D, YYYY')} - ${moment(endDate).format('MMM D, YYYY')}`
+                          : 'No date selected'}
                       </div>
                     </div>
                     <div>
@@ -463,7 +460,7 @@ const isGenerateEnabled = selectedUserId && startDate && endDate;
                   </div>
                 </div>
                 <p className="text-center text-gray-600">
-                  Redirecting to Invoices page...
+                  Redirecting to Payslips page...
                 </p>
               </CardContent>
             </Card>

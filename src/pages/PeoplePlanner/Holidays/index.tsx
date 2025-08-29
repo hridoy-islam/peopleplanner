@@ -11,11 +11,7 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger
-} from '@/components/ui/collapsible';
+
 import {
   Table,
   TableBody,
@@ -26,10 +22,9 @@ import {
 } from '@/components/ui/table';
 import {
   Calendar,
-  ChevronDown,
-  ChevronRight,
+
   CalendarDays,
-  Clock,
+  
   Users,
   CheckCircle
 } from 'lucide-react';

@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react'
+import  { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -19,9 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { FileIcon, Pencil, Trash2, Eye } from 'lucide-react'
+import {  Pencil, Trash2, Eye } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import {
   Table,

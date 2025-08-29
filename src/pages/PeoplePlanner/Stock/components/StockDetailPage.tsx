@@ -52,6 +52,7 @@ const mockMedicationData = {
 }
 
 export default function StockDetailPage() {
+  const navigate = useNavigate()
 const {id} = useParams()
   const [isAddStockOpen, setIsAddStockOpen] = useState(false)
   const medicationId = id
@@ -60,7 +61,6 @@ const {id} = useParams()
   if (!medication) {
     return <div>Medication not found</div>
   }
-const navigate = useNavigate()
   return (
     <div className="min-h-screen b">
       <div className="space-y-6">

@@ -1,24 +1,30 @@
 import React, { useState } from 'react';
-import { CreditCard, Banknote, Smartphone, Calendar, DollarSign, Check } from 'lucide-react';
+import { Banknote, DollarSign } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
@@ -44,52 +50,95 @@ interface PaymentRecord {
   notes: string;
 }
 
-const PaymentModal: React.FC<PaymentModalProps> = ({ 
-  isOpen, 
-  onClose, 
+const PaymentModal: React.FC<PaymentModalProps> = ({
+  isOpen,
+  onClose,
   invoiceAmount,
-  userInfo 
+  userInfo
 }) => {
-  const [paymentAmount, setPaymentAmount] = useState<string>(invoiceAmount.toString());
+  const [paymentAmount, setPaymentAmount] = useState<string>(
+    invoiceAmount.toString()
+  );
   const [paymentMethod, setPaymentMethod] = useState<string>('');
-  const [paymentDate, setPaymentDate] = useState<string>(new Date().toISOString().split('T')[0]);
+  const [paymentDate, setPaymentDate] = useState<string>(
+    new Date().toISOString().split('T')[0]
+  );
   const [reference, setReference] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
-  const [existingPayments] = useState<PaymentRecord[]>([]);
+  const [existingPayments, setExistingPayments] = useState<PaymentRecord[]>([]);
   const { toast } = useToast();
 
   const paymentMethodOptions = [
-    { value: 'bank', label: 'Bank Transfer', icon: Banknote },
-    { value: 'card', label: 'Credit/Debit Card', icon: CreditCard },
     { value: 'cash', label: 'Cash', icon: DollarSign },
-    { value: 'digital', label: 'Digital Wallet', icon: Smartphone }
+    { value: 'bank', label: 'Bank Transfer/Cheque', icon: Banknote }
   ];
 
-  const totalPaid = existingPayments.reduce((sum, payment) => sum + payment.amount, 0);
-  const remainingAmount = invoiceAmount - totalPaid;
+  // Totals
+  const totalPaid = existingPayments.reduce(
+    (sum, payment) => sum + payment.amount,
+    0
+  );
+  const remainingAmount = Math.max(invoiceAmount - totalPaid, 0);
   const currentPaymentAmount = parseFloat(paymentAmount) || 0;
-  const isFullPayment = currentPaymentAmount >= remainingAmount;
-  const isPartialPayment = currentPaymentAmount > 0 && currentPaymentAmount < remainingAmount;
+
+  // For preview
+  const newRemaining = Math.max(
+    invoiceAmount - (totalPaid + currentPaymentAmount),
+    0
+  );
+
+  // Status
+  const isFullPayment = remainingAmount === 0;
+  const isPartialPayment = totalPaid > 0 && remainingAmount > 0;
 
   const handleSubmit = () => {
     if (!paymentAmount || !paymentMethod || !paymentDate) {
       toast({
-        title: "Error",
-        description: "Please fill in all required fields",
-        variant: "destructive"
+        title: 'Error',
+        description: 'Please fill in all required fields',
+        variant: 'destructive'
       });
       return;
     }
 
-    const paymentStatus = isFullPayment ? 'Fully Paid' : isPartialPayment ? 'Partially Paid' : 'Unpaid';
-    
+    if (currentPaymentAmount > remainingAmount) {
+      toast({
+        title: 'Error',
+        description: 'Payment amount cannot exceed remaining balance',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    const newPayment: PaymentRecord = {
+      id: Date.now().toString(),
+      amount: currentPaymentAmount,
+      method: paymentMethod,
+      date: paymentDate,
+      reference,
+      notes
+    };
+
+    setExistingPayments((prev) => [...prev, newPayment]);
+
+    const afterRemaining = Math.max(
+      invoiceAmount - (totalPaid + currentPaymentAmount),
+      0
+    );
+
+    const paymentStatus =
+      afterRemaining <= 0
+        ? 'Fully Paid'
+        : afterRemaining < invoiceAmount
+        ? 'Partially Paid'
+        : 'Unpaid';
+
     toast({
-      title: "Payment Recorded",
-      description: `Payment of $${currentPaymentAmount.toLocaleString()} recorded successfully. Status: ${paymentStatus}`,
+      title: 'Payment Recorded',
+      description: `Payment of $${currentPaymentAmount.toLocaleString()} recorded. Status: ${paymentStatus}`
     });
 
-    onClose();
-    // Reset form
+    // Reset only form fields, not history
     setPaymentAmount(invoiceAmount.toString());
     setPaymentMethod('');
     setPaymentDate(new Date().toISOString().split('T')[0]);
@@ -104,49 +153,66 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
   };
 
   const getPaymentStatusText = () => {
-    if (isFullPayment) return 'Full Payment';
-    if (isPartialPayment) return 'Partial Payment';
-    return 'No Payment';
+    if (isFullPayment) return 'Fully Paid';
+    if (isPartialPayment) return 'Partially Paid';
+    return 'Unpaid';
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-2xl max-h-[80vh] overflow-hidden">
+      <DialogContent className="max-h-[80vh] overflow-hidden sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <DollarSign className="w-5 h-5" />
-             Payment
+            <DollarSign className="h-5 w-5" />
+            Payment
           </DialogTitle>
           <DialogDescription>
             Record payment information for the payslip
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 overflow-y-auto max-h-[60vh] pr-2">
-          {/* payslip Summary */}
+        <div className="max-h-[60vh] space-y-6 overflow-y-auto pr-2">
+          {/* Payment Summary */}
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Payment Summary</CardTitle>
               {userInfo && (
-                <CardDescription>
-                  Payment for {userInfo.name}
-                </CardDescription>
+                <CardDescription>Payment for {userInfo.name}</CardDescription>
               )}
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2  gap-4">
-                <div className="text-center p-3 bg-blue-50 rounded-lg">
-                  <div className="text-xs text-blue-800 font-bold">payslip Total</div>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="rounded-lg bg-blue-50 p-3 text-center">
+                  <div className="text-xs font-bold text-blue-800">
+                    Invoice Total
+                  </div>
                   <div className="text-lg font-bold text-blue-600">
                     ${invoiceAmount.toLocaleString()}
                   </div>
                 </div>
-                
-                <div className="text-center p-3 bg-purple-50 rounded-lg">
-                  <div className="text-xs text-purple-800 mt-1 font-bold">Status</div>
+
+                <div className="rounded-lg bg-green-50 p-3 text-center">
+                  <div className="text-xs font-bold text-green-800">Paid</div>
+                  <div className="text-lg font-bold text-green-600">
+                    ${totalPaid.toLocaleString()}
+                  </div>
+                </div>
+
+                <div className="rounded-lg bg-purple-50 p-3 text-center">
+                  <div className="mt-1 text-xs font-bold text-purple-800">
+                    Status
+                  </div>
                   <Badge className={getPaymentStatusColor()}>
                     {getPaymentStatusText()}
                   </Badge>
+                </div>
+              </div>
+              <div className="mt-3 rounded-lg bg-yellow-50 p-2 text-center">
+                <div className="text-xs font-bold text-yellow-800">
+                  Remaining Balance
+                </div>
+                <div className="text-md font-bold text-yellow-600">
+                  ${remainingAmount.toLocaleString()}
                 </div>
               </div>
             </CardContent>
@@ -196,7 +262,7 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                       return (
                         <SelectItem key={option.value} value={option.value}>
                           <div className="flex items-center gap-2">
-                            <Icon className="w-4 h-4" />
+                            <Icon className="h-4 w-4" />
                             {option.label}
                           </div>
                         </SelectItem>
@@ -205,8 +271,6 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                   </SelectContent>
                 </Select>
               </div>
-
-             
 
               <div className="space-y-2">
                 <Label htmlFor="notes">Notes</Label>
@@ -219,24 +283,11 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
                 />
               </div>
 
-              {/* Payment Preview */}
-              {currentPaymentAmount > 0 && (
-                <div className="p-4 bg-gray-50 rounded-lg space-y-2">
-                  <h4 className="font-medium">Payment Preview</h4>
-                  <div className="text-sm space-y-1">
-                    <div className="flex justify-between">
-                      <span>Payment Amount:</span>
-                      <span className="font-medium">${currentPaymentAmount.toLocaleString()}</span>
-                    </div>
-                    
-                    
-                  </div>
-                </div>
-              )}
+             
             </CardContent>
           </Card>
 
-          {/* Existing Payments (if any) */}
+          {/* Existing Payments */}
           {existingPayments.length > 0 && (
             <Card>
               <CardHeader>
@@ -245,12 +296,29 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
               <CardContent>
                 <div className="space-y-2">
                   {existingPayments.map((payment) => (
-                    <div key={payment.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
+                    <div
+                      key={payment.id}
+                      className="flex items-center justify-between rounded bg-gray-50 p-2"
+                    >
                       <div className="text-sm">
-                        <div className="font-medium">${payment.amount.toLocaleString()}</div>
-                        <div className="text-gray-600">{payment.method} • {payment.date}</div>
+                        <div className="font-medium">
+                          ${payment.amount.toLocaleString()}
+                        </div>
+                        <div className="text-gray-600">
+                          {payment.method} • {payment.date}
+                        </div>
+                        {payment.notes && (
+                          <div className="text-xs text-gray-500">
+                            Note: {payment.notes}
+                          </div>
+                        )}
                       </div>
-                      <Badge variant="default" className='bg-supperagent text-white hover:bg-supperagent/90'>Recorded</Badge>
+                      <Badge
+                        variant="default"
+                        className="bg-supperagent text-white hover:bg-supperagent/90"
+                      >
+                        Recorded
+                      </Badge>
                     </div>
                   ))}
                 </div>
@@ -263,8 +331,11 @@ const PaymentModal: React.FC<PaymentModalProps> = ({
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} className='bg-supperagent text-white hover:bg-supperagent/90'>
-            Payment
+          <Button
+            onClick={handleSubmit}
+            className="bg-supperagent text-white hover:bg-supperagent/90"
+          >
+            Record Payment
           </Button>
         </DialogFooter>
       </DialogContent>

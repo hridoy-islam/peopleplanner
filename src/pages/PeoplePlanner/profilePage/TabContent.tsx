@@ -6,13 +6,11 @@ import EmergencyContactData from './tabs/EmergencyContactData';
 import EducationData from './tabs/EducationData';
 import EmploymentData from './tabs/EmploymentData';
 import ComplianceData from './tabs/ComplianceData';
-import CourseDetails from './tabs/CourseDetails';
 import axiosInstance from '@/lib/axios';
 import { useToast } from '@/components/ui/use-toast';
 import { useSelector } from 'react-redux';
 import DocumentData from './tabs/DocumentData';
 import FundingData from './tabs/FundingData';
-import CourseData from './tabs/CourseData';
 
 
 const TabContent: React.FC<TabContentProps> = ({ activeTab, userData,refreshData,loading }) => {

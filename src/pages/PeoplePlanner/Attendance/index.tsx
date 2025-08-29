@@ -15,8 +15,7 @@ import { BlinkingDots } from '@/components/shared/blinking-dots';
 import { DynamicPagination } from '@/components/shared/DynamicPagination';
 import { AttendanceDialog } from './attendaceList/components';
 import moment from 'moment';
-import { Input } from '@/components/ui/input';
-import { useRouter } from '@/routes/hooks';
+
 import { useNavigate } from 'react-router-dom';
 import {
   Select,
@@ -25,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { count } from 'console';
+
 
 export default function Attendance() {
   const [attendanceList, setAttendance] = useState<any[]>([]);

@@ -256,12 +256,11 @@ export default function InvoicePage({ onCreateInvoice }: InvoicesPageProps) {
       <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Invoices</h1>
-          <p className="text-gray-600 mt-1">Manage time-based and standard invoices</p>
         </div>
         <div className="flex gap-3">
           <Button
             onClick={() => setShowBulkModal(true)}
-            className="bg-blue-600 text-white hover:bg-blue-700"
+            className="bg-supperagent text-white hover:bg-supperagent/90"
           >
             <Users className="mr-2 h-4 w-4" />
             Generate Invoice (Bulk)

@@ -180,7 +180,7 @@ const IndividualInvoiceForm: React.FC<IndividualInvoiceFormProps> = ({
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="sticky  ">
-        <div className=" py-4">
+        <div className=" ">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Button
