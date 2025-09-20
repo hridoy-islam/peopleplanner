@@ -69,7 +69,7 @@ export const InvoiceContactInformationStep: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <FormField
           label="Email"
-          required
+          
           error={invoiceErrors?.email?.message}
         >
           <Input
@@ -99,9 +99,8 @@ export const InvoiceContactInformationStep: React.FC = () => {
           error={errors.invoice?.deliveryType?.message}
         >
           <Select
-            value={deliveryTypeOptions.find(option => option.value === (typeof watchedDeliveryType === 'string' ? watchedDeliveryType : watchedDeliveryType?.value)) || null}
-            onChange={(option) => setValue('invoice.deliveryType', option || null)}
-            options={deliveryTypeOptions}
+            value={deliveryTypeOptions.find(option => option.value ===  watchedDeliveryType)|| null}
+ onChange={(selected) => setValue('invoice.deliveryType', selected?.value || '')}            options={deliveryTypeOptions}
             placeholder="Select Delivery Type"
             className="react-select-container"
             classNamePrefix="react-select"

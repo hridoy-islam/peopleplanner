@@ -251,7 +251,7 @@ export default function PayslipsPage({ onCreatePayslip }: PayslipsPageProps) {
     }
   };
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 bg-white  p-4 rounded-lg shadow-sm">
       {/* Header */}
       <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div>
@@ -328,7 +328,7 @@ export default function PayslipsPage({ onCreatePayslip }: PayslipsPageProps) {
       </div>
 
       {/* Search and Filters */}
-      <Card>
+      <Card className='shadow-none'>
         <CardHeader>
           <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
             <div>

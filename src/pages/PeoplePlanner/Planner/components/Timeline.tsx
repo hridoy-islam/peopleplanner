@@ -315,7 +315,7 @@ export function Timeline({
                       <div className="flex-shrink-0">
                         <div
                           className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium ${
-                            isServiceUser
+                            item?.role=='seviceUser'
                               ? 'bg-teal-100 text-teal-700'
                               : 'bg-blue-100 text-blue-700'
                           }`}
@@ -325,20 +325,15 @@ export function Timeline({
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-gray-900">
-                          {item?.name}
+                        <p className="truncate text-xs font-medium text-gray-900">
+                          {item?.title} {item?.firstName} {item?.middleInitial} {item?.lastName}
                         </p>
                         <div className="flex items-center gap-2">
-                          <p className="text-xs text-gray-500">
-                            {isServiceUser
-                              ? item.type
-                              : (item as Employee).role}
-                          </p>
-                          {/* {taskCount > 0 && (
-                            <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
-                              {taskCount}
-                            </span>
-                          )} */}
+                            <p className="text-xs text-gray-500">
+  {item?.role === 'serviceUser' ? 'Service User' : 'Employee'}
+</p>
+
+                          
                         </div>
                       </div>
                     </div>

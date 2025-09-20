@@ -2,26 +2,11 @@ import { z } from 'zod';
 
 export const serviceFunderSchema = z.object({
   // Personal Information
-  type: z
-    .object({
-      value: z.string(),
-      label: z.string()
-    })
-    .nullable()
-    .refine((val) => val !== null && val !== undefined, {
-      message: 'Type is required'
-    }),
+  type: z.string().min(1, 'Type is required'),
 
-  title: z
-    .object({
-      value: z.string(),
-      label: z.string()
-    })
-    .nullable()
-    .refine((val) => val !== null && val !== undefined, {
-      message: 'Title is required'
-    }),
+  title: z.string().min(1, 'Title is required'),
 
+  serviceUser: z.string().optional(),
   image: z.any().optional(),
 
   firstName: z.string().min(1, 'First name is required'),
@@ -32,44 +17,9 @@ export const serviceFunderSchema = z.object({
 
   description: z.string().min(1, 'Description is required'),
 
+  area: z.string().min(1, 'Area is required'),
 
-  area: z
-    .object({
-      value: z.string(),
-      label: z.string()
-    })
-    .nullable()
-    .refine((val) => val !== null && val !== undefined, {
-      message: 'Area is required'
-    }),
-
-  branch: z
-    .object({
-      value: z.string(),
-      label: z.string()
-    })
-    .nullable()
-    .refine((val) => val !== null && val !== undefined, {
-      message: 'Branch is required'
-    }),
-
-  maritalStatus: z
-    .object({
-      value: z.string(),
-      label: z.string()
-    })
-    .nullable()
-    .optional(),
-
-  ethnicOrigin: z
-    .object({
-      value: z.string(),
-      label: z.string()
-    })
-    .nullable()
-    .optional(),
-
-  religion: z.string().optional(),
+  branch: z.string().min(1, 'Branch is required'),
 
   // Address & Location
   address: z.string().min(1, 'Address is required'),
@@ -78,9 +28,9 @@ export const serviceFunderSchema = z.object({
   postCode: z.string().min(1, 'Post code is required'),
 
   // Contact Information
-  phone: z.string().optional(),
+  phone: z.string().min(1, 'Phone is required'),
   fax: z.string().optional(),
-  mobile: z.string().optional(),
+  mobile: z.string().min(1, 'Mobile is required'),
   other: z.string().optional(),
   email: z.string().email('Please enter a valid email address'),
   website: z.string().optional(),
@@ -88,30 +38,14 @@ export const serviceFunderSchema = z.object({
   // Employment / Service Details
   startDate: z.string().min(1, 'Start date is required'),
 
-  status: z
-    .object({
-      value: z.string(),
-      label: z.string()
-    })
-    .nullable()
-    .refine((val) => val !== null && val !== undefined, {
-      message: 'Status is required'
-    }),
+  status: z.string().min(1, 'Status is required'),
 
-  travelType: z
-    .object({
-      value: z.string(),
-      label: z.string()
-    })
-    .nullable()
-    .refine((val) => val !== null && val !== undefined, {
-      message: 'Travel type is required'
-    }),
+  rateSheet: z.string().optional(),
+  travelType: z.string().min(1, 'Travel type is required'),
 
   invoice: z.object({
     linked: z
-      .boolean()
-      .refine((val) => val !== undefined, { message: 'Linked is required' }),
+      .boolean( { required_error: 'Linked is required' }),
     type: z.string().min(1, 'Type is required'),
     name: z.string().min(1, 'Name is required'),
     address: z.string().min(1, 'Address is required'),
@@ -123,15 +57,7 @@ export const serviceFunderSchema = z.object({
     invoiceFormat: z.string().min(1, 'Invoice format is required'),
     invoiceGrouping: z.string().min(1, 'Invoice grouping is required'),
 
-    deliveryType: z
-    .object({
-      value: z.string(),
-      label: z.string()
-    })
-    .nullable()
-    .refine((val) => val !== null && val !== undefined, {
-      message: 'Delivery type is required'
-    }),
+    deliveryType: z.string().min(1, 'Delivery type is required'),
     phone: z.string().optional(),
     fax: z.string().optional(),
     mobile: z.string().optional(),

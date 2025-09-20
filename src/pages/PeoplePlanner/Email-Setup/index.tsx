@@ -142,7 +142,7 @@ export default function EmailSetup() {
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 rounded-md bg-white p-4 shadow-md">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">All Email Configurations</h1>
         <Button
@@ -170,7 +170,7 @@ export default function EmailSetup() {
           Search
         </Button>
       </div>
-      <div className="rounded-md bg-white p-4 shadow-lg">
+      <div className="">
         {initialLoading ? (
           <div className="flex justify-center py-6">
             <BlinkingDots size="large" color="bg-supperagent" />

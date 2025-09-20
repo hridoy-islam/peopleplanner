@@ -54,7 +54,12 @@ const MiscellaneousTab: React.FC<MiscellaneousTabProps> = ({
             value={formData.timesheetSignature}
             type="select"
             options={booleanOptions}
-            onUpdate={(value) => onSelectChange('timesheetSignature', value)}
+            onUpdate={(value) =>
+              onSelectChange(
+                'timesheetSignature',
+                value === 'true' || value === true
+              )
+            }
             isSaving={isFieldSaving.timesheetSignature}
             required
             isMissing={isFieldMissing('timesheetSignature')}

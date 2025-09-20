@@ -36,15 +36,6 @@ const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({
     { value: 'Prefer not to say', label: 'Prefer not to say' }
   ];
 
-  const maritalStatusOptions = [
-    { value: 'Single', label: 'Single' },
-    { value: 'Married', label: 'Married' },
-    { value: 'Divorced', label: 'Divorced' },
-    { value: 'Widowed', label: 'Widowed' },
-    { value: 'Separated', label: 'Separated' },
-    { value: 'Civil Partnership', label: 'Civil Partnership' }
-  ];
-
   const countryOptions = countries.map((country) => ({
     value: country,
     label: country
@@ -70,6 +61,52 @@ const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({
     { value: 'individual-with-medication', label: 'Individual With Medication' }
   ];
 
+  const maritalStatusOptions = [
+    { value: 'single', label: 'Single' },
+    { value: 'married', label: 'Married' },
+    { value: 'divorced', label: 'Divorced' },
+    { value: 'widowed', label: 'Widowed' },
+    { value: 'separated', label: 'Separated' }
+  ];
+
+  const ethnicOriginOptions = [
+    { value: 'white-british', label: 'White British' },
+    { value: 'white-irish', label: 'White Irish' },
+    { value: 'white-other', label: 'White Other' },
+    {
+      value: 'mixed-white-black-caribbean',
+      label: 'Mixed White and Black Caribbean'
+    },
+    {
+      value: 'mixed-white-black-african',
+      label: 'Mixed White and Black African'
+    },
+    { value: 'mixed-white-asian', label: 'Mixed White and Asian' },
+    { value: 'mixed-other', label: 'Mixed Other' },
+    { value: 'asian-indian', label: 'Asian Indian' },
+    { value: 'asian-pakistani', label: 'Asian Pakistani' },
+    { value: 'asian-bangladeshi', label: 'Asian Bangladeshi' },
+    { value: 'asian-other', label: 'Asian Other' },
+    { value: 'black-caribbean', label: 'Black Caribbean' },
+    { value: 'black-african', label: 'Black African' },
+    { value: 'black-other', label: 'Black Other' },
+    { value: 'chinese', label: 'Chinese' },
+    { value: 'other', label: 'Other' }
+  ];
+
+  const religionOptions = [
+    { value: 'christianity', label: 'Christianity' },
+    { value: 'islam', label: 'Islam' },
+    { value: 'hinduism', label: 'Hinduism' },
+    { value: 'buddhism', label: 'Buddhism' },
+    { value: 'sikhism', label: 'Sikhism' },
+    { value: 'judaism', label: 'Judaism' },
+    { value: 'atheism', label: 'Atheism' },
+    { value: 'agnosticism', label: 'Agnosticism' },
+    { value: 'other', label: 'Other' },
+    { value: 'prefer-not-to-say', label: 'Prefer not to say' }
+  ];
+
   const missingFields = getMissingFields('general', formData);
 
   const isFieldMissing = (fieldKey: string) => {
@@ -84,15 +121,15 @@ const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           <EditableField
-            id="type"
+            id="serviceUserType"
             label="Service User Type"
-            value={formData.type}
+            value={formData.serviceUserType}
             type="select"
             options={typeOptions}
-            onUpdate={(value) => onSelectChange('type', value)}
+            onUpdate={(value) => onSelectChange('serviceUserType', value)}
             isSaving={isFieldSaving.type}
             required
-            isMissing={isFieldMissing('type')}
+            isMissing={isFieldMissing('serviceUserType')}
           />
           <EditableField
             id="title"
@@ -150,36 +187,6 @@ const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({
             isSaving={isFieldSaving.dateOfBirth}
             required
             isMissing={isFieldMissing('dateOfBirth')}
-          />
-
-
-          <EditableField
-            id="maritalStatus"
-            label="Marital Status"
-            value={formData.maritalStatus}
-            type="select"
-            options={maritalStatusOptions}
-            onUpdate={(value) => onSelectChange('maritalStatus', value)}
-            isSaving={isFieldSaving.maritalStatus}
-            required
-            isMissing={isFieldMissing('maritalStatus')}
-          />
-
-          <EditableField
-            id="ethnicOrigin"
-            label="Ethnic Origin"
-            value={formData.ethnicOrigin}
-            onUpdate={(value) => onUpdate('ethnicOrigin', value)}
-            isSaving={isFieldSaving.ethnicOrigin}
-            placeholder="Enter ethnic origin"
-          />
-          <EditableField
-            id="religion"
-            label="Religion"
-            value={formData.religion}
-            onUpdate={(value) => onUpdate('religion', value)}
-            isSaving={isFieldSaving.religion}
-            placeholder="Enter religion"
           />
 
           <EditableField
@@ -249,14 +256,14 @@ const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <EditableField
-              id="cityOrTown"
+              id="city"
               label="City/Town"
-              value={formData.cityOrTown}
-              onUpdate={(value) => onUpdate('cityOrTown', value)}
-              isSaving={isFieldSaving.cityOrTown}
+              value={formData.city}
+              onUpdate={(value) => onUpdate('city', value)}
+              isSaving={isFieldSaving.city}
               required
-              placeholder="Enter city or town"
-              isMissing={isFieldMissing('cityOrTown')}
+              placeholder="Enter city"
+              isMissing={isFieldMissing('city')}
             />
 
             <EditableField

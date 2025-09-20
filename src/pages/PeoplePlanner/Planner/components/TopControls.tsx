@@ -57,13 +57,13 @@ export function TopControls({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="All" className="text-xs">
+                <SelectItem value="all" className="text-xs">
                   All
                 </SelectItem>
-                <SelectItem value="Service User" className="text-xs">
+                <SelectItem value="serviceUser" className="text-xs">
                   Service User
                 </SelectItem>
-                <SelectItem value="Employee" className="text-xs">
+                <SelectItem value="staff" className="text-xs">
                   Employee
                 </SelectItem>
               </SelectContent>
@@ -78,19 +78,19 @@ export function TopControls({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="All" className="text-xs">
+                <SelectItem value="all" className="text-xs">
                   All
                 </SelectItem>
-                <SelectItem value="Manager" className="text-xs">
+                <SelectItem value="manager" className="text-xs">
                   Manager
                 </SelectItem>
-                <SelectItem value="Developer" className="text-xs">
+                <SelectItem value="developer" className="text-xs">
                   Developer
                 </SelectItem>
-                <SelectItem value="Designer" className="text-xs">
+                <SelectItem value="designer" className="text-xs">
                   Designer
                 </SelectItem>
-                <SelectItem value="QA" className="text-xs">
+                <SelectItem value="qa" className="text-xs">
                   QA
                 </SelectItem>
               </SelectContent>
@@ -105,22 +105,22 @@ export function TopControls({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="All" className="text-xs">
+                <SelectItem value="all" className="text-xs">
                   All
                 </SelectItem>
-                <SelectItem value="Sales" className="text-xs">
+                <SelectItem value="sales" className="text-xs">
                   Sales
                 </SelectItem>
-                <SelectItem value="Marketing" className="text-xs">
+                <SelectItem value="marketing" className="text-xs">
                   Marketing
                 </SelectItem>
-                <SelectItem value="Engineering" className="text-xs">
+                <SelectItem value="engineering" className="text-xs">
                   Engineering
                 </SelectItem>
-                <SelectItem value="HR" className="text-xs">
+                <SelectItem value="hr" className="text-xs">
                   HR
                 </SelectItem>
-                <SelectItem value="Finance" className="text-xs">
+                <SelectItem value="finance" className="text-xs">
                   Finance
                 </SelectItem>
               </SelectContent>
@@ -163,55 +163,52 @@ export function TopControls({
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
               />
-              <Button
+              {/* <Button
                 className="bg-supperagent text-white hover:bg-supperagent/90"
                 onClick={handleSearch}
               >
                 Search
-              </Button>
+              </Button> */}
             </div>
           </div>
-              <div className="flex flex-col items-start gap-2">
-                <span className="text-xs text-gray-600">Zoom</span>
-                <div className='flex flex-row items-center gap-2'>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleZoomOut}
-                  className="h-6 w-6 p-0"
-                  >
-                  <Minus className="h-3 w-3" />
-                </Button>
-                <div className="relative h-1.5 w-16 rounded bg-gray-200">
-                  <div
-                    className="h-1.5 rounded bg-teal-600 transition-all duration-200"
-                    style={{ width: `${((zoomLevel - 2) / 6) * 100}%` }}
-                    />
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleZoomIn}
-                  className="h-6 w-6 p-0"
-                  >
-                  <Plus className="h-3 w-3" />
-                </Button>
-                <span className="text-xs text-gray-500">{zoomLevel}x</span>
-                  </div>
+          <div className="flex flex-col items-start gap-2">
+            <span className="text-xs text-gray-600">Zoom</span>
+            <div className="flex flex-row items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleZoomOut}
+                className="h-6 w-6 p-0"
+              >
+                <Minus className="h-3 w-3" />
+              </Button>
+              <div className="relative h-1.5 w-16 rounded bg-gray-200">
+                <div
+                  className="h-1.5 rounded bg-teal-600 transition-all duration-200"
+                  style={{ width: `${((zoomLevel - 2) / 6) * 100}%` }}
+                />
               </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleZoomIn}
+                className="h-6 w-6 p-0"
+              >
+                <Plus className="h-3 w-3" />
+              </Button>
+              <span className="text-xs text-gray-500">{zoomLevel}x</span>
+            </div>
+          </div>
 
-              <div className="flex items-end">
-          <Button
-            variant="default"
-            className="bg-supperagent hover:bg-supperagent/90 text-white text-xs h-9 px-3 flex items-center gap-1"
-            onClick={() =>  onScheduleClick()
-            }
-          >
-            <Plus className="h-4 w-4" />
-            Add Schedule
-          </Button>
-        </div>
+          <div className="flex items-end">
+            <Button
+              variant="default"
+              className="flex h-9 items-center gap-1 bg-supperagent px-3 text-xs text-white hover:bg-supperagent/90"
+              onClick={() => onScheduleClick()}
+            >
+              Add Schedule
+            </Button>
+          </div>
         </div>
       </div>
     </div>

@@ -38,6 +38,7 @@ export const EmploymentServiceStep: React.FC = () => {
         <FormField
           label="Timesheet Signature Required"
           error={errors.timesheetSignature?.message}
+          required
         >
           <Select
             value={booleanOptions.find(opt => opt.value === timesheetSignature)}

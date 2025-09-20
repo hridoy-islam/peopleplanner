@@ -14,6 +14,59 @@ import {
   FileInput,
 } from 'lucide-react';
 
+// 📅 Helper to format ISO date string to dd-MM-yyyy
+const formatDate = (isoString: string): string => {
+  const date = new Date(isoString);
+  if (isNaN(date.getTime())) return isoString; // fallback if invalid
+
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0'); // months are 0-indexed
+  const year = date.getFullYear();
+
+  return `${day}-${month}-${year}`;
+};
+
+// 🔠 Helper to smart-format any value for display
+const formatValue = (value: any): string => {
+  if (value === null || value === undefined || value === '') {
+    return '';
+  }
+
+  // Handle boolean → Yes/No
+  if (typeof value === 'boolean') {
+    return value ? 'Yes' : 'No';
+  }
+
+  // Handle ISO date strings
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z?$/.test(value)) {
+    return formatDate(value);
+  }
+
+  // Handle react-select object: { value: 'abc', label: 'Abc' }
+  if (typeof value === 'object' && value !== null) {
+    if (value.label) return capitalizeWords(value.label);
+    if (value.value) return capitalizeWords(value.value);
+    return String(value); // fallback
+  }
+
+  // Capitalize string values
+  if (typeof value === 'string') {
+    return capitalizeWords(value);
+  }
+
+  // Fallback: convert anything else to string
+  return String(value);
+};
+
+// 🔤 Capitalizes first letter of each word
+const capitalizeWords = (str: string): string => {
+  return str
+    .toLowerCase()
+    .split(' ')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+};
+
 export const ReviewStep: React.FC = () => {
   const { watch } = useFormContext<ServiceFunderFormData>();
   const formData = watch();
@@ -24,9 +77,10 @@ export const ReviewStep: React.FC = () => {
       icon: User,
       fields: [
         { label: 'Type', value: formData.type },
+        { label: 'Service User', value: formData.serviceUser },
         { label: 'Title', value: formData.title },
         { label: 'First Name', value: formData.firstName },
-        { label: 'Middle Initial', value: formData.middleInitial },
+        { label: 'Middle Initial', value: formData.middleInitial?.toUpperCase() }, // Keep uppercase for initials
         { label: 'Last Name', value: formData.lastName },
         { label: 'Description', value: formData.description },
       ]
@@ -48,7 +102,7 @@ export const ReviewStep: React.FC = () => {
         { label: 'Address', value: formData.address },
         { label: 'City', value: formData.city },
         { label: 'Country', value: formData.country },
-        { label: 'Post Code', value: formData.postCode },
+        { label: 'Post Code', value: formData.postCode?.toUpperCase() }, // Postcode always uppercase
         { label: 'Area', value: formData.area },
         { label: 'Branch', value: formData.branch }
       ]
@@ -72,20 +126,34 @@ export const ReviewStep: React.FC = () => {
         { label: 'Start Date', value: formData.startDate },
         { label: 'Status', value: formData.status },
         { label: 'Travel Type', value: formData.travelType },
-        { label: 'Purchase Order Required', value: typeof formData.purchaseOrder === 'boolean' ? (formData.purchaseOrder ? 'Yes' : 'No') : formData.purchaseOrder }
+        {
+          label: 'Purchase Order Required',
+          value: typeof formData.purchaseOrder === 'boolean'
+            ? formData.purchaseOrder
+              ? 'Yes'
+              : 'No'
+            : formData.purchaseOrder
+        }
       ]
     },
     {
       title: 'Invoice Details',
       icon: FileText,
       fields: [
-        { label: 'Linked', value: typeof formData.invoice?.linked === 'boolean' ? (formData.invoice.linked ? 'Yes' : 'No') : formData.invoice?.linked },
+        {
+          label: 'Linked',
+          value: typeof formData.invoice?.linked === 'boolean'
+            ? formData.invoice.linked
+              ? 'Yes'
+              : 'No'
+            : formData.invoice?.linked
+        },
         { label: 'Type', value: formData.invoice?.type },
         { label: 'Name', value: formData.invoice?.name },
         { label: 'Address', value: formData.invoice?.address },
         { label: 'City / Town', value: formData.invoice?.cityTown },
         { label: 'County', value: formData.invoice?.county },
-        { label: 'Post Code', value: formData.invoice?.postCode },
+        { label: 'Post Code', value: formData.invoice?.postCode?.toUpperCase() },
         { label: 'Customer External ID', value: formData.invoice?.customerExternalId },
         { label: 'Invoice Run', value: formData.invoice?.invoiceRun },
         { label: 'Invoice Format', value: formData.invoice?.invoiceFormat },
@@ -104,7 +172,10 @@ export const ReviewStep: React.FC = () => {
     <div className="space-y-6">
       {sections.map((section, index) => {
         const Icon = section.icon;
-        const hasData = section.fields.some((field) => field.value);
+        const hasData = section.fields.some((field) => {
+          const val = field.value;
+          return val !== null && val !== undefined && val !== '';
+        });
 
         if (!hasData) return null;
 
@@ -121,12 +192,9 @@ export const ReviewStep: React.FC = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {section.fields.map((field, fieldIndex) => {
-                if (!field.value) return null;
+                const displayValue = formatValue(field.value);
 
-                const displayValue =
-                  typeof field.value === 'object' && field.value !== null
-                    ? field.value.label || field.value.value
-                    : field.value;
+                if (!displayValue) return null;
 
                 return (
                   <div

@@ -13,6 +13,7 @@ import InvoiceContactTab from './tabs/InvoiceContactTab';
 import PurchaseOrderTab from './tabs/PurchaseOrderTab';
 import TravelRateDetailTab from './tabs/TravelDetailsTab';
 import AdhocInvoiceTab from './tabs/AdhocInvoiceTab';
+import { BlinkingDots } from '@/components/shared/blinking-dots';
 
 const ServiceFunderDetailPage = () => {
   const [showNotification, setShowNotification] = useState(true);
@@ -37,10 +38,7 @@ const ServiceFunderDetailPage = () => {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-500 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
-          <p className="mt-4 font-medium text-gray-600">
-            Loading applicant data...
-          </p>
+          <BlinkingDots size="large" color="bg-supperagent" />
         </div>
       </div>
     );
@@ -170,7 +168,7 @@ const ServiceFunderDetailPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="mx-auto px-4 py-8 sm:px-2 lg:px-2">
+      <div className="mx-auto  py-8 ">
         <div className="-mt-8 mb-4 flex items-center justify-between">
           <div>
             <p className="mt-2 text-3xl font-semibold text-gray-600">
@@ -199,14 +197,14 @@ const ServiceFunderDetailPage = () => {
             />
           </div>
 
-          {incompleteTabsCount > 0 && (
+           
             <div className="">
               <ValidationNotification
                 validation={tabValidation}
                 onTabClick={handleTabNavigation}
               />
             </div>
-          )}
+        
         </div>
       </div>
     </div>

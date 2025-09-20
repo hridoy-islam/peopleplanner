@@ -3,7 +3,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Check, Pencil } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import Select from 'react-select';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -11,13 +11,6 @@ import moment from 'moment';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-
-interface TimeScrollListProps {
-  title: string;
-  items: { value: number; label: string }[];
-  selectedValue: number;
-  onSelect: (value: number) => void;
-}
 
 interface EditableFieldProps {
   id: string;
@@ -46,33 +39,6 @@ interface EditableFieldProps {
   compact?: boolean;
 }
 
-function TimeScrollList({
-  items,
-  selectedValue,
-  onSelect
-}: TimeScrollListProps) {
-  return (
-    <ScrollArea className="h-32 rounded-md">
-      <div className="flex flex-col gap-1 p-1">
-        {items.map((item) => (
-          <Button
-            key={item.value}
-            variant="ghost"
-            className={cn(
-              'h-8 w-full justify-center px-1 text-xs',
-              item.value === selectedValue && 'bg-gray-100 font-medium'
-            )}
-            onClick={() => onSelect(item.value)}
-          >
-            {item.label}
-          </Button>
-        ))}
-      </div>
-      <ScrollBar orientation="vertical" />
-    </ScrollArea>
-  );
-}
-
 export const EditableField: React.FC<EditableFieldProps> = ({
   id,
   label,
@@ -93,29 +59,20 @@ export const EditableField: React.FC<EditableFieldProps> = ({
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [fieldValue, setFieldValue] = useState(value);
-  const [tempTime, setTempTime] = useState({
-    hour: 0,
-    minute: 0
-  });
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 
   useEffect(() => {
     setFieldValue(value);
-
-    if (type === 'time' && typeof value === 'string') {
-      const [hour, minute] = value.split(':').map(Number);
-      setTempTime({
-        hour: isNaN(hour) ? 0 : hour,
-        minute: isNaN(minute) ? 0 : minute
-      });
-    }
-  }, [value, type]);
+  }, [value]);
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();
+      if (type !== 'time') {
+        inputRef.current.select();
+      }
     }
-  }, [isEditing]);
+  }, [isEditing, type]);
 
   const formatDate = (dateStr: string | number) => {
     if (!dateStr) return '';
@@ -123,29 +80,66 @@ export const EditableField: React.FC<EditableFieldProps> = ({
     return m.isValid() ? m.format('MM-DD-YYYY') : dateStr.toString();
   };
 
-  const formatTime = (timeStr: string | number) => {
-    if (!timeStr) return '';
-    if (typeof timeStr === 'string') {
-      const [hour, minute] = timeStr.split(':').map(Number);
-      return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-    }
-    return timeStr.toString();
-  };
+const handleTimeChange = (newValue: string) => {
+  if (!newValue) {
+    setFieldValue('');
+    return;
+  }
 
-  const handleBlur = () => {
-    if (isEditing && fieldValue !== value) {
+  const digits = newValue.replace(/\D/g, '').slice(0, 4);
+
+  let formatted = '';
+
+  if (digits.length <= 2) {
+    formatted = digits;
+  } else {
+    const h = digits.slice(0, 2);
+    const m = digits.slice(2);
+
+    const hhNum = Math.min(23, parseInt(h, 10) || 0);
+    const hhStr = hhNum.toString().padStart(2, '0');
+
+    let mmStr = '';
+    if (m.length === 1) {
+      mmStr = m;
+    } else if (m.length === 2) {
+      const mmNum = Math.min(59, parseInt(m, 10) || 0);
+      mmStr = mmNum.toString().padStart(2, '0');
+    }
+
+    formatted = `${hhStr}${mmStr ? ':' + mmStr : ''}`;
+  }
+
+  setFieldValue(formatted);
+
+  // keep caret at end
+  setTimeout(() => {
+    const el = inputRef.current as HTMLInputElement | null;
+    if (el && typeof el.setSelectionRange === 'function') {
+      const pos = formatted.length;
+      el.setSelectionRange(pos, pos);
+    }
+  }, 0);
+};
+
+const handleBlur = () => {
+  if (type === 'time') {
+    if (fieldValue !== value) {
       onUpdate(fieldValue);
     }
-    setIsEditing(false);
-  };
+  } else {
+    if (fieldValue !== value) {
+      onUpdate(fieldValue);
+    }
+  }
+  setIsEditing(false);
+};
+
 
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Enter' && type !== 'textarea') {
       e.preventDefault();
-      if (fieldValue !== value) {
-        onUpdate(fieldValue);
-      }
-      setIsEditing(false);
+      handleBlur();
     } else if (e.key === 'Escape') {
       setFieldValue(value);
       setIsEditing(false);
@@ -155,9 +149,14 @@ export const EditableField: React.FC<EditableFieldProps> = ({
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    setFieldValue(e.target.value);
-  };
+    const newValue = e.target.value;
 
+    if (type === 'time') {
+      handleTimeChange(newValue);
+    } else {
+      setFieldValue(newValue);
+    }
+  };
   const handleSelectChange = (value: string) => {
     setFieldValue(value);
     onUpdate(value);
@@ -167,13 +166,6 @@ export const EditableField: React.FC<EditableFieldProps> = ({
   const handleCheckboxChange = (checked: boolean) => {
     setFieldValue(checked);
     onUpdate(checked);
-  };
-
-  const handleTimeSave = () => {
-    const timeStr = `${String(tempTime.hour).padStart(2, '0')}:${String(tempTime.minute).padStart(2, '0')}`;
-    setFieldValue(timeStr);
-    onUpdate(timeStr);
-    setIsEditing(false);
   };
 
   const getBorderColor = () => {
@@ -221,7 +213,10 @@ export const EditableField: React.FC<EditableFieldProps> = ({
     return (
       <div className={`space-y-1 ${className}`}>
         <div className="flex items-center justify-between">
-          <Label htmlFor={id} className={`text-xs ${isMissing ? 'text-red-600' : ''}`}>
+          <Label
+            htmlFor={id}
+            className={`text-xs ${isMissing ? 'text-red-600' : ''}`}
+          >
             {label}
             {required && <span className="ml-0.5 text-red-500">*</span>}
           </Label>
@@ -312,10 +307,14 @@ export const EditableField: React.FC<EditableFieldProps> = ({
   return (
     <div className={`space-y-1 ${className}`}>
       <div className="flex items-center justify-between">
-        <Label htmlFor={id} className={`text-xs ${isMissing ? 'text-red-600' : ''}`}>
+        <Label
+          htmlFor={id}
+          className={`text-xs ${isMissing ? 'text-red-600' : ''}`}
+        >
           {label}
           {required && <span className="ml-0.5 text-red-500">*</span>}
         </Label>
+        {isSaving && <Loader2 className="h-3 w-3 animate-spin text-gray-500" />}
       </div>
 
       {isEditing ? (
@@ -352,116 +351,19 @@ export const EditableField: React.FC<EditableFieldProps> = ({
             showYearDropdown
             dropdownMode="select"
           />
-        ) : type === 'time' ? (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-            <div className="w-full max-w-xs rounded-lg bg-white p-4">
-              <div className="space-y-3">
-                <div className="flex flex-col items-center justify-center py-1">
-                  <div className="mb-1 text-sm font-medium">Select {label}</div>
-                  <div className="mb-2 flex items-center justify-center space-x-1">
-                    <Input
-                      type="number"
-                      min="0"
-                      max="23"
-                      value={tempTime.hour.toString().padStart(2, '0')}
-                      onChange={(e) => {
-                        const val = Math.min(
-                          23,
-                          Math.max(0, parseInt(e.target.value)) || 0
-                        );
-                        setTempTime((prev) => ({ ...prev, hour: val }));
-                      }}
-                      className="w-14 text-center text-xl font-medium [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                    />
-                    <span className="text-xl font-medium">:</span>
-                    <Input
-                      type="number"
-                      min="0"
-                      max="59"
-                      value={tempTime.minute.toString().padStart(2, '0')}
-                      onChange={(e) => {
-                        const val = Math.min(
-                          59,
-                          Math.max(0, parseInt(e.target.value)) || 0
-                        );
-                        setTempTime((prev) => ({ ...prev, minute: val }));
-                      }}
-                      className="w-14 text-center text-xl font-medium [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
-                    />
-                  </div>
-                </div>
-
-                <div className="flex gap-2">
-                  <div className="flex-1 border border-gray-300 rounded-md">
-                    <div className="mb-0.5 text-center text-xs font-medium">
-                      Hours
-                    </div>
-                    <TimeScrollList
-                      items={Array.from({ length: 24 }, (_, i) => ({
-                        value: i,
-                        label: String(i).padStart(2, '0')
-                      }))}
-                      selectedValue={tempTime.hour}
-                      onSelect={(val) =>
-                        setTempTime((prev) => ({ ...prev, hour: val }))
-                      }
-                    />
-                  </div>
-                  <div className="flex-1 border border-gray-300 rounded-md">
-                    <div className="mb-0.5 text-center text-xs font-medium">
-                      Minutes
-                    </div>
-                    <TimeScrollList
-                      items={Array.from({ length: 60 }, (_, i) => i).map(
-                        (m) => ({
-                          value: m,
-                          label: String(m).padStart(2, '0')
-                        })
-                      )}
-                      selectedValue={tempTime.minute}
-                      onSelect={(val) =>
-                        setTempTime((prev) => ({ ...prev, minute: val }))
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-1 pt-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setFieldValue(value);
-                      setIsEditing(false);
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={handleTimeSave}
-                    className="hover:bg-suppergant/90 bg-supperagent text-white"
-                  >
-                    Confirm
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
         ) : (
           <Input
             ref={inputRef as React.RefObject<HTMLInputElement>}
             id={id}
-            type={type}
+            type="text" // Always text for time — we handle formatting
             value={fieldValue as string}
             onChange={handleChange}
             onBlur={handleBlur}
             onKeyDown={handleKeyDown}
-            placeholder={placeholder}
+            placeholder={type === 'time' ? 'HH:mm' : placeholder}
             disabled={isSaving}
             required={required}
-            maxLength={maxLength}
-            max={max}
+            maxLength={type === 'time' ? 5 : maxLength}
             className={`w-full text-xs ${isMissing ? 'border-red-500' : ''}`}
           />
         )
@@ -481,9 +383,7 @@ export const EditableField: React.FC<EditableFieldProps> = ({
                   ? formatDate(fieldValue)
                   : 'Click to select'
                 : type === 'time'
-                  ? fieldValue
-                    ? formatTime(fieldValue)
-                    : 'Click to select'
+                  ? fieldValue || 'Click to edit'
                   : fieldValue || 'Click to edit'}
             </span>
           )}

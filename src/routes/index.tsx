@@ -92,6 +92,7 @@ import AddCapacityFormPage from '@/pages/PeoplePlanner/Consent/components/add-ca
 import AddConsentFormPage from '@/pages/PeoplePlanner/Consent/components/add-consent-form';
 import ServiceUserRequestDocument from '@/pages/PeoplePlanner/RequestDocument';
 import StaffAttendancePage from '@/pages/PeoplePlanner/StaffAttendance';
+import ServiceUserFunderDetailPage from '@/pages/PeoplePlanner/ServiceUser/funder/view-funder';
 
 const SignInPage = lazy(() => import('@/pages/auth/signin'));
 
@@ -164,6 +165,10 @@ export default function AppRouter() {
             {
               path: 'service-user/:id/funder',
               element: <ServiceUserFunder />
+            },
+            {
+              path: 'service-user/:id/funder/:funderId',
+              element: <ServiceUserFunderDetailPage />
             },
             {
               path: 'service-user/:id/funder/create',

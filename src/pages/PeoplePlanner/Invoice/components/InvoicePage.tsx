@@ -251,7 +251,7 @@ export default function InvoicePage({ onCreateInvoice }: InvoicesPageProps) {
     }
   };
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 bg-white rounded-lg shadow-md p-4">
       {/* Header */}
       <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div>
@@ -328,8 +328,8 @@ export default function InvoicePage({ onCreateInvoice }: InvoicesPageProps) {
       </div>
 
       {/* Search and Filters */}
-      <Card>
-        <CardHeader>
+      <Card className='shadow-none'>
+        <CardHeader className='p-0 mb-4'>
           <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
             <div>
               <CardTitle>All Invoices</CardTitle>
@@ -353,7 +353,7 @@ export default function InvoicePage({ onCreateInvoice }: InvoicesPageProps) {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className='p-0'>
           <Table>
             <TableHeader>
               <TableRow>

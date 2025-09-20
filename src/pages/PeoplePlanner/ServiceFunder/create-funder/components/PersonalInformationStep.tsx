@@ -1,25 +1,20 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import Select from 'react-select';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { ServiceFunderFormData } from './validation';
 import { FormField } from './FromField';
-import { Textarea } from '@/components/ui/textarea';
 import { countries } from '@/types';
-
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import axiosInstance from '@/lib/axios';
 const typeOptions = [
   { value: 'private', label: 'Private Client' },
   { value: 'otherOrganization', label: 'Other Organization' },
   { value: 'socialServices', label: 'Social Services' }
 ];
-const titleOptions = [
-  { value: 'Mr', label: 'Mr' },
-  { value: 'Mrs', label: 'Mrs' },
-  { value: 'Miss', label: 'Miss' },
-  { value: 'Ms', label: 'Ms' },
-  { value: 'Dr', label: 'Dr' }
-];
+
 
 const statusOptions = [
   { value: 'active', label: 'Active' },
@@ -29,26 +24,46 @@ const statusOptions = [
   { value: 'terminated', label: 'Terminated' }
 ];
 
-const servicePriorityOptions = [
-  { value: 'high', label: 'High' },
-  { value: 'medium', label: 'Medium' },
-  { value: 'low', label: 'Low' }
+
+const titleOptions = [
+  { value: 'Mr', label: 'Mr' },
+  { value: 'Mrs', label: 'Mrs' },
+  { value: 'Miss', label: 'Miss' },
+  { value: 'Ms', label: 'Ms' },
+  { value: 'Dr', label: 'Dr' }
+];
+
+const rateSheetOptions = [
+  { value: 'basic', label: 'Basic Plan' },
+  { value: 'premium', label: 'Premium Plan' },
+  { value: 'enterprise', label: 'Enterprise Plan' }
 ];
 
 const branchOptions = [
-  { value: 'north', label: 'North Branch' },
-  { value: 'south', label: 'South Branch' },
-  { value: 'east', label: 'East Branch' },
-  { value: 'west', label: 'West Branch' }
+  { value: 'everycare-romford', label: 'Everycare Romford' },
+  { value: 'staff-hours', label: 'Staff Hours' }
 ];
 
-const areaOptions = [
-  { value: 'zone1', label: 'Zone 1' },
-  { value: 'zone2', label: 'Zone 2' },
-  { value: 'zone3', label: 'Zone 3' }
-];
+// Default area options fallback
+const defaultAreaOptions = [{ value: '', label: 'Select Branch First' }];
+
+// Area options by branch
+const branchToAreas: Record<string, { value: string; label: string }[]> = {
+  'everycare-romford': [
+    { value: 'romford-north', label: 'Romford North' },
+    { value: 'romford-south', label: 'Romford South' }
+  ],
+  'staff-hours': [
+    { value: 'day-shift', label: 'Day Shift' },
+    { value: 'night-shift', label: 'Night Shift' }
+  ]
+};
 
 export const PersonalInformationStep: React.FC = () => {
+  const [serviceUserOptions, setServiceUserOptions] = useState<
+    { value: string; label: string }[]
+  >([]);
+
   const {
     register,
     setValue,
@@ -56,44 +71,57 @@ export const PersonalInformationStep: React.FC = () => {
     formState: { errors }
   } = useFormContext<ServiceFunderFormData>();
 
-  const watchedTitle = watch('title');
-  const watchedType = watch('type');
-  const watchedStatus = watch('status');
-  const watchedServicePriority = watch('servicePriority');
   const watchedBranch = watch('branch');
   const watchedArea = watch('area');
   const watchedCountry = watch('country');
+  const watchedStartDate = watch('startDate');
+  const watchedType = watch('type');
+  const watchedTitle = watch('title');
+  const watchedStatus = watch('status');
+  const watchedRateSheet = watch('rateSheet');
+  const watchedServiceUser = watch('serviceUser');
+
+  useEffect(() => {
+    const fetchServiceUsers = async () => {
+      try {
+        const res = await axiosInstance.get(
+          '/users?role=serviceUser&limit=all'
+        );
+        const users = res.data?.data?.result || [];
+        const options = users.map((user: any) => ({
+          value: user._id,
+          label:
+            `${user.title || ''} ${user.firstName || ''} ${user.lastName || ''}`.trim()
+        }));
+        setServiceUserOptions(options);
+      } catch (error) {
+        console.error('Failed to fetch service users:', error);
+      }
+    };
+
+    fetchServiceUsers();
+  }, []);
 
   const countryOptions = countries.map((country) => ({
     value: country,
     label: country
   }));
 
-  // Initialize nullable select fields to null if undefined on mount
-  useEffect(() => {
-    if (watchedType === undefined) setValue('type', null);
-    if (watchedTitle === undefined) setValue('title', null);
-    if (watchedStatus === undefined) setValue('status', null);
-    if (watchedServicePriority === undefined) setValue('servicePriority', null);
-    if (watchedBranch === undefined) setValue('branch', null);
-    if (watchedArea === undefined) setValue('area', null);
-  }, [
-    watchedType,
-    watchedTitle,
-    watchedStatus,
-    watchedServicePriority,
-    watchedBranch,
-    watchedArea,
-    setValue
-  ]);
+  // Compute area options dynamically
+  const areaOptions =
+    watchedBranch && branchToAreas[watchedBranch]
+      ? branchToAreas[watchedBranch]
+      : defaultAreaOptions;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         <FormField label="Type" required error={errors.type?.message}>
           <Select
-            value={watchedType}
-            onChange={(value) => setValue('type', value)}
+            value={
+              typeOptions.find((option) => option.value === watchedType) || null
+            }
+            onChange={(selected) => setValue('type', selected?.value || '')}
             options={typeOptions}
             placeholder="Select Type"
             className="react-select-container"
@@ -102,10 +130,32 @@ export const PersonalInformationStep: React.FC = () => {
           />
         </FormField>
 
+
+         <FormField label="Service User" error={errors.serviceUser?.message}>
+          <Select
+            value={
+              serviceUserOptions.find(
+                (option) => option.value === watchedServiceUser
+              ) || null
+            }
+            onChange={(selected) =>
+              setValue('serviceUser', selected?.value || '')
+            }
+            options={serviceUserOptions}
+            placeholder="Select Service User"
+            className="react-select-container"
+            classNamePrefix="react-select"
+            isClearable
+          />
+        </FormField>
+
         <FormField label="Title" required error={errors.title?.message}>
           <Select
-            value={watchedTitle}
-            onChange={(value) => setValue('title', value)}
+            value={
+              titleOptions.find((option) => option.value === watchedTitle) ||
+              null
+            }
+            onChange={(selected) => setValue('title', selected?.value || '')}
             options={titleOptions}
             placeholder="Select title"
             className="react-select-container"
@@ -134,7 +184,9 @@ export const PersonalInformationStep: React.FC = () => {
           <Input
             {...register('address')}
             placeholder="Enter full address"
-            className="flex w-full rounded-md border border-gray-300 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex w-full rounded-md border border-gray-300 px-3 py-2 text-sm 
+                       focus-visible:outline-none focus-visible:ring-2 
+                       focus-visible:ring-ring focus-visible:ring-offset-2"
           />
         </FormField>
 
@@ -165,6 +217,7 @@ export const PersonalInformationStep: React.FC = () => {
             className="uppercase"
           />
         </FormField>
+
         <FormField
           label="Description"
           required
@@ -173,7 +226,7 @@ export const PersonalInformationStep: React.FC = () => {
           <Textarea
             {...register('description')}
             placeholder="Enter description"
-            className="h-24 resize-none rounded-md border border-gray-300 px-3 py-2 text-sm focus-visible:outline-none "
+            className="h-24 resize-none rounded-md border border-gray-300 px-3 py-2 text-sm focus-visible:outline-none"
           />
         </FormField>
       </div>
@@ -184,17 +237,30 @@ export const PersonalInformationStep: React.FC = () => {
           required
           error={errors.startDate?.message}
         >
-          <Input {...register('startDate')} type="date" />
-        </FormField>
-
-        <FormField label="Last Duty Date" error={errors.lastDutyDate?.message}>
-          <Input {...register('lastDutyDate')} type="date" />
+          <DatePicker
+            selected={watchedStartDate ? new Date(watchedStartDate) : null}
+            onChange={(date) =>
+              setValue('startDate', date ? date.toISOString() : '')
+            }
+            dateFormat="dd-MM-yyyy"
+            placeholderText="Select start date"
+            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm 
+                       focus-visible:outline-none focus-visible:ring-2 
+                       focus-visible:ring-ring focus-visible:ring-offset-2"
+            wrapperClassName="w-full"
+            showMonthDropdown
+            showYearDropdown
+            dropdownMode="select"
+          />
         </FormField>
 
         <FormField label="Status" required error={errors.status?.message}>
           <Select
-            value={watchedStatus}
-            onChange={(selected) => setValue('status', selected)}
+            value={
+              statusOptions.find((option) => option.value === watchedStatus) ||
+              null
+            }
+            onChange={(selected) => setValue('status', selected?.value || '')}
             options={statusOptions}
             placeholder="Select status"
             className="react-select-container"
@@ -203,16 +269,18 @@ export const PersonalInformationStep: React.FC = () => {
           />
         </FormField>
 
-        <FormField
-          label="Service Priority"
-          required
-          error={errors.servicePriority?.message}
-        >
+        <FormField label="Rate Sheet" error={errors.rateSheet?.message}>
           <Select
-            value={watchedServicePriority}
-            onChange={(selected) => setValue('servicePriority', selected)}
-            options={servicePriorityOptions}
-            placeholder="Select service priority"
+            value={
+              rateSheetOptions.find(
+                (option) => option.value === watchedRateSheet
+              ) || null
+            }
+            onChange={(selected) =>
+              setValue('rateSheet', selected?.value || '')
+            }
+            options={rateSheetOptions}
+            placeholder="Select rateSheet"
             className="react-select-container"
             classNamePrefix="react-select"
             isClearable
@@ -221,8 +289,11 @@ export const PersonalInformationStep: React.FC = () => {
 
         <FormField label="Branch" required error={errors.branch?.message}>
           <Select
-            value={watchedBranch}
-            onChange={(selected) => setValue('branch', selected)}
+            value={
+              branchOptions.find((option) => option.value === watchedBranch) ||
+              null
+            }
+            onChange={(selected) => setValue('branch', selected?.value || '')}
             options={branchOptions}
             placeholder="Select branch"
             className="react-select-container"
@@ -233,8 +304,10 @@ export const PersonalInformationStep: React.FC = () => {
 
         <FormField label="Area" required error={errors.area?.message}>
           <Select
-            value={watchedArea}
-            onChange={(selected) => setValue('area', selected)}
+            value={
+              areaOptions.find((option) => option.value === watchedArea) || null
+            }
+            onChange={(selected) => setValue('area', selected?.value || '')}
             options={areaOptions}
             placeholder="Select area"
             className="react-select-container"
@@ -243,6 +316,7 @@ export const PersonalInformationStep: React.FC = () => {
           />
         </FormField>
       </div>
+   
     </div>
   );
 };

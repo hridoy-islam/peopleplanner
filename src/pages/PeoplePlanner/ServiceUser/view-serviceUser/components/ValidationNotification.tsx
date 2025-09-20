@@ -17,7 +17,7 @@ const tabLabels: { [key: string]: string } = {
   criticalInfo: 'Critical Information',
   equipment: 'Required Equipment',
   primaryBranch: 'Branch & Area',
-  note: 'Note'
+  notes: 'Note'
 };
 
 export const ValidationNotification: React.FC<ValidationNotificationProps> = ({
@@ -49,13 +49,11 @@ const navigate = useNavigate()
                   <span className="text-sm font-medium text-black">
                     {tabLabels[tabId] || tabId}
                   </span>
-                  {isInvalid ? (
+                  {isInvalid && (
                     <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
                       {missingCount}
-                    </span>
-                  ) : (
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                  )}
+                    </span>)
+                  }
                 </div>
                 <ChevronRight className="h-4 w-4 text-supperagent transition-transform group-hover:translate-x-1" />
               </div>

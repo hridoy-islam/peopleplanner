@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Select from 'react-select';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -14,51 +14,7 @@ import { Eye, Search } from 'lucide-react';
 import { DynamicPagination } from '@/components/shared/DynamicPagination';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
-
-// Mock Data
-const mockServiceUsers = [
-  {
-    _id: '1',
-    title: 'Mr.',
-    firstName: 'John',
-    initial: 'D',
-    lastName: 'Doe',
-    address: '123 Main St',
-    city: 'Springfield',
-    mobilePhone: '555-1234',
-    status: 'active',
-    type: 'Inpatient',
-    area: 'North Wing',
-  },
-  {
-    _id: '2',
-    title: 'Ms.',
-    firstName: 'Jane',
-    initial: '',
-    lastName: 'Smith',
-    address: '456 Elm St',
-    city: 'Shelbyville',
-    mobilePhone: '555-5678',
-    status: 'block',
-    type: 'Outpatient',
-    area: 'South Wing',
-  },
-  {
-    _id: '3',
-    title: 'Dr.',
-    firstName: 'Alice',
-    initial: 'M',
-    lastName: 'Johnson',
-    address: '789 Oak St',
-    city: 'Ogdenville',
-    mobilePhone: '555-9012',
-    status: 'active',
-    type: 'Inpatient',
-    area: 'East Wing',
-  },
-  // Add more mock users here to test pagination
-  // ...
-];
+import axiosInstance from '@/lib/axios';
 
 // React Select options
 const typeOptions = [
@@ -81,7 +37,8 @@ const areaOptions = [
 ];
 
 export default function ServiceUserList() {
-  const [users, setUsers] = useState(mockServiceUsers);
+  const [users, setUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
   // Filters state
   const [searchTerm, setSearchTerm] = useState('');
@@ -93,21 +50,46 @@ export default function ServiceUserList() {
   const [currentPage, setCurrentPage] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(5);
 
-  // Handle status toggle
-  const handleStatusChange = (id: string, checked: boolean) => {
-    setUsers((prev) =>
-      prev.map((user) =>
-        user._id === id ? { ...user, status: checked ? 'active' : 'block' } : user
-      )
-    );
+  const navigate = useNavigate();
+
+  // Fetch users from API
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const res = await axiosInstance.get('/users', {
+        params: { role: 'serviceUser' },
+      });
+      setUsers(res.data.data.result || []);
+    } catch (error) {
+      console.error('Failed to fetch users', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
-  const navigate = useNavigate()
+  // Handle status toggle
+  const handleStatusChange = async (id: string, checked: boolean) => {
+    try {
+      await axiosInstance.patch(`/users/${id}`, {
+        status: checked ? 'active' : 'block',
+      });
+      setUsers((prev) =>
+        prev.map((user) =>
+          user._id === id ? { ...user, status: checked ? 'active' : 'block' } : user
+        )
+      );
+    } catch (error) {
+      console.error('Failed to update status', error);
+    }
+  };
 
   // Handle view action
   const handleView = (id: string) => {
-   navigate(`/admin/people-planner/service-user/${id}`);
+    navigate(`/admin/people-planner/service-user/${id}`);
   };
 
   // Filtering logic
@@ -117,7 +99,7 @@ export default function ServiceUserList() {
         .filter(Boolean)
         .join(' ')
         .toLowerCase();
-      const phone = user.mobilePhone.toLowerCase();
+      const phone = user.mobilePhone?.toLowerCase() || '';
       const search = searchTerm.toLowerCase();
 
       if (search && !fullName.includes(search) && !phone.includes(search)) {
@@ -144,10 +126,8 @@ export default function ServiceUserList() {
   }, [filteredUsers, currentPage, entriesPerPage]);
 
   // Reset currentPage if filteredUsers shrink below current page
-  React.useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(1);
-    }
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(1);
   }, [totalPages, currentPage]);
 
   return (
@@ -156,17 +136,20 @@ export default function ServiceUserList() {
 
       {/* Filters */}
       <div className="flex flex-wrap gap-4 mb-4 items-center">
-        <div className='flex items-center gap-2'>
-
-        <Input
-          type="text"
-          className="border rounded px-3 py-1 min-w-[300px]"
-          placeholder="Search by Name or Phone"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+        <div className="flex items-center gap-2">
+          <Input
+            type="text"
+            className="border rounded px-3 py-1 min-w-[300px]"
+            placeholder="Search by Name or Phone"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
-<Button className='bg-supperagent hover:bg-supperagent/90 text-white'><Search className='w-4 h-4'></Search>Search</Button>
-          </div>
+          <Button className="bg-supperagent hover:bg-supperagent/90 text-white">
+            <Search className="w-4 h-4" />
+            Search
+          </Button>
+        </div>
+
         <div className="w-48">
           <Select
             options={typeOptions}
@@ -208,7 +191,13 @@ export default function ServiceUserList() {
         </TableHeader>
 
         <TableBody>
-          {paginatedUsers.length === 0 ? (
+          {loading ? (
+            <TableRow>
+              <TableCell colSpan={5} className="text-center py-4">
+                Loading...
+              </TableCell>
+            </TableRow>
+          ) : paginatedUsers.length === 0 ? (
             <TableRow>
               <TableCell colSpan={5} className="text-center text-gray-500 py-4">
                 No matching records found.
@@ -222,22 +211,16 @@ export default function ServiceUserList() {
                     .filter(Boolean)
                     .join(' ')}
                 </TableCell>
-
                 <TableCell>
                   {[user.address, user.city].filter(Boolean).join(', ')}
                 </TableCell>
-
                 <TableCell>{user.mobilePhone}</TableCell>
-
                 <TableCell>
                   <Switch
                     checked={user.status === 'active'}
-                    onCheckedChange={(checked) =>
-                      handleStatusChange(user._id, checked)
-                    }
+                    onCheckedChange={(checked) => handleStatusChange(user._id, checked)}
                   />
                 </TableCell>
-
                 <TableCell className="text-right">
                   <Button
                     variant="ghost"

@@ -18,19 +18,43 @@ const EqualityTab: React.FC<EqualityTabProps> = ({
   isFieldSaving
 }) => {
   const genderOptions = [
-    { value: 'Male', label: 'Male' },
-    { value: 'Female', label: 'Female' },
-    { value: 'Other', label: 'Other' },
-    { value: 'Prefer not to say', label: 'Prefer not to say' }
+    { value: 'male', label: 'Male' },
+    { value: 'female', label: 'Female' },
+    { value: 'other', label: 'Other' },
+    { value: 'prefer-not-to-say', label: 'Prefer not to say' }
   ];
 
   const maritalStatusOptions = [
-    { value: 'Single', label: 'Single' },
-    { value: 'Married', label: 'Married' },
-    { value: 'Divorced', label: 'Divorced' },
-    { value: 'Widowed', label: 'Widowed' },
-    { value: 'Separated', label: 'Separated' },
-    { value: 'Civil Partnership', label: 'Civil Partnership' }
+    { value: 'single', label: 'Single' },
+    { value: 'married', label: 'Married' },
+    { value: 'divorced', label: 'Divorced' },
+    { value: 'widowed', label: 'Widowed' },
+    { value: 'separated', label: 'Separated' }
+  ];
+
+  const ethnicOriginOptions = [
+    { value: 'white-british', label: 'White British' },
+    { value: 'white-irish', label: 'White Irish' },
+    { value: 'white-other', label: 'White Other' },
+    {
+      value: 'mixed-white-black-caribbean',
+      label: 'Mixed White and Black Caribbean'
+    },
+    {
+      value: 'mixed-white-black-african',
+      label: 'Mixed White and Black African'
+    },
+    { value: 'mixed-white-asian', label: 'Mixed White and Asian' },
+    { value: 'mixed-other', label: 'Mixed Other' },
+    { value: 'asian-indian', label: 'Asian Indian' },
+    { value: 'asian-pakistani', label: 'Asian Pakistani' },
+    { value: 'asian-bangladeshi', label: 'Asian Bangladeshi' },
+    { value: 'asian-other', label: 'Asian Other' },
+    { value: 'black-caribbean', label: 'Black Caribbean' },
+    { value: 'black-african', label: 'Black African' },
+    { value: 'black-other', label: 'Black Other' },
+    { value: 'chinese', label: 'Chinese' },
+    { value: 'other', label: 'Other' }
   ];
 
   const religionOptions = [
@@ -87,10 +111,14 @@ const EqualityTab: React.FC<EqualityTabProps> = ({
             id="ethnicOrigin"
             label="Ethnic Origin"
             value={formData.ethnicOrigin}
-            onUpdate={(value) => onUpdate('ethnicOrigin', value)}
+            type="select"
+            options={ethnicOriginOptions}
+            onUpdate={(value) => onSelectChange('ethnicOrigin', value)}
             isSaving={isFieldSaving.ethnicOrigin}
-            placeholder="Enter ethnic origin"
+            required
+            isMissing={isFieldMissing('maritalStatus')}
           />
+
           <EditableField
             id="religion"
             label="Religion"

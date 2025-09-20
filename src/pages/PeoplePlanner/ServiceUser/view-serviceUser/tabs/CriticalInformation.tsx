@@ -1,24 +1,19 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { EditableField } from '../components/EditableField';
-import { countries } from '@/types';
-import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import Select from 'react-select';
+import { Trash } from 'lucide-react'; // ✅ Import Trash icon
 
 interface CriticalInfoItem {
   date: string;
-  type: { label: string; value: string | null } ;
+  type: { label: string; value: string } | null;
   details: string;
 }
 
-interface AddressTabProps {
+interface CriticalInfoTabProps {
   formData: any;
   onUpdate: (field: string, value: any) => void;
-  onDateChange: () => void;
-  onSelectChange: (field: string, value: string) => void;
   isFieldSaving: Record<string, boolean>;
-  getMissingFields: (tab: any, formData: Record<string, any>) => string[];
+  getMissingFields: (tab: string, formData: Record<string, any>) => string[]; // ✅ Add this prop
 }
 
 const typeOptions = [
@@ -27,115 +22,121 @@ const typeOptions = [
   { value: 'other', label: 'Other' }
 ];
 
-const CriticalInfoTab: React.FC<AddressTabProps> = ({
+const CriticalInfoTab: React.FC<CriticalInfoTabProps> = ({
   formData,
   onUpdate,
-  onSelectChange,
-  onDateChange,
-  getMissingFields,
-  isFieldSaving
+  isFieldSaving,
+  getMissingFields // ✅ Destructure it
 }) => {
-  const [criticalInfo, setCriticalInfo] = useState<CriticalInfoItem[]>([
-    { date: '', type: null, details: '' }
-  ]);
+  const criticalInfo: CriticalInfoItem[] = formData.criticalInfo || [];
 
-  const handleCriticalChange = (
+  const updateCriticalField = <K extends keyof CriticalInfoItem>(
     index: number,
-    field: keyof CriticalInfoItem,
-    value: any
+    field: K,
+    value: CriticalInfoItem[K]
   ) => {
     const updated = [...criticalInfo];
     updated[index][field] = value;
-    setCriticalInfo(updated);
-     onUpdate('criticalInfo', updated);
+    onUpdate('criticalInfo', updated);
   };
 
-  const addMoreCriticalInfo = () => {
-    setCriticalInfo([...criticalInfo, { date: '', type: null, details: '' }]);
+  const addNewCriticalInfo = () => {
+    const updated = [...criticalInfo, { date: '', type: null, details: '' }];
+    onUpdate('criticalInfo', updated);
   };
 
-const getMissingCriticalFields = (criticalInfo: CriticalInfoItem): (keyof CriticalInfoItem)[] => {
-  const missing: (keyof CriticalInfoItem)[] = [];
+  // ✅ Add remove function
+  const removeCriticalInfo = (index: number) => {
+    const updated = criticalInfo.filter((_, i) => i !== index);
+    onUpdate('criticalInfo', updated);
+  };
 
-  if (!criticalInfo.date?.toString().trim()) {
-    missing.push('date');
-  }
-
-  if (!criticalInfo.type || !criticalInfo.type.value?.toString().trim()) {
-    missing.push('type');
-  }
-
-  if (!criticalInfo.details?.toString().trim()) {
-    missing.push('details');
-  }
-
-  return missing;
-};
-
+  // ✅ Use global validation
+  const missingFields = getMissingFields('criticalInfo', formData);
 
   const isFieldMissing = (index: number, field: keyof CriticalInfoItem) => {
-    const critical = criticalInfo[index];
-    const missing = getMissingCriticalFields(critical);
-    return missing.includes(field);
+    return missingFields.includes(`${field}[${index}]`);
   };
 
   return (
-    <div className="space-y-8">
-      {/* Dynamic Critical Information Entries */}
-      <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-        <h3 className="mb-4 border-b border-gray-200 pb-3 text-lg font-semibold text-gray-900">
-          Critical Information
-        </h3>
+    <div className="space-y-2">
+      <h1 className="text-xl font-semibold text-gray-900">
+        Critical Information
+      </h1>
 
-        {criticalInfo.map((info, index) => (
-          <div key={index} className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            {/* Date Field */}
+      {criticalInfo.map((item, index) => (
+        <div
+          key={index}
+          className="rounded-lg border border-gray-300 bg-white p-6 shadow-sm"
+        >
+          {/* ✅ Header with remove button */}
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Critical Information #{index + 1}
+            </h3>
+
+            <Button
+              type="button"
+              variant="default"
+              size="icon"
+              onClick={() => removeCriticalInfo(index)}
+              className="text-red-500 hover:bg-red-500 hover:text-white"
+            >
+              <Trash className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             <EditableField
               id={`date-${index}`}
               label="Date"
-              value={info.date}
+              value={item.date}
               type="date"
-              onUpdate={(val) => handleCriticalChange(index, 'date', val)}
-              isSaving={false}
+              onUpdate={(val) => updateCriticalField(index, 'date', val)}
+              isSaving={isFieldSaving[`date[${index}]`]} // ✅ Better key format
               isMissing={isFieldMissing(index, 'date')}
               required
             />
 
-            {/* Type Field - with Select */}
             <EditableField
               id={`type-${index}`}
               label="Type"
-              value={info.type ? info.type.value : null}
+              value={item.type?.value || ''}
               type="select"
               options={typeOptions}
               onUpdate={(val) =>
-                handleCriticalChange(
+                updateCriticalField(
                   index,
                   'type',
                   typeOptions.find((option) => option.value === val) || null
                 )
               }
-              isSaving={isFieldSaving[`type-${index}`]}
+              isSaving={isFieldSaving[`type[${index}]`]} // ✅ Better key format
               isMissing={isFieldMissing(index, 'type')}
               required
             />
 
-            {/* Details Field */}
             <EditableField
               id={`details-${index}`}
               label="Details"
-              value={info.details}
+              value={item.details}
               type="textarea"
-              onUpdate={(val) => handleCriticalChange(index, 'details', val)}
-              isSaving={false} // or use isFieldSaving[`details-${index}`]
+              onUpdate={(val) => updateCriticalField(index, 'details', val)}
+              isSaving={isFieldSaving[`details[${index}]`]} // ✅ Better key format
               isMissing={isFieldMissing(index, 'details')}
               required
             />
           </div>
-        ))}
+        </div>
+      ))}
 
-        <Button type="button" onClick={addMoreCriticalInfo}>
-          + Add More
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          onClick={addNewCriticalInfo}
+          className="rounded bg-supperagent px-4 py-2 text-white hover:bg-supperagent/90"
+        >
+          Add More
         </Button>
       </div>
     </div>

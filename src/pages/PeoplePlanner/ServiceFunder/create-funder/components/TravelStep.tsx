@@ -10,7 +10,9 @@ const travelTypeOptions = [
 ];
 
 export const TravelStep: React.FC = () => {
-  const { control, formState: { errors } } = useFormContext<ServiceFunderFormData>();
+  const { control, watch, setValue, formState: { errors } } = useFormContext<ServiceFunderFormData>();
+
+  const watchedTravelType = watch('travelType');
 
   return (
     <div className="space-y-6">
@@ -25,7 +27,8 @@ export const TravelStep: React.FC = () => {
             control={control}
             render={({ field }) => (
               <Select
-                {...field}
+                value={travelTypeOptions.find(option => option.value === watchedTravelType) || null}
+                onChange={(selected) => setValue('travelType', selected?.value || '')}
                 options={travelTypeOptions}
                 placeholder="Select travel type"
                 isClearable

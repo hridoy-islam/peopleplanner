@@ -65,52 +65,59 @@ export const EqualityStep: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-        <FormField label="Gender" required error={errors.gender?.message}>
-          <Select
-            value={watchedGender}
-            onChange={(value) => setValue('gender', value)}
-            options={genderOptions}
-            placeholder="Select gender"
-            className="react-select-container"
-            classNamePrefix="react-select"
-          />
-        </FormField>
+   <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+  {/* ✅ Gender — Fixed */}
+  <FormField label="Gender" required error={errors.gender?.message}>
+    <Select
+      value={genderOptions.find(option => option.value === watchedGender) || null}
+      onChange={(selectedOption) => setValue('gender', selectedOption?.value || '')}
+      options={genderOptions}
+      placeholder="Select gender"
+      className="react-select-container"
+      classNamePrefix="react-select"
+      isClearable
+    />
+  </FormField>
 
-        <FormField label="Marital Status" error={errors.maritalStatus?.message}>
-          <Select
-            value={watchedMaritalStatus}
-            onChange={(value) => setValue('maritalStatus', value)}
-            options={maritalStatusOptions}
-            placeholder="Select marital status"
-            className="react-select-container"
-            classNamePrefix="react-select"
-          />
-        </FormField>
+  {/* ✅ Marital Status — Fixed */}
+  <FormField label="Marital Status" error={errors.maritalStatus?.message}>
+    <Select
+      value={maritalStatusOptions.find(option => option.value === watchedMaritalStatus) || null}
+      onChange={(selectedOption) => setValue('maritalStatus', selectedOption?.value || '')}
+      options={maritalStatusOptions}
+      placeholder="Select marital status"
+      className="react-select-container"
+      classNamePrefix="react-select"
+      isClearable
+    />
+  </FormField>
 
-        <FormField label="Ethnic Origin" error={errors.ethnicOrigin?.message}>
-          <Select
-            value={watchedEthnicOrigin}
-            onChange={(value) => setValue('ethnicOrigin', value)}
-            options={ethnicOriginOptions}
-            placeholder="Select ethnic origin"
-            className="react-select-container"
-            classNamePrefix="react-select"
-          />
-        </FormField>
+  {/* ✅ Ethnic Origin — Fixed */}
+  <FormField label="Ethnic Origin" error={errors.ethnicOrigin?.message}>
+    <Select
+      value={ethnicOriginOptions.find(option => option.value === watchedEthnicOrigin) || null}
+      onChange={(selectedOption) => setValue('ethnicOrigin', selectedOption?.value || '')}
+      options={ethnicOriginOptions}
+      placeholder="Select ethnic origin"
+      className="react-select-container"
+      classNamePrefix="react-select"
+      isClearable
+    />
+  </FormField>
 
-        <FormField label="Religion" error={errors.religion?.message}>
-  <Select
-    value={religionOptions.find(option => option.value === watchedReligion)}
-    onChange={(selectedOption) => setValue('religion', selectedOption?.value || '')}
-    options={religionOptions}
-    placeholder="Select religion"
-    className="react-select-container"
-    classNamePrefix="react-select"
-  />
-</FormField>
-
-      </div>
+  {/* ✅ Religion — Already Correct ✅ */}
+  <FormField label="Religion" error={errors.religion?.message}>
+    <Select
+      value={religionOptions.find(option => option.value === watchedReligion) || null}
+      onChange={(selectedOption) => setValue('religion', selectedOption?.value || '')}
+      options={religionOptions}
+      placeholder="Select religion"
+      className="react-select-container"
+      classNamePrefix="react-select"
+      isClearable
+    />
+  </FormField>
+</div>
     </div>
   );
 };

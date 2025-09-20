@@ -13,7 +13,7 @@ interface TabValidation {
 
 export const useEditApplicant = () => {
   const [loading, setLoading] = useState(true); // ✅ Start as true while fetching
-  const { id } = useParams();
+  const { id, funderId } = useParams<{ id?: string; funderId?: string }>();
   const [activeTab, setActiveTab] = useState('general');
   const [isFieldSaving, setIsFieldSaving] = useState<Record<string, boolean>>(
     {}
@@ -42,7 +42,6 @@ export const useEditApplicant = () => {
     otherPhone: '',
     website: '',
     travelType: '',
-    serviceUser:'',
     invoice: {
       phone: '',
       fax: '',
@@ -142,14 +141,14 @@ export const useEditApplicant = () => {
   // ✅ Fetch funder data on mount
   useEffect(() => {
     const fetchFunderData = async () => {
-      if (!id) {
+      if (!funderId) {
         setLoading(false);
         return;
       }
 
       try {
         const response = await axiosInstance.get(
-          `/hr/service-funder/${id}`
+          `/hr/service-funder/${funderId}`
         );
         const data = response.data.data;
 
@@ -178,7 +177,6 @@ export const useEditApplicant = () => {
           otherPhone: data.otherPhone || '',
           travelType: data.travelType || '',
           website: data.website || '',
-          serviceUser: data.serviceUser ||'',
           invoice: {
             phone: data.invoice?.phone || '',
             fax: data.invoice?.fax || '',
@@ -230,7 +228,7 @@ export const useEditApplicant = () => {
     };
 
     fetchFunderData();
-  }, [id]);
+  }, [funderId]);
 
 
   // Helper function to check if a field is empty
@@ -392,7 +390,7 @@ const validateTab = (tabId: string): ValidationResult => {
 
   // ✅ Generic field update with PATCH
   const handleFieldUpdate = async (field: string, value: any) => {
-    if (!id) return;
+    if (!funderId) return;
 
     setIsFieldSaving((prev) => ({ ...prev, [field]: true }));
 
@@ -401,7 +399,7 @@ const validateTab = (tabId: string): ValidationResult => {
       setFormData((prev) => ({ ...prev, [field]: value }));
 
       // Send PATCH request
-      await axiosInstance.patch(`/hr/service-funder/${id}`, {
+      await axiosInstance.patch(`/hr/service-funder/${funderId}`, {
         [field]: value
       });
     } catch (error) {
@@ -414,13 +412,13 @@ const validateTab = (tabId: string): ValidationResult => {
 
   // ✅ Date field update
   const handleDateChange = async (field: string, value: string) => {
-    if (!id) return;
+    if (!funderId) return;
 
     setIsFieldSaving((prev) => ({ ...prev, [field]: true }));
 
     try {
       setFormData((prev) => ({ ...prev, [field]: value }));
-      await axiosInstance.patch(`/hr/service-funder/${id}`, {
+      await axiosInstance.patch(`/hr/service-funder/${funderId}`, {
         [field]: value
       });
     } catch (error) {
@@ -432,7 +430,7 @@ const validateTab = (tabId: string): ValidationResult => {
 
   // ✅ Select field update (handles {value, label} objects)
   const handleSelectChange = async (field: string, value: any) => {
-    if (!id) return;
+    if (!funderId) return;
 
     setIsFieldSaving((prev) => ({ ...prev, [field]: true }));
 
@@ -442,7 +440,7 @@ const validateTab = (tabId: string): ValidationResult => {
 
     try {
       setFormData((prev) => ({ ...prev, [field]: value })); // Keep full object in UI for display
-      await axiosInstance.patch(`/hr/service-funder/${id}`, {
+      await axiosInstance.patch(`/hr/service-funder/${funderId}`, {
         [field]: payloadValue // Send only string value to backend
       });
     } catch (error) {
@@ -454,13 +452,13 @@ const validateTab = (tabId: string): ValidationResult => {
 
   // ✅ Checkbox (boolean) field update
   const handleCheckboxChange = async (field: string, value: boolean) => {
-    if (!id) return;
+    if (!funderId) return;
 
     setIsFieldSaving((prev) => ({ ...prev, [field]: true }));
 
     try {
       setFormData((prev) => ({ ...prev, [field]: value }));
-      await axiosInstance.patch(`/hr/service-funder/${id}`, {
+      await axiosInstance.patch(`/hr/service-funder/${funderId}`, {
         [field]: value
       });
     } catch (error) {

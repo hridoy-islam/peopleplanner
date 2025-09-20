@@ -256,6 +256,7 @@ export const EditableField: React.FC<EditableFieldProps> = ({
             showMonthDropdown
             showYearDropdown
             dropdownMode="select"
+            wrapperClassName='w-full'
           />
         ) : (
           <Input

@@ -12,7 +12,7 @@ export const ReviewStep: React.FC = () => {
       title: 'Personal Information',
       icon: User,
       fields: [
-        { label: 'Type', value: formData.type },
+        { label: 'Service User Type', value: formData.serviceUserType },
         { label: 'Title', value: formData.title },
         { label: 'First Name', value: formData.firstName },
         { label: 'Middle Initial', value: formData.middleInitial },

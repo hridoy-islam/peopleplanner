@@ -99,9 +99,9 @@ export default function PeoplePlannerCompanyDetails() {
   };
 
   return (
-    <div className="flex flex-col space-y-2 p-2 md:p-2">
+    <div className="flex flex-col space-y-2 p-4  bg-white shadow-md rounded-lg">
       <h1 className="mb-2 text-2xl font-semibold ">Company Details</h1>
-      <div className="flex flex-col  rounded-lg bg-white p-4 shadow-sm">
+      <div className="flex flex-col ">
         <div className="flex basis-1/6 items-center justify-start">
           <div className="relative h-48 w-48 overflow-hidden ROUNDED">
             <img

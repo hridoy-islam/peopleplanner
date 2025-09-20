@@ -65,9 +65,9 @@ const ContactTab: React.FC<ContactTabProps> = ({
           />
 
           <EditableField
-            id="mobilePhone"
+            id="mobile"
             label="Mobile Phone"
-            value={formData.homePhone}
+            value={formData.mobile}
             type="text"
             onUpdate={(value) => onUpdate('mobilePhone', value)}
             isSaving={isFieldSaving.mobilePhone}

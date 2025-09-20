@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { countries } from '@/types';
 import { EditableField } from '../components/EditableField';
-import axiosInstance from '@/lib/axios';
+
 interface PersonalInfoTabProps {
   formData: any;
   onUpdate: (field: string, value: any) => void;
@@ -19,10 +19,6 @@ const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({
   isFieldSaving,
   getMissingFields
 }) => {
-  const [serviceUserOptions, setServiceUserOptions] = useState<
-    { value: string; label: string }[]
-  >([]);
-
   const typeOptions = [
     { value: 'private-client', label: 'Private Client' },
     { value: 'other-organization', label: 'Other Organization' },
@@ -52,6 +48,8 @@ const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({
     { value: 'south', label: 'South Branch' }
   ];
 
+
+
   // 🔹 Dynamically compute area options based on branch
   const areaOptions = useMemo(() => {
     if (formData.branch === 'everycare-romford') {
@@ -64,33 +62,13 @@ const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({
     if (formData.branch === 'staff-hours') {
       return [{ value: 'work-hours', label: 'Work Hours' }];
     }
+    ;
   }, [formData.branch]);
 
   const countryOptions = countries.map((country) => ({
     value: country,
     label: country
   }));
-
-  useEffect(() => {
-    const fetchServiceUsers = async () => {
-      try {
-        const res = await axiosInstance.get(
-          '/users?role=serviceUser&limit=all'
-        );
-        const users = res.data?.data?.result || [];
-        const options = users.map((user: any) => ({
-          value: user._id,
-          label:
-            `${user.title || ''} ${user.firstName || ''} ${user.lastName || ''}`.trim()
-        }));
-        setServiceUserOptions(options);
-      } catch (error) {
-        console.error('Failed to fetch service users:', error);
-      }
-    };
-
-    fetchServiceUsers();
-  }, []);
 
   const missingFields = getMissingFields('general', formData);
 
@@ -118,16 +96,7 @@ const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({
             required
             isMissing={isFieldMissing('type')}
           />
-          <EditableField
-            id="serviceUser"
-            label="Service User"
-            value={formData.serviceUser || ''}
-            type="select"
-            options={serviceUserOptions}
-            onUpdate={(value) => onSelectChange('serviceUser', value)}
-            isSaving={isFieldSaving.serviceUser}
-            isMissing={isFieldMissing('serviceUser')}
-          />
+
           <EditableField
             id="title"
             label="Title"

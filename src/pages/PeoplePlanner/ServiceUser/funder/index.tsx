@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Select from 'react-select';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -13,89 +13,61 @@ import {
 import { Eye, Plus, Search } from 'lucide-react';
 import { DynamicPagination } from '@/components/shared/DynamicPagination';
 import { Input } from '@/components/ui/input';
-import { useNavigate } from 'react-router-dom';
-
-// Mock Data
-const mockFundUsers = [
-  {
-    _id: '1',
-    title: 'Mr.',
-    firstName: 'John',
-    lastName: 'Doe',
-    organization: 'Healthcare Funding Ltd',
-    funderType: 'NHS',
-    status: 'active',
-    phone: '555-1234',
-    email: 'john@nhs.org'
-  },
-  {
-    _id: '2',
-    title: 'Ms.',
-    firstName: 'Jane',
-    lastName: 'Smith',
-    organization: 'Charity Care Fund',
-    funderType: 'Charity',
-    status: 'inactive',
-    phone: '555-5678',
-    email: 'jane@charity.org'
-  },
-  {
-    _id: '3',
-    title: 'Dr.',
-    firstName: 'Robert',
-    lastName: 'Brown',
-    organization: 'Private Health Group',
-    funderType: 'Private',
-    status: 'active',
-    phone: '555-9012',
-    email: 'robert@privatehealth.com'
-  }
-];
-
-// React Select options
-const funderTypeOptions = [
-  { value: 'all', label: 'All Types' },
-  { value: 'NHS', label: 'NHS' },
-  { value: 'Charity', label: 'Charity' },
-  { value: 'Private', label: 'Private' }
-];
-
-const statusOptions = [
-  { value: 'all', label: 'All Statuses' },
-  { value: 'active', label: 'Active' },
-  { value: 'inactive', label: 'Inactive' }
-];
+import { useNavigate, useParams } from 'react-router-dom';
+import axiosInstance from '@/lib/axios'; // ✅ Import axiosInstance
 
 export default function ServiceUserFunder() {
-  const [fundUsers, setFundUsers] = useState(mockFundUsers);
+  const [fundUsers, setFundUsers] = useState<any[]>([]); // ✅ Initialize as empty array
+  const [serviceUser, setServiceUser] = useState<any>(null); // ✅ Store service user info
+  const [loading, setLoading] = useState(true); // ✅ Add loading state
 
   // Filters state
   const [searchTerm, setSearchTerm] = useState('');
+  const { id } = useParams<{ id: string }>(); // ✅ Type safety
 
-  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(5);
 
   const navigate = useNavigate();
 
-  // Handle status toggle
-  const handleStatusChange = (id: string, checked: boolean) => {
-    setFundUsers((prev) =>
-      prev.map((user) =>
-        user._id === id
-          ? { ...user, status: checked ? 'active' : 'inactive' }
-          : user
-      )
-    );
-  };
+  // ✅ Fetch Service User and their Funders
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (!id) return;
+
+      try {
+        setLoading(true);
+
+        // 1. Fetch Service User (to display name in heading)
+        const userRes = await axiosInstance.get(`/users/${id}`);
+        setServiceUser(userRes.data.data);
+
+        // 2. Fetch Funders for this Service User
+        const fundersRes = await axiosInstance.get(`/hr/service-funder`, {
+          params: { serviceUser: id }
+        });
+        setFundUsers(fundersRes.data.data.result || []);
+      } catch (error) {
+        console.error('Failed to fetch data:', error);
+        setFundUsers([]);
+        setServiceUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [id]);
 
   // Handle view action
-  const handleView = (id: string) => {
-    navigate(`/admin/people-planner/service-funder/${id}`);
+  const handleView = (funderId: string) => {
+    navigate(`${funderId}`);
   };
 
   // Filtering logic
   const filteredFundUsers = useMemo(() => {
+    if (!fundUsers.length) return [];
+
     return fundUsers.filter((user) => {
       const fullName = [user.title, user.firstName, user.lastName]
         .filter(Boolean)
@@ -106,9 +78,9 @@ export default function ServiceUserFunder() {
       if (
         search &&
         !fullName.includes(search) &&
-        !user.organization.toLowerCase().includes(search) &&
-        !user.phone.includes(search) &&
-        !user.email.toLowerCase().includes(search)
+        !user.organization?.toLowerCase().includes(search) &&
+        !user.phone?.includes(search) &&
+        !user.email?.toLowerCase().includes(search)
       ) {
         return false;
       }
@@ -125,19 +97,34 @@ export default function ServiceUserFunder() {
   }, [filteredFundUsers, currentPage, entriesPerPage]);
 
   // Reset currentPage if filtered list shrinks below current page
-  React.useEffect(() => {
+  useEffect(() => {
     if (currentPage > totalPages) {
       setCurrentPage(1);
     }
   }, [totalPages, currentPage]);
 
+  // ✅ Helper to format full name for heading
+  const getUserName = () => {
+    if (!serviceUser) return 'Loading...';
+    return [serviceUser.title, serviceUser.firstName, serviceUser.lastName]
+      .filter(Boolean)
+      .join(' ');
+  };
+
+  if (loading && !serviceUser) {
+    return (
+      <div className="flex h-64 items-center justify-center rounded-md bg-white p-6 shadow-md">
+        <div className="text-lg text-gray-500">Loading...</div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 rounded-md bg-white p-6 shadow-md">
-      <div className="flex flex-row  justify-between">
-
+      <div className="flex flex-row justify-between">
         {/* Filters */}
         <div className="mb-4 flex flex-wrap items-center gap-4">
-        <h1 className="text-2xl font-semibold">Mr. John Doe Funders</h1>
+          <h1 className="text-2xl font-semibold">{getUserName()} Funders</h1>
           <div className="flex items-center gap-2">
             <Input
               type="text"
@@ -151,9 +138,13 @@ export default function ServiceUserFunder() {
             </Button>
           </div>
         </div>
-          <Button className="flex gap-2 bg-supperagent text-white hover:bg-supperagent/90">
-            <Plus className="h-4 w-4 " /> Add Funder
-          </Button>
+
+        <Button
+          className="flex gap-2 bg-supperagent text-white hover:bg-supperagent/90"
+          onClick={() => navigate('create')}
+        >
+          <Plus className="h-4 w-4" /> Add Funder
+        </Button>
       </div>
 
       {/* Table */}
@@ -161,11 +152,9 @@ export default function ServiceUserFunder() {
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
-            <TableHead>Organization</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Contact</TableHead>
-            <TableHead>Status</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -185,18 +174,13 @@ export default function ServiceUserFunder() {
                     .filter(Boolean)
                     .join(' ')}
                 </TableCell>
-                <TableCell>{user.organization}</TableCell>
-                <TableCell>{user.funderType}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>{user.phone}</TableCell>
                 <TableCell>
-                  <Switch
-                    checked={user.status === 'active'}
-                    onCheckedChange={(checked) =>
-                      handleStatusChange(user._id, checked)
-                    }
-                  />
+                  {user.type
+                    ? user.type.charAt(0).toUpperCase() + user.type.slice(1)
+                    : '-'}
                 </TableCell>
+                <TableCell>{user.email || '-'}</TableCell>
+                <TableCell>{user.phone || '-'}</TableCell>
                 <TableCell className="text-right">
                   <Button
                     variant="ghost"

@@ -57,7 +57,7 @@ export const InvoiceStep: React.FC = () => {
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {/* Linked (Boolean Select) */}
-        <FormField label="Linked" required>
+        <FormField label="Linked" required  error={errors.invoice?.linked?.message}>
           <Select
             value={linkedOptions.find(option => option.value === watchedLinked)}
             onChange={(selectedOption) => setValue('invoice.linked', selectedOption?.value || false)}

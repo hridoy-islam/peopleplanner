@@ -1,26 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { MoveLeft, AlertCircle } from 'lucide-react';
 import { Tabs } from './components/Tabs';
 import PersonalInfoTab from './tabs/PersonalInfoTab';
 import AddressTab from './tabs/ContactTab';
-import MiscellaneousTab from './tabs/MiscellaneousTab';
-import EqualityTab from './tabs/EqualityTab';
 import { ValidationNotification } from './components/ValidationNotification';
 import { useEditApplicant } from './hooks/useEditApplicant';
 import { Button } from '@/components/ui/button';
-import EmergencyContactTab from './tabs/EmergencyContacTab';
-import CriticalInfoTab from './tabs/CriticalInformation';
-import EquipmentTab from './tabs/EquipmentTab';
-
-import NoteTab from './tabs/NoteTab';
-import PrimaryBranchTab from './tabs/PrimaryBranchTab';
 import ContactTab from './tabs/ContactTab';
-import { useParams } from 'react-router-dom';
-import axiosInstance from '@/lib/axios';
+import TravelTab from './tabs/TravelTab';
+import InvoiceTab from './tabs/InvoiceTab';
+import InvoiceContactTab from './tabs/InvoiceContactTab';
+import PurchaseOrderTab from './tabs/PurchaseOrderTab';
+import TravelRateDetailTab from './tabs/TravelDetailsTab';
+import AdhocInvoiceTab from './tabs/AdhocInvoiceTab';
 import { BlinkingDots } from '@/components/shared/blinking-dots';
 
-const ServiceuserDetailPage = () => {
-  const { id } = useParams();
+const ServiceUserFunderDetailPage = () => {
+  const [showNotification, setShowNotification] = useState(true);
+
   const {
     loading,
     activeTab,
@@ -31,21 +28,17 @@ const ServiceuserDetailPage = () => {
     handleSelectChange,
     handleCheckboxChange,
     isFieldSaving,
-    getMissingFields,
-    getTabValidation
-  } = useEditApplicant(id);
+    getTabValidation,
+    getMissingFields
+  } = useEditApplicant();
 
   const tabValidation = getTabValidation();
 
-
-
-  
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
-                      <BlinkingDots size="large" color="bg-supperagent" />
-          
+          <BlinkingDots size="large" color="bg-supperagent" />
         </div>
       </div>
     );
@@ -68,7 +61,7 @@ const ServiceuserDetailPage = () => {
     },
     {
       id: 'contact',
-      label: 'Contact',
+      label: 'Communication',
       component: (
         <ContactTab
           formData={formData}
@@ -80,10 +73,10 @@ const ServiceuserDetailPage = () => {
       )
     },
     {
-      id: 'equality',
-      label: 'Equality',
+      id: 'travel',
+      label: 'Travel Information',
       component: (
-        <EqualityTab
+        <TravelTab
           formData={formData}
           onUpdate={handleFieldUpdate}
           onSelectChange={handleSelectChange}
@@ -93,10 +86,10 @@ const ServiceuserDetailPage = () => {
       )
     },
     {
-      id: 'other',
-      label: 'Other',
+      id: 'invoice',
+      label: 'Invoice',
       component: (
-        <MiscellaneousTab
+        <InvoiceTab
           formData={formData}
           onUpdate={handleFieldUpdate}
           onDateChange={handleDateChange}
@@ -107,10 +100,10 @@ const ServiceuserDetailPage = () => {
       )
     },
     {
-      id: 'emergency',
-      label: 'Emergency Contact',
+      id: 'invoiceContact',
+      label: 'Invoice Contact',
       component: (
-        <EmergencyContactTab
+        <InvoiceContactTab
           formData={formData}
           onUpdate={handleFieldUpdate}
           onDateChange={handleDateChange}
@@ -121,27 +114,13 @@ const ServiceuserDetailPage = () => {
       )
     },
     {
-      id: 'criticalInfo',
-      label: 'Critical Information',
+      id: 'po',
+      label: 'PO',
       component: (
-        <CriticalInfoTab
+        <PurchaseOrderTab
           formData={formData}
           onUpdate={handleFieldUpdate}
           onDateChange={handleDateChange}
-          onSelectChange={handleSelectChange}
-          isFieldSaving={isFieldSaving}
-                    getMissingFields={getMissingFields}
-
-        />
-      )
-    },
-    {
-      id: 'equipment',
-      label: 'Required Equipment',
-      component: (
-        <EquipmentTab
-          formData={formData}
-          onUpdate={handleFieldUpdate}
           onSelectChange={handleSelectChange}
           isFieldSaving={isFieldSaving}
           getMissingFields={getMissingFields}
@@ -149,13 +128,13 @@ const ServiceuserDetailPage = () => {
       )
     },
     {
-      id: 'primaryBranch',
-      label: 'Branch & Area',
+      id: 'travelDetails',
+      label: 'Travel Details',
       component: (
-        <PrimaryBranchTab
+        <TravelRateDetailTab
           formData={formData}
-          onDateChange={handleDateChange}
           onUpdate={handleFieldUpdate}
+          onDateChange={handleDateChange}
           onSelectChange={handleSelectChange}
           isFieldSaving={isFieldSaving}
           getMissingFields={getMissingFields}
@@ -163,13 +142,13 @@ const ServiceuserDetailPage = () => {
       )
     },
     {
-      id: 'notes',
-      label: 'Note',
+      id: 'adhocInvoice',
+      label: 'Adhoc Invoice',
       component: (
-        <NoteTab
+        <AdhocInvoiceTab
           formData={formData}
-          onDateChange={handleDateChange}
           onUpdate={handleFieldUpdate}
+          onDateChange={handleDateChange}
           onSelectChange={handleSelectChange}
           isFieldSaving={isFieldSaving}
           getMissingFields={getMissingFields}
@@ -180,6 +159,7 @@ const ServiceuserDetailPage = () => {
 
   const handleTabNavigation = (tabId: string) => {
     setActiveTab(tabId);
+    setShowNotification(false);
   };
 
   const incompleteTabsCount = Object.values(tabValidation).filter(
@@ -188,17 +168,18 @@ const ServiceuserDetailPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="mx-auto px-4 py-8 sm:px-2 lg:px-2">
+      <div className="mx-auto  py-8 ">
         <div className="-mt-8 mb-4 flex items-center justify-between">
-          <p className="mt-2 text-3xl font-semibold text-gray-600">
-            {formData.firstName && formData.lastName
-              ? `${formData.title || ''} ${formData.firstName} ${formData.lastName}`.trim()
-              : 'Service User'}
-          </p>
-
+          <div>
+            <p className="mt-2 text-3xl font-semibold text-gray-600">
+              {formData.firstName && formData.lastName
+                ? `${formData.title || ''} ${formData.firstName} ${formData.lastName}`.trim()
+                : 'Service Funder'}
+            </p>
+          </div>
           <Button
             variant="outline"
-            className="border-none bg-supperagent text-white  hover:bg-supperagent/90"
+            className="border-supperagent bg-supperagent text-white  hover:bg-supperagent/90"
             onClick={() => window.history.back()}
           >
             <MoveLeft className="mr-2 h-4 w-4" />
@@ -216,17 +197,18 @@ const ServiceuserDetailPage = () => {
             />
           </div>
 
-          <div className="">
-            <ValidationNotification
-              validation={tabValidation}
-              onTabClick={handleTabNavigation}
-              userId={id}
-            />
-          </div>
+           
+            <div className="">
+              <ValidationNotification
+                validation={tabValidation}
+                onTabClick={handleTabNavigation}
+              />
+            </div>
+        
         </div>
       </div>
     </div>
   );
 };
 
-export default ServiceuserDetailPage;
+export default ServiceUserFunderDetailPage;

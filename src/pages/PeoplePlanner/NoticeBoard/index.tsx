@@ -1,8 +1,8 @@
 import { useSelector } from 'react-redux';
 
 import { BlinkingDots } from '@/components/shared/blinking-dots';
-import StaffNoticeBoard from './components/StaffNotice';
 import AdminNoticeBoard from './components/AdminNotice';
+import StaffNoticeBoard from './components/StaffNotice';
 
 const NoticeBoard = () => {
   const user = useSelector((state: any) => state.auth?.user) || null;

@@ -19,13 +19,15 @@ import {
   serviceFunderSchema
 } from './components/validation';
 import { PersonalInformationStep } from './components/PersonalInformationStep';
-import {  InvoiceStep } from './components/InvoiceStep';
+import { InvoiceStep } from './components/InvoiceStep';
 import { ContactInformationStep } from './components/ContactInformation';
 import { EmploymentServiceStep } from './components/EmploymentServiceStep';
 import { ReviewStep } from './components/ReviewStep';
 import { InvoiceContactInformationStep } from './components/InvoiceContactInformation';
 import { TravelStep } from './components/TravelStep';
 import { PurchaseOrderStep } from './components/PurchaseOrderStep copy';
+import axiosInstance from '@/lib/axios';
+import { useNavigate, useParams } from 'react-router-dom';
 
 const steps = [
   {
@@ -34,7 +36,7 @@ const steps = [
     icon: User,
     component: PersonalInformationStep
   },
-  
+
   {
     id: 2,
     title: 'Contact Information',
@@ -77,35 +79,68 @@ const CreateServiceFunderPage = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-
+  const navigate = useNavigate();
+  const {id} = useParams()
   const methods = useForm<ServiceFunderFormData>({
     resolver: zodResolver(serviceFunderSchema),
     mode: 'onChange',
     defaultValues: {
-      type: undefined,
-      title: undefined,
+      // Personal Information
+      serviceUser:'',
+      type: '',
+      title: '',
+
       firstName: '',
       middleInitial: '',
       lastName: '',
-     
-      gender: undefined,
-      maritalStatus: undefined,
-      ethnicOrigin: undefined,
-      religion: '',
+      description: '',
+      area: '',
+      branch: '',
+
+      // Address & Location
       address: '',
       city: '',
-      country: undefined,
+      country: '',
       postCode: '',
+
+      // Contact Information
       phone: '',
       fax: '',
       mobile: '',
       other: '',
       email: '',
       website: '',
+
+      // Employment / Service Details
       startDate: '',
-      lastDutyDate: '',
-      status: undefined,
-      servicePriority: undefined
+      status: '',
+      rateSheet: '',
+      travelType: '',
+
+      // Invoice
+      invoice: {
+        linked: undefined,
+        type: '',
+        name: '',
+        address: '',
+        cityTown: '',
+        county: '',
+        postCode: '',
+        customerExternalId: '',
+        invoiceRun: '',
+        invoiceFormat: '',
+        invoiceGrouping: '',
+        deliveryType: '',
+        phone: '',
+        fax: '',
+        mobile: '',
+        other: '',
+        email: '',
+        website: ''
+      },
+
+      // Purchase Order
+      purchaseOrder: undefined
     }
   });
 
@@ -120,7 +155,6 @@ const CreateServiceFunderPage = () => {
     const isValid = await trigger(fieldsToValidate);
 
     if (isValid) {
-      
       setCurrentStep((prev) => Math.min(prev + 1, steps.length));
     }
   };
@@ -129,28 +163,48 @@ const CreateServiceFunderPage = () => {
     setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
-  const getFieldsForStep = (step: number): (keyof ServiceFunderFormData | string)[] => {
+  const getFieldsForStep = (
+    step: number
+  ): (keyof ServiceFunderFormData | string)[] => {
     switch (step) {
-      // case 1:
-      //   return [
-      //     'type',
-      //     'title',
-      //     'firstName',
-      //     'lastName',
-      //     'address',
-      //     'city',
-      //     'country',
-      //     'postCode',
-      //     'area',
-      //     'branch',
-      //     'description'
-      //   ];
-      // case 2:
-      //   return ['email'];
-      // case 3:
-      //   return ['invoice.type', 'invoice.name', 'invoice.address', 'invoice.cityTown', 'invoice.county', 'invoice.postCode', 'invoice.customerExternalId'];
-      // case 4:
-      //   return ['startDate', 'status', 'servicePriority'];
+      case 1:
+        return [
+          'type',
+          'title',
+          'firstName',
+          'lastName',
+          'address',
+          'city',
+          'country',
+          'postCode',
+          'area',
+          'branch',
+          'description',
+          'status',
+          'startDate'
+        ];
+      case 2:
+        return ['email','phone','mobile'];
+      case 3:
+        return [
+          'invoice.linked',
+          'invoice.type',
+          'invoice.name',
+          'invoice.address',
+          'invoice.cityTown',
+          'invoice.county',
+          'invoice.postCode',
+          'invoice.customerExternalId',
+          'invoice.invoiceRun',
+          'invoice.invoiceFormat',
+          'invoice.invoiceGrouping'
+        ];
+      case 4:
+        return ['invoice.deliveryType'];
+      case 5:
+        return ['travelType'];
+      case 6:
+        return ['purchaseOrder'];
       default:
         return [];
     }
@@ -159,19 +213,20 @@ const CreateServiceFunderPage = () => {
   const onSubmit = async (data: ServiceFunderFormData) => {
     setIsSubmitting(true);
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const payload = {
+        ...data,
+        serviceUser:id 
+      };
 
-      console.log('Form submitted:', data);
+      // 👇 Use axiosInstance to POST
+      const response = await axiosInstance.post('/hr/service-funder', payload);
       toast({
-        title: 'Success!',
-        description: 'Service user has been created successfully.',
-        className: 'bg-green-500 border-none text-white'
+        title: 'Service user has been created successfully.',
+        className: 'bg-supperagent border-none text-white'
       });
 
-      // Reset form or redirect
       methods.reset();
-      setCurrentStep(1);
+      navigate(`/admin/people-planner/service-user/${id}/funder`);
     } catch (error) {
       toast({
         title: 'Error',
@@ -189,7 +244,7 @@ const CreateServiceFunderPage = () => {
     <div className="min-h-screen bg-gray-50 ">
       <div className="">
         {/* Header */}
-        <div className="mb-6 rounded-xl bg-white p-6 shadow-lg">
+        <div className="mb-2 rounded-xl bg-white p-6 shadow-lg">
           <h1 className="mb-2 text-3xl font-bold text-gray-900">
             Create Service Funder
           </h1>
@@ -247,7 +302,7 @@ const CreateServiceFunderPage = () => {
         {/* Form Content */}
         <FormProvider {...methods}>
           <form onSubmit={(e) => e.preventDefault()}>
-            <div className="mb-6 rounded-xl bg-white p-6 shadow-lg">
+            <div className="mb-2 rounded-xl bg-white p-6 shadow-lg">
               <div className="mb-6">
                 <h2 className="mb-2 text-2xl font-semibold text-gray-900">
                   {steps[currentStep - 1].title}
@@ -301,7 +356,7 @@ const CreateServiceFunderPage = () => {
                     ) : (
                       <>
                         <Check className="h-4 w-4" />
-                        <span>Create Service User</span>
+                        <span>Create</span>
                       </>
                     )}
                   </Button>
