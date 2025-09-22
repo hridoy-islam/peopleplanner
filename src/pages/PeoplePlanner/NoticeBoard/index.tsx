@@ -1,6 +1,6 @@
 import { useSelector } from 'react-redux';
 
-import { BlinkingDots } from '@/components/shared/blinking-dots';
+import { BlinkingDots } from '@/components/shared/blinking-dots.tsx';
 import AdminNoticeBoard from './components/AdminNoticeBoard.tsx';
 import StaffNoticeBoard from './components/StaffNoticeBoard.tsx';
 
