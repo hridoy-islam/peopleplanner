@@ -15,6 +15,7 @@ import { DynamicPagination } from '@/components/shared/DynamicPagination';
 import { Input } from '@/components/ui/input';
 import { useNavigate } from 'react-router-dom';
 import axiosInstance from '@/lib/axios';
+import { BlinkingDots } from '@/components/shared/blinking-dots';
 
 // React Select options
 const typeOptions = [
@@ -194,7 +195,7 @@ export default function ServiceUserList() {
           {loading ? (
             <TableRow>
               <TableCell colSpan={5} className="text-center py-4">
-                Loading...
+                 <BlinkingDots size="large" color="bg-supperagent" />
               </TableCell>
             </TableRow>
           ) : paginatedUsers.length === 0 ? (
