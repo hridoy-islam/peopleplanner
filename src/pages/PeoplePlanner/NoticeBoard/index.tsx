@@ -1,7 +1,7 @@
 import { BlinkingDots } from "@/components/shared/blinking-dots";
 import { useSelector } from "react-redux";
-import AdminNoticeBoard from "./components/AdminNoticeBoard";
-import StaffNoticeBoard from "./components/StaffNoticeBoard";
+import AdminNoticeBoard from "./Components/AdminNoticeBoard";
+import StaffNoticeBoard from "./Components/StaffNoticeBoard";
 
 
 const NoticeBoard = () => {
@@ -15,7 +15,7 @@ const NoticeBoard = () => {
     );
   }
 
-  return user.role === 'admin' ? (
+  return user.role === 'admin'?(
     <AdminNoticeBoard />
   ) : (
     <StaffNoticeBoard />
