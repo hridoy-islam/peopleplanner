@@ -33,7 +33,7 @@ const noticeTypeOptions = [
   { value: 'other', label: 'Other' }
 ];
 
-export function NoticeDialog({
+export default function NoticeDialog({
   open,
   onOpenChange,
   onSubmit,
