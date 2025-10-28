@@ -43,7 +43,7 @@ export default function ServiceUserFunder() {
         setServiceUser(userRes.data.data);
 
         // 2. Fetch Funders for this Service User
-        const fundersRes = await axiosInstance.get(`/hr/service-funder`, {
+        const fundersRes = await axiosInstance.get(`/service-funder`, {
           params: { serviceUser: id }
         });
         setFundUsers(fundersRes.data.data.result || []);

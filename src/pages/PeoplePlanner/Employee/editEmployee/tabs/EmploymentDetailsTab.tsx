@@ -59,20 +59,10 @@ const EmploymentDetailsTab: React.FC<EmploymentDetailsTabProps> = ({
     { value: 'intern', label: 'Intern' }
   ];
 
-  // Get designations, departments, and trainings
-  const designationOptions = designations.map((des: any) => ({
-    value: des._id,
-    label: des.title
-  }));
-
-  const departmentOptions = departments.map((dep: any) => ({
-    value: dep._id,
-    label: dep.departmentName
-  }));
-  const trainingOptions = trainings.map((dep: any) => ({
-    value: dep._id,
-    label: dep.name
-  }));
+  const carTravelAllowanceOptions = [
+    { value: true, label: 'Yes' },
+    { value: false, label: 'No' }
+  ];
 
   return (
     <Card>
@@ -150,35 +140,21 @@ const EmploymentDetailsTab: React.FC<EmploymentDetailsTabProps> = ({
           />
 
           <EditableField
-            id="isFullTime"
-            label="Full Time Employee"
-            value={formData.isFullTime}
-            type="checkbox"
-            onUpdate={(checked) => onCheckboxChange('isFullTime', checked)}
-            isSaving={isFieldSaving['isFullTime']}
+            id="contractHours"
+            label="Contract Hours"
+            value={formData.contractHours}
+            onUpdate={(value) => onUpdate('contractHours', value)}
+            isSaving={isFieldSaving['contractHours']}
           />
 
           <EditableField
             id="carTravelAllowance"
             label="Car Travel Allowance"
             value={formData.carTravelAllowance}
-            type="checkbox"
-            onUpdate={(checked) =>
-              onCheckboxChange('carTravelAllowance', checked)
-            }
-            isSaving={isFieldSaving['carTravelAllowance']}
-          />
-
-          <EditableField
-            id="recruitmentEmploymentType"
-            label="Recruitment Employment Type"
-            value={formData.recruitmentEmploymentType}
             type="select"
-            options={recruitmentEmploymentTypeOptions}
-            onUpdate={(value) =>
-              onSelectChange('recruitmentEmploymentType', value)
-            }
-            isSaving={isFieldSaving['recruitmentEmploymentType']}
+            options={carTravelAllowanceOptions}
+            onUpdate={(value) => onSelectChange('carTravelAllowance', value)}
+            isSaving={isFieldSaving['carTravelAllowance']}
           />
 
           <EditableField

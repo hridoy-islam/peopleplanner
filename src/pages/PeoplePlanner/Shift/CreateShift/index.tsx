@@ -1,5 +1,4 @@
 
-
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -39,7 +38,7 @@ const timeOnlySchema = z.object({
 
 type TimeOnlyFormData = z.infer<typeof timeOnlySchema>;
 
-export default function CreateShift() {
+export default function TimeOnlyPickerForm() {
   const form = useForm<TimeOnlyFormData>({
     resolver: zodResolver(timeOnlySchema),
     defaultValues: {

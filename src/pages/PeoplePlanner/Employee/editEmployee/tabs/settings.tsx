@@ -15,26 +15,29 @@ const SettingsTab = ({
   const [designations, setDesignations] = useState([]);
   const [trainings, setTrainings] = useState([]);
   const [departments, setDepartments] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
   const fetchData = async () => {
     try {
-      const [designationRes, trainingRes, departmentRes] = await Promise.all([
+      setIsLoading(true);
+      const [designationRes, departmentRes] = await Promise.all([
         axiosInstance('/hr/designation'),
-        axiosInstance('/hr/training'),
+        // axiosInstance('/hr/training'),
         axiosInstance('/hr/department')
       ]);
-
       setDesignations(designationRes.data.data.result);
-      setTrainings(trainingRes.data.data.result);
+      // setTrainings(trainingRes.data.data.result);
       setDepartments(departmentRes.data.data.result);
     } catch (error) {
       console.error('Error fetching data:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   useEffect(() => {
     fetchData();
   }, []);
-
 
   const designationOptions = designations.map((des: any) => ({
     value: des._id,
@@ -45,39 +48,40 @@ const SettingsTab = ({
     value: dep._id,
     label: dep.departmentName
   }));
-  const trainingOptions = trainings.map((dep: any) => ({
-    value: dep._id,
-    label: dep.name
-  }));
+
+  // Extract the actual ID from populated objects
+  const designationIdValue = formData.designationId?._id || formData.designationId;
+  const departmentIdValue = formData.departmentId?._id || formData.departmentId;
+
+
+
+
 
   return (
     <Card>
       <CardContent className="pt-6">
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          
-          
-
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <EditableField
             id="designationId"
             label="Designation"
-            value={formData.designationId || ''}
+            value={designationIdValue || ''}
             type="select"
             options={designationOptions}
             onUpdate={(value) => onSelectChange('designationId', value)}
             isSaving={isFieldSaving['designationId']}
           />
-
+          
           <EditableField
             id="departmentId"
             label="Department"
-            value={formData.departmentId || ''}
+            value={departmentIdValue || ''}
             type="select"
             options={departmentOptions}
             onUpdate={(value) => onSelectChange('departmentId', value)}
             isSaving={isFieldSaving['departmentId']}
           />
-
-          <EditableField
+          
+          {/* <EditableField
             id="trainingId"
             label="Training"
             value={formData.trainingId || ''}
@@ -86,7 +90,7 @@ const SettingsTab = ({
             options={trainingOptions}
             onUpdate={(value) => onSelectChange('trainingId', value)}
             isSaving={isFieldSaving['trainingId']}
-          />
+          /> */}
         </div>
       </CardContent>
     </Card>

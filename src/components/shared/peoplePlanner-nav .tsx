@@ -105,16 +105,22 @@ const navItems = [
     label: 'HR',
     roles: ['admin'],
     subItems: [
+       {
+        icon: User2,
+        label: 'HR Dashboard',
+        href: 'hr-dashboard',
+        roles: ['admin']
+      },
       {
         icon: User2,
-        label: 'My Stuff',
-        href: 'my-stuff',
+        label: 'My Staff',
+        href: 'my-staff',
         roles: ['admin']
       },
       {
         icon: UserCircle,
-        label: 'Vacancy',
-        href: 'vacancy',
+        label: 'Pending Hiring',
+        href: 'pending-employee',
         roles: ['admin']
       },
       {
@@ -399,6 +405,12 @@ const navItems = [
         icon: Mails,
         label: 'Email Setup',
         href: 'email-setup',
+        roles: ['admin']
+      },
+        {
+        icon: Calendar,
+        label: 'Bank Holiday',
+        href: 'bank-holiday',
         roles: ['admin']
       }
     ]

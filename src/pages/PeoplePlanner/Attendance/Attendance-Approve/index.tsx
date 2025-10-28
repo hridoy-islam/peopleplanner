@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Eye, Pen } from 'lucide-react';
+import { CalendarFold, Eye, Pen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -40,7 +40,9 @@ export default function AttendanceApprovalPage() {
   const [entriesPerPage, setEntriesPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
   const now = new Date();
-  const [selectedMonth, setSelectedMonth] = useState(String(now.getMonth() + 1)); // Months are 0-indexed
+  const [selectedMonth, setSelectedMonth] = useState(
+    String(now.getMonth() + 1)
+  ); // Months are 0-indexed
   const [selectedYear, setSelectedYear] = useState(String(now.getFullYear()));
   const fetchData = async (
     page,
@@ -51,20 +53,23 @@ export default function AttendanceApprovalPage() {
   ) => {
     try {
       setInitialLoading(true);
-      const response = await axiosInstance.get(`/hr/attendance?approvalStatus=pending`, {
-        params: {
-          page,
-          limit: entriesPerPage,
-          ...(searchTerm ? { searchTerm } : {}),
-          ...(month ? { month } : {}),
-          ...(year ? { year } : {})
+      const response = await axiosInstance.get(
+        `/hr/attendance?approvalStatus=pending`,
+        {
+          params: {
+            page,
+            limit: entriesPerPage,
+            ...(searchTerm ? { searchTerm } : {}),
+            ...(month ? { month } : {}),
+            ...(year ? { year } : {})
+          }
         }
-      });
-  
+      );
+
       const result = response.data.data.result;
       setAttendance(result);
       setTotalPages(response.data.data.meta.totalPage);
-  
+
       const grouped = result.reduce((acc, item) => {
         const date = moment(item.clockIn).format('YYYY-MM-DD');
         const existing = acc.find((entry) => entry.date === date);
@@ -82,66 +87,41 @@ export default function AttendanceApprovalPage() {
       setInitialLoading(false);
     }
   };
-  
 
   const navigate = useNavigate();
 
   const handleRowClick = (date: string, count: number) => {
-    navigate(`/admin/people-planner/attendance-approve/attendance-list?date=${date}`, {
-      state: { count, date },
+    navigate(`/admin/hr/attendance-approve/attendance-list?date=${date}`, {
+      state: { count, date }
     });
   };
-  
 
-  const handleSubmit = async (data) => {
-    try {
-      let response;
-      if (editingAttendance) {
-        response = await axiosInstance.patch(
-          `/hr/attendance/${editingAttendance?._id}`,
-          data
-        );
-      } else {
-        response = await axiosInstance.post(`/hr/attendance/clock-in`, data);
-      }
-
-      if (response.data?.success) {
-        toast({
-          title: response.data.message || 'Record updated successfully',
-          className: 'bg-supperagent border-none text-white'
-        });
-      } else {
-        throw new Error('Unexpected response');
-      }
-
-      fetchData(currentPage, entriesPerPage);
-      setEditingAttendance(undefined);
-    } catch (error) {
-      toast({
-        title: 'An error occurred. Please try again.',
-        className: 'bg-red-500 border-none text-white'
-      });
-    }
-  };
-
- ;
+ 
 
   useEffect(() => {
-    fetchData(currentPage, entriesPerPage);
-  }, [currentPage, entriesPerPage]);
+fetchData(currentPage, entriesPerPage, searchTerm, selectedMonth, selectedYear);  }, [currentPage, entriesPerPage]);
 
   const handleSearch = () => {
     if (selectedMonth && selectedYear) {
-      fetchData(currentPage, entriesPerPage, searchTerm, selectedMonth, selectedYear);
+      fetchData(
+        currentPage,
+        entriesPerPage,
+        searchTerm,
+        selectedMonth,
+        selectedYear
+      );
     }
   };
-  
+
   const currentYear = new Date().getFullYear();
 
   return (
-    <div className="space-y-3">
-       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Pending Attendance List</h1>
+    <div className="space-y-3 bg-white p-6 rounded-md shadow-sm">
+      <div className="flex items-center justify-between">
+        <h2 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
+          <CalendarFold className="h-6 w-6" />
+          Pending Attendance List
+        </h2>{' '}
       </div>
 
       <div className="flex items-center space-x-4">
@@ -187,7 +167,7 @@ export default function AttendanceApprovalPage() {
         </Button>
       </div>
 
-      <div className="rounded-md bg-white p-4 shadow-lg">
+      <div className="">
         {initialLoading ? (
           <div className="flex justify-center py-6">
             <BlinkingDots size="large" color="bg-supperagent" />
@@ -207,7 +187,11 @@ export default function AttendanceApprovalPage() {
             </TableHeader>
             <TableBody>
               {groupedData.map(({ date, count }) => (
-                <TableRow key={date} onClick={() => handleRowClick(date,count)} className='cursor-pointer'>
+                <TableRow
+                  key={date}
+                  onClick={() => handleRowClick(date, count)}
+                  className="cursor-pointer"
+                >
                   <TableCell>{moment(date).format('MMMM Do YYYY')}</TableCell>
                   <TableCell>{count}</TableCell>
                   <TableCell className="text-center">
@@ -217,7 +201,7 @@ export default function AttendanceApprovalPage() {
                       size="icon"
                       onClick={(e) => {
                         e.stopPropagation(); // prevent row click
-                        handleRowClick(date,count);
+                        handleRowClick(date, count);
                       }}
                     >
                       <Eye className="h-4 w-4" />
@@ -236,8 +220,6 @@ export default function AttendanceApprovalPage() {
           onPageChange={setCurrentPage}
         />
       </div>
-
-      
     </div>
   );
 }

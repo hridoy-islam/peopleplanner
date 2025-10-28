@@ -8,7 +8,9 @@ export const useEditEmployee = () => {
   const { id } = useParams<{ id: string }>();
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('personal');
-  const [isFieldSaving, setIsFieldSaving] = useState<Record<string, boolean>>({});
+  const [isFieldSaving, setIsFieldSaving] = useState<Record<string, boolean>>(
+    {}
+  );
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -43,7 +45,7 @@ export const useEditEmployee = () => {
     applicationDate: null as moment.Moment | null,
     availableFromDate: null as moment.Moment | null,
     startDate: null as moment.Moment | null,
-    isFullTime: false,
+    contractHours: 0,
     carTravelAllowance: false,
     recruitmentEmploymentType: '',
     area: '',
@@ -61,21 +63,25 @@ export const useEditEmployee = () => {
     // Payroll
     payroll: {
       payrollNumber: '',
-      paymentMethod: ''
+      paymentMethod: '',
+      bankName: '',
+      accountNumber: '',
+      sortCode: '',
+      beneficiary: ''
     },
 
     // Equality Information
     equalityInformation: {
       nationality: '',
       religion: '',
-      hasDisability: false,
+      hasDisability: undefined,
       disabilityDetails: ''
     },
 
     // Disability Information
-    hasDisability: false,
+    hasDisability: undefined,
     disabilityDetails: '',
-    needsReasonableAdjustment: false,
+    needsReasonableAdjustment: undefined,
     reasonableAdjustmentDetails: '',
 
     // Beneficiary
@@ -84,7 +90,7 @@ export const useEditEmployee = () => {
       relationship: '',
       email: '',
       mobile: '',
-      sameAddress: false,
+      sameAddress: undefined,
       address: {
         line1: '',
         line2: '',
@@ -150,7 +156,7 @@ export const useEditEmployee = () => {
             ? moment(data.availableFromDate)
             : null,
           startDate: data.startDate ? moment(data.startDate) : null,
-          isFullTime: data.isFullTime || false,
+          contractHours: data.contractHours || 0,
           carTravelAllowance: data.carTravelAllowance || false,
           recruitmentEmploymentType: data.recruitmentEmploymentType || '',
           area: data.area || '',
@@ -170,7 +176,11 @@ export const useEditEmployee = () => {
           // Payroll
           payroll: {
             payrollNumber: data.payroll?.payrollNumber || '',
-            paymentMethod: data.payroll?.paymentMethod || ''
+            paymentMethod: data.payroll?.paymentMethod || '',
+            bankName: data?.payroll?.bankName || '',
+            accountNumber: data?.payroll?.accountNumber || '',
+            sortCode: data?.payroll?.sortCode || '',
+            beneficiary: data?.payroll?.beneficiary || ''
           },
 
           // Equality Information
@@ -211,8 +221,11 @@ export const useEditEmployee = () => {
           // Department, Designation, Training
           designationId: data.designationId || '',
           departmentId: data.departmentId || '',
-          trainingId: Array.isArray(data.trainingId) ? data.trainingId : [],
-
+          training: Array.isArray(data.training) ? data.training : [],
+          passportNo: data.passportNo || '',
+          passportExpiry: data.passportExpiry
+            ? moment(data.passportExpiry)
+            : '',
           // Notes
           notes: data.notes || ''
         });
@@ -230,68 +243,123 @@ export const useEditEmployee = () => {
     fetchEmployee();
   }, [id, toast]);
 
-  const updateField = useCallback(async (fieldName: string, value: any) => {
-    try {
-      setIsFieldSaving((prev) => ({ ...prev, [fieldName]: true }));
-      
-      // Create update payload with just the field being changed
-      const updateData = { [fieldName]: value };
-      
-      // For date fields, convert moment to ISO string
-      if (value && typeof value === 'object' && moment.isMoment(value)) {
-        updateData[fieldName] = value.toISOString();
-      }
-      
-      await axiosInstance.patch(`/users/${id}`, updateData);
-      
-      // Update local state
-      setFormData((prev) => ({
-        ...prev,
-        [fieldName]: value
-      }));
-      
-      toast({
-        title: 'Field updated',
-        description: 'Changes saved successfully',
-        duration: 1500
-      });
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Update failed',
-        description: 'Could not save changes'
-      });
-    } finally {
-      setIsFieldSaving((prev) => ({ ...prev, [fieldName]: false }));
+  const serializeMoments = (obj: any): any => {
+    if (moment.isMoment(obj)) {
+      return obj.toISOString();
     }
-  }, [id, toast]);
 
-  const handleFieldUpdate = useCallback((fieldName: string, value: any) => {
-    updateField(fieldName, value);
-  }, [updateField]);
+    if (Array.isArray(obj)) {
+      return obj.map(serializeMoments);
+    }
 
-  const handleNestedFieldUpdate = useCallback((parentField: string, fieldName: string, value: any) => {
-    const currentParentData = formData[parentField as keyof typeof formData] || {};
-    const updatedData = {
-      ...currentParentData,
-      [fieldName]: value
-    };
-    
-    updateField(parentField, updatedData);
-  }, [formData, updateField]);
+    if (obj && typeof obj === 'object') {
+      const result: Record<string, any> = {};
+      for (const [key, val] of Object.entries(obj)) {
+        // Skip null or undefined values
+        if (val !== null && val !== undefined) {
+          result[key] = serializeMoments(val);
+        }
+      }
+      return result;
+    }
 
-  const handleDateChange = useCallback((fieldName: string, dateStr: string) => {
-    const parsedDate = dateStr ? moment(dateStr, 'YYYY-MM-DD') : null;
-    updateField(fieldName, parsedDate);
-  }, [updateField]);
+    return obj;
+  };
 
-  const handleSelectChange = useCallback((fieldName: string, value: string) => {
-    updateField(fieldName, value);
-  }, [updateField]);
+  const updateField = useCallback(
+    async (fieldName: string, value: any) => {
+      try {
+        setIsFieldSaving((prev) => ({ ...prev, [fieldName]: true }));
+        if (fieldName === 'contractHours') {
+          value = Number(value);
+        }
+        // Special handling for nested objects
+        let updateData;
+        if (fieldName.includes('.')) {
+          // Handle nested fields (e.g., 'rightToWork.expiryDate')
+          const [parentField, childField] = fieldName.split('.');
+          updateData = {
+            [parentField]: {
+              ...formData[parentField as keyof typeof formData],
+              [childField]: serializeMoments(value)
+            }
+          };
+        } else {
+          updateData = { [fieldName]: serializeMoments(value) };
+        }
 
-  const handleCheckboxChange = useCallback((fieldName: string, checked: boolean) => {
-    updateField(fieldName, checked);
-  }, [updateField]);
+        await axiosInstance.patch(`/users/${id}`, updateData);
+
+        setFormData((prev) => ({
+          ...prev,
+          ...(fieldName.includes('.')
+            ? {
+                [fieldName.split('.')[0]]: {
+                  ...prev[fieldName.split('.')[0] as keyof typeof prev],
+                  [fieldName.split('.')[1]]: value
+                }
+              }
+            : { [fieldName]: value })
+        }));
+
+        toast({
+          title: 'Data updated successfully'
+        });
+      } catch (error) {
+        toast({
+          variant: 'destructive',
+          title: 'Update failed',
+          description: 'Could not save changes'
+        });
+      } finally {
+        setIsFieldSaving((prev) => ({ ...prev, [fieldName]: false }));
+      }
+    },
+    [id, toast, formData]
+  );
+
+  const handleFieldUpdate = useCallback(
+    (fieldName: string, value: any) => {
+      updateField(fieldName, value);
+    },
+    [updateField]
+  );
+
+  const handleNestedFieldUpdate = useCallback(
+    (parentField: string, fieldName: string, value: any) => {
+      const currentParentData =
+        formData[parentField as keyof typeof formData] || {};
+      const updatedData = {
+        ...currentParentData,
+        [fieldName]: value
+      };
+
+      updateField(parentField, updatedData);
+    },
+    [formData, updateField]
+  );
+
+  const handleDateChange = useCallback(
+    (fieldName: string, dateStr: string) => {
+      const parsedDate = dateStr ? moment(dateStr, 'YYYY-MM-DD') : null;
+      updateField(fieldName, parsedDate);
+    },
+    [updateField]
+  );
+
+  const handleSelectChange = useCallback(
+    (fieldName: string, value: string) => {
+      updateField(fieldName, value);
+    },
+    [updateField]
+  );
+
+  const handleCheckboxChange = useCallback(
+    (fieldName: string, checked: boolean) => {
+      updateField(fieldName, checked);
+    },
+    [updateField]
+  );
 
   return {
     loading,

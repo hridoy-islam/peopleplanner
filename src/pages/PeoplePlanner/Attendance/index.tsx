@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Eye, Pen } from 'lucide-react';
+import { CalendarFold, Eye, Pen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Table,
@@ -15,7 +15,8 @@ import { BlinkingDots } from '@/components/shared/blinking-dots';
 import { DynamicPagination } from '@/components/shared/DynamicPagination';
 import { AttendanceDialog } from './attendaceList/components';
 import moment from 'moment';
-
+import { Input } from '@/components/ui/input';
+import { useRouter } from '@/routes/hooks';
 import { useNavigate } from 'react-router-dom';
 import {
   Select,
@@ -24,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-
+import { count } from 'console';
 
 export default function Attendance() {
   const [attendanceList, setAttendance] = useState<any[]>([]);
@@ -97,7 +98,7 @@ export default function Attendance() {
   const navigate = useNavigate();
 
   const handleRowClick = (date: string, count: number) => {
-    navigate(`/admin/people-planner/attendance/attendance-list?date=${date}`, {
+    navigate(`/admin/hr/attendance/attendance-list?date=${date}`, {
       state: { count, date }
     });
   };
@@ -133,10 +134,9 @@ export default function Attendance() {
     }
   };
 
-  useEffect(() => {
-    fetchData(currentPage, entriesPerPage);
-  }, [currentPage, entriesPerPage]);
-
+useEffect(() => {
+  fetchData(currentPage, entriesPerPage, searchTerm, selectedMonth, selectedYear);
+}, [currentPage, entriesPerPage]);
   const handleSearch = () => {
     if (selectedMonth && selectedYear) {
       fetchData(
@@ -152,9 +152,12 @@ export default function Attendance() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 bg-white p-6 rounded-md shadow-sm">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">All Attendances</h1>
+       <h2 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
+          <CalendarFold  className="h-6 w-6" />
+          Attendance Records
+        </h2>{' '}
       </div>
 
       <div className="flex items-center space-x-4">
@@ -200,7 +203,7 @@ export default function Attendance() {
         </Button>
       </div>
 
-      <div className="rounded-md bg-white p-4 shadow-lg">
+      <div className="">
         {initialLoading ? (
           <div className="flex justify-center py-6">
             <BlinkingDots size="large" color="bg-supperagent" />

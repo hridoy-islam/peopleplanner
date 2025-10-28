@@ -9,10 +9,10 @@ import { schedules } from '@/data/plannerData';
 import type { SidebarState, schedule } from '@/types/planner';
 import moment from 'moment';
 import { ScheduleDetailComponent } from './components/ScheduleDetail';
-import { ExtraCallComponent } from './components/ExtraCall';
 import axiosInstance from '@/lib/axios';
 import { toast } from '@/components/ui/use-toast';
 import { BlinkingDots } from '@/components/shared/blinking-dots';
+import { ExtraCallComponent } from './components/ExtraCall';
 
 // 👇 Define User type for better type safety
 interface User {

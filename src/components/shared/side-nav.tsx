@@ -46,8 +46,8 @@ const navItems = [
   },
   {
     icon: PencilRuler,
-    label: 'MyStuff',
-    href: 'my-stuff'
+    label: 'MyStaff',
+    href: 'my-staff'
   },
   {
     icon: UsersIcon,

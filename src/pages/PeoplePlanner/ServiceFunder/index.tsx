@@ -30,7 +30,7 @@ export default function ServiceUserFunder() {
   const fetchFunders = async (page: number, entriesPerPage: number, searchTerm = '') => {
     try {
       setLoading(true);
-      const res = await axiosInstance.get(`/hr/service-funder`, {
+      const res = await axiosInstance.get(`/service-funder`, {
   params: {
     page,
     limit: entriesPerPage,

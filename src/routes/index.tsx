@@ -44,8 +44,6 @@ import Employee from '@/pages/PeoplePlanner/Employee';
 import EditEmployee from '@/pages/PeoplePlanner/Employee/editEmployee';
 import EmployeeRate from '@/pages/PeoplePlanner/Employee/employeeRate';
 import Holiday from '@/pages/PeoplePlanner/Holidays';
-import LeaveApprovalPage from '@/pages/PeoplePlanner/LeaveManagement/LeaveApproval';
-import MyStuff from '@/pages/PeoplePlanner/MyStuff';
 import Shift from '@/pages/PeoplePlanner/Shift';
 import CreateShift from '@/pages/PeoplePlanner/Shift/CreateShift';
 import EditShift from '@/pages/PeoplePlanner/Shift/EditShift';
@@ -93,6 +91,14 @@ import AddConsentFormPage from '@/pages/PeoplePlanner/Consent/components/add-con
 import ServiceUserRequestDocument from '@/pages/PeoplePlanner/RequestDocument';
 import StaffAttendancePage from '@/pages/PeoplePlanner/StaffAttendance';
 import ServiceUserFunderDetailPage from '@/pages/PeoplePlanner/ServiceUser/funder/view-funder';
+import CreateTraining from '@/pages/PeoplePlanner/Training/CreateTraining';
+import EditTraining from '@/pages/PeoplePlanner/Training/EditTraining';
+import LeaveApprovalPage from '@/pages/PeoplePlanner/LeaveApproval';
+import RequestDocumentPage from '@/pages/PeoplePlanner/Request-Documents';
+import MyStaff from '@/pages/PeoplePlanner/MyStaff';
+import BankHolidayPage from '@/pages/PeoplePlanner/Bank-Holiday';
+import HRDashboardPage from '@/pages/PeoplePlanner/HR-Dashboard/adminDashboard';
+import PendingHiring from '@/pages/PeoplePlanner/Pending-Hiring';
 
 const SignInPage = lazy(() => import('@/pages/auth/signin'));
 
@@ -129,6 +135,10 @@ export default function AppRouter() {
             {
               path: 'service-user',
               element: <PServiceUserList />
+            },
+            {
+              path: 'hr-dashboard',
+              element: <HRDashboardPage />
             },
             {
               path: 'service-user/new',
@@ -226,6 +236,14 @@ export default function AppRouter() {
               path: 'training',
               element: <TrainingPage />
             },
+              {
+              path: 'training/create',
+              element: <CreateTraining />
+            },
+              {
+              path: 'training/edit/:id',
+              element: <EditTraining />
+            },
             {
               path: 'schedule',
               element: <SchedulePage />
@@ -236,7 +254,7 @@ export default function AppRouter() {
             },
             {
               path: 'request/document',
-              element: <ServiceUserRequestDocument />
+              element: <RequestDocumentPage />
             },
             {
               path: 'invoice',
@@ -284,8 +302,8 @@ export default function AppRouter() {
               element: <LeaveApprovalPage />
             },
             {
-              path: 'my-stuff',
-              element: <MyStuff />
+              path: 'my-staff',
+              element: <MyStaff />
             },
             {
               path: 'devices',
@@ -443,7 +461,15 @@ export default function AppRouter() {
             {
               path: 'holiday',
               element: <Holiday />
-            }
+            },
+              {
+              path: 'bank-holiday',
+              element: <BankHolidayPage />
+            },
+              {
+              path: 'pending-employee',
+              element: <PendingHiring />
+            },
           ]
         }
       ]

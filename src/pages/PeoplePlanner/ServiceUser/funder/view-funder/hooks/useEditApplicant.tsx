@@ -148,7 +148,7 @@ export const useEditApplicant = () => {
 
       try {
         const response = await axiosInstance.get(
-          `/hr/service-funder/${funderId}`
+          `/service-funder/${funderId}`
         );
         const data = response.data.data;
 
@@ -399,7 +399,7 @@ const validateTab = (tabId: string): ValidationResult => {
       setFormData((prev) => ({ ...prev, [field]: value }));
 
       // Send PATCH request
-      await axiosInstance.patch(`/hr/service-funder/${funderId}`, {
+      await axiosInstance.patch(`/service-funder/${funderId}`, {
         [field]: value
       });
     } catch (error) {
@@ -418,7 +418,7 @@ const validateTab = (tabId: string): ValidationResult => {
 
     try {
       setFormData((prev) => ({ ...prev, [field]: value }));
-      await axiosInstance.patch(`/hr/service-funder/${funderId}`, {
+      await axiosInstance.patch(`/service-funder/${funderId}`, {
         [field]: value
       });
     } catch (error) {
@@ -440,7 +440,7 @@ const validateTab = (tabId: string): ValidationResult => {
 
     try {
       setFormData((prev) => ({ ...prev, [field]: value })); // Keep full object in UI for display
-      await axiosInstance.patch(`/hr/service-funder/${funderId}`, {
+      await axiosInstance.patch(`/service-funder/${funderId}`, {
         [field]: payloadValue // Send only string value to backend
       });
     } catch (error) {
@@ -458,7 +458,7 @@ const validateTab = (tabId: string): ValidationResult => {
 
     try {
       setFormData((prev) => ({ ...prev, [field]: value }));
-      await axiosInstance.patch(`/hr/service-funder/${funderId}`, {
+      await axiosInstance.patch(`/service-funder/${funderId}`, {
         [field]: value
       });
     } catch (error) {
