@@ -77,7 +77,7 @@ export const EditableField: React.FC<EditableFieldProps> = ({
   const formatDate = (dateStr: string | number) => {
     if (!dateStr) return '';
     const m = moment(dateStr);
-    return m.isValid() ? m.format('MM-DD-YYYY') : dateStr.toString();
+    return m.isValid() ? m.format('DD-MM-YYYY') : dateStr.toString();
   };
 
 const handleTimeChange = (newValue: string) => {

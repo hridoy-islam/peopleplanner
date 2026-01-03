@@ -88,17 +88,19 @@ import StockDetailPage from '@/pages/PeoplePlanner/Stock/components/StockDetailP
 import ConsentPage from '@/pages/PeoplePlanner/Consent';
 import AddCapacityFormPage from '@/pages/PeoplePlanner/Consent/components/add-capacity-form';
 import AddConsentFormPage from '@/pages/PeoplePlanner/Consent/components/add-consent-form';
-import ServiceUserRequestDocument from '@/pages/PeoplePlanner/RequestDocument';
 import StaffAttendancePage from '@/pages/PeoplePlanner/StaffAttendance';
 import ServiceUserFunderDetailPage from '@/pages/PeoplePlanner/ServiceUser/funder/view-funder';
 import CreateTraining from '@/pages/PeoplePlanner/Training/CreateTraining';
 import EditTraining from '@/pages/PeoplePlanner/Training/EditTraining';
 import LeaveApprovalPage from '@/pages/PeoplePlanner/LeaveApproval';
-import RequestDocumentPage from '@/pages/PeoplePlanner/Request-Documents';
 import MyStaff from '@/pages/PeoplePlanner/MyStaff';
 import BankHolidayPage from '@/pages/PeoplePlanner/Bank-Holiday';
 import HRDashboardPage from '@/pages/PeoplePlanner/HR-Dashboard/adminDashboard';
 import PendingHiring from '@/pages/PeoplePlanner/Pending-Hiring';
+import RequestDocumentPage from '@/pages/PeoplePlanner/RequestDocument';
+import DocumentReportPage from '@/pages/PeoplePlanner/RequestDocument';
+import AdminRequestDocumentPage from '@/pages/PeoplePlanner/Request-Documents';
+import UpcomingSchedulePage from '@/pages/PeoplePlanner/upcomingSchedule';
 
 const SignInPage = lazy(() => import('@/pages/auth/signin'));
 
@@ -249,12 +251,20 @@ export default function AppRouter() {
               element: <SchedulePage />
             },
             {
+              path: 'upcoming-schedule',
+              element: <UpcomingSchedulePage />
+            },
+            {
               path: 'payslip',
               element: <PayslipPage />
             },
             {
               path: 'request/document',
-              element: <RequestDocumentPage />
+              element: <DocumentReportPage />
+            },
+            {
+              path: 'request-documents',
+              element: <AdminRequestDocumentPage />
             },
             {
               path: 'invoice',

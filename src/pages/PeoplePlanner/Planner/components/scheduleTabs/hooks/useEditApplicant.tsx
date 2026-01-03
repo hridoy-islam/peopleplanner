@@ -1,51 +1,47 @@
 import { useState, useEffect } from 'react';
+import axiosInstance from '@/lib/axios';
+import { toast } from '@/components/ui/use-toast';
 
+// 1. Updated Interface for Schedule Data
 interface FormData {
-  // Personal Information
-  type: string | null;
-  title: string | null;
-  image?: any;
-  firstName: string;
-  middleInitial?: string;
-  lastName: string;
-  preferredName?: string;
-  dateOfBirth: string;
-  gender: string | null;
-  maritalStatus?: string | null;
-  ethnicOrigin?: string | null;
-  religion?: string;
+  // --- General Info ---
+  date: string;
+  startTime: string;
+  endTime: string;
+  timeInMinutes: string | number;
+  travelTime: string | number;
+  
+  // --- People & Location ---
+  employee: string;
+  serviceUser: string;
+  branch: string;
+  area: string;
 
-  // Address & Location
-  address: string;
-  city: string;
-  postCode: string;
-  country: string;
+  // --- Service Details ---
+  serviceType: string;
+  visitType: string;
+  serviceFunder: string;
 
-  // Contact Information
-  phone?: string;
-  fax?: string;
-  mobile?: string;
-  other?: string;
-  email: string;
-  website?: string;
+  // --- Rates ---
+  payRate: string | number;
+  invoiceRate: string | number;
 
-  // Employment / Service Details
-  startDate: string;
-  lastDutyDate?: string;
-  status: string | null;
-  servicePriority: string | null;
-  serviceLocationExId: string;
-  timesheetSignature: boolean;
-  timesheetSignatureNote?: string;
+  // --- Summary/Status ---
+  cancellation: string;
+  status: string;
 
-  // Additional Fields (used elsewhere in your app)
-  phoneNumber?: string;
-  emergencyContact?: string;
-  emergencyPhone?: string;
-  disability?: string;
-  ethnicity?: string;
-  nationality?: string;
-  preferredLanguage?: string;
+  // --- Admin/Equipment ---
+  purchaseOrder: boolean;
+  glovesAprons: boolean;
+  uniform: boolean;
+  idBadge: boolean;
+
+  // --- Dynamic Arrays (Index-wise objects) ---
+  expenses: any[];
+  tags: any[];
+  breaks: any[];
+  notes: any[];
+  logs: any[];
 
   // Allow flexible key-value access
   [key: string]: any;
@@ -60,202 +56,188 @@ interface TabValidation {
   [key: string]: ValidationResult;
 }
 
-export const useEditApplicant = () => {
+export const useEditApplicant = (scheduleData?: any, 
+  onScheduleUpdate?: (updatedFields: any) => void) => {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
-  const [isFieldSaving, setIsFieldSaving] = useState<Record<string, boolean>>(
-    {}
-  );
+  const [isFieldSaving, setIsFieldSaving] = useState<Record<string, boolean>>({});
+
+  // 2. Initial State aligned with Schedule Schema
   const [formData, setFormData] = useState<FormData>({
-    type: '',
-    title: '',
-    firstName: '',
-    middleInitial: '',
-    lastName: '',
-    preferredName: '',
-    dateOfBirth: '',
-    gender: '',
-    maritalStatus: '',
-    ethnicOrigin: '',
-    religion: '',
-    address: '',
-    city: '',
-    postCode: '',
-    country: '',
-    phone: '',
-    fax: '',
-    mobile: '',
-    other: '',
-    email: '',
-    website: '',
-    startDate: '',
-    lastDutyDate: '',
+    date: '',
+    startTime: '',
+    endTime: '',
+    timeInMinutes: '',
+    travelTime: '',
+    employee: '',
+    serviceUser: '',
+    branch: '',
+    area: '',
+    serviceType: '',
+    visitType: '',
+    serviceFunder: '',
+    payRate: '',
+    invoiceRate: '',
+    cancellation: '',
     status: '',
-    servicePriority: '',
-    serviceLocationExId: '',
-    timesheetSignature: undefined,
-    timesheetSignatureNote: '',
-    phoneNumber: '',
-    emergencyContact: '',
-    emergencyPhone: '',
-    disability: '',
-    ethnicity: '',
-    nationality: '',
-    preferredLanguage: '',
-    emergencyContacts: [
-      {
-        emergencyContactName: '',
-        relationship: '',
-        address: '',
-        cityOrTown: '',
-        country: '',
-        postCode: '',
-        note: '',
-        phone: '',
-        mobile: '',
-        email: '',
-        emailRota: undefined,
-        sendInvoice: undefined
-      }
-    ],
-    criticalInfo: [{ date: '', type: null, details: '' }],
-    primaryBranch: [
-      {
-        fromDate: '',
-        branch: '',
-        area: '',
-        note: ''
-      }
-    ],
-    logs:[]
+    purchaseOrder: false,
+    glovesAprons: false,
+    uniform: false,
+    idBadge: false,
+    expenses: [],
+    tags: [],
+    breaks: [],
+    notes: [],
+    logs: [],
   });
 
-  // Define required fields for each tab
+  // 3. Prefill Logic
+  useEffect(() => {
+    if (scheduleData) {
+      setFormData((prev) => ({
+        ...prev,
+        ...scheduleData,
+        // Safe mapping for Date
+        date: scheduleData.date ? String(scheduleData.date).split('T')[0] : prev.date,
+        
+        // Handle IDs if objects are passed (Population handling)
+        employee: typeof scheduleData.employee === 'object' ? scheduleData.employee?._id : scheduleData.employee,
+        serviceUser: typeof scheduleData.serviceUser === 'object' ? scheduleData.serviceUser?._id : scheduleData.serviceUser,
+        serviceFunder: typeof scheduleData.serviceFunder === 'object' ? scheduleData.serviceFunder?._id : scheduleData.serviceFunder,
+        
+        // Ensure arrays exist
+        expenses: scheduleData.expenses || [],
+        tags: scheduleData.tags || [],
+        breaks: scheduleData.breaks || [],
+        notes: scheduleData.notes || [],
+      }));
+    }
+  }, [scheduleData]);
+
+  // 4. The "Rulebook": Define Required Fields per Tab
   const requiredFieldsByTab = {
     general: [
-      { field: 'type', label: 'Service User Type' },
-      { field: 'title', label: 'Title' },
-      { field: 'firstName', label: 'First Name' },
-      { field: 'lastName', label: 'Last Name' },
-      { field: 'dateOfBirth', label: 'Date of Birth' },
-      { field: 'maritalStatus', label: 'Marital Status' },
-      { field: 'startDate', label: 'Start Date' },
-      { field: 'lastDutyDate', label: 'Last Duty Date' },
-      { field: 'status', label: 'Status' },
-      { field: 'servicePriority', label: 'Service Priority' },
-      { field: 'address', label: 'Full Address' },
-      { field: 'cityOrTown', label: 'City/Town' },
-      { field: 'postCode', label: 'Postal Code' },
-      { field: 'country', label: 'Country' }
-    ],
-    equipment: [],
-    expense: [],
-    tag: [],
-    dayOnOff: [],
-    emergency: [
-      { field: 'emergencyContactName', label: 'Name' },
-      { field: 'relationship', label: 'Relationship' }
-    ],
-    criticalInfo: [
       { field: 'date', label: 'Date' },
-      { field: 'type', label: 'Type' },
-      { field: 'details', label: 'Details' }
-    ],
+      { field: 'startTime', label: 'Start Time' },
+      { field: 'endTime', label: 'End Time' },
+      { field: 'timeInMinutes', label: 'Time (Minutes)' },
+      { field: 'travelTime', label: 'Travel Time' },
 
-    primaryBranch: [],
+      { field: 'branch', label: 'Branch' },
+      { field: 'area', label: 'Area' },
+      { field: 'serviceUser', label: 'Service User' },
+      { field: 'serviceFunder', label: 'Funder' },
+
+      { field: 'employeeBranch', label: 'Employee Branch' },
+      { field: 'employeeArea', label: 'Employee Area' },
+      { field: 'employee', label: 'Employee' },
+
+      { field: 'serviceType', label: 'Service Type' },
+      { field: 'visitType', label: 'Visit Type' },
+      { field: 'payRate', label: 'Pay Rate' },
+      { field: 'invoiceRate', label: 'Invoice Rate' }
+    ],
+    // Index-wise Arrays
+    expense: [
+      { field: 'expenseType', label: 'Expense Type' },
+      { field: 'payAmount', label: 'Pay Amount' }
+    ],
+    tag: [
+      { field: 'tag', label: 'Tag' },
+      { field: 'deliveryOption', label: 'Delivery Option' }
+    ],
+    break: [
+      { field: 'startDate', label: 'Start Date' },
+      { field: 'startTime', label: 'Start Time' },
+      { field: 'endTime', label: 'End Time' },
+      { field: 'type', label: 'Type' }
+    ],
+    // Other tabs
+    equipment: [],
+    dayOnOff: [
+          { field: 'plannedDate', label: 'Planned Date' },
+      { field: 'actualDate', label: 'Actual Date' },
+      { field: 'plannedStartTime', label: 'Start Time' },
+      { field: 'actualEndTime', label: 'End Time' },
+      { field: 'duration', label: 'Duration' }
+    ],
     note: [],
-    po: [{ field: 'purchaseOrder', label: 'Requires Purchase Order?' }],
-    break:[],
-    logs:[]
+    po: [],
+    logs: []
   };
 
+ 
+
+  // 5. "The Judge": Check for missing values
   const getMissingFields = (
     tab: keyof typeof requiredFieldsByTab,
-    formData: Record<string, any>
+    currentFormData: Record<string, any>
   ) => {
-    return requiredFieldsByTab[tab]
-      .filter(({ field }) => !formData[field]?.toString().trim())
-      .map(({ field }) => field); // Return field names instead of labels
+    // For normal fields
+    const fields = requiredFieldsByTab[tab] || [];
+    return fields
+      .filter(({ field }) => {
+        // Skip validation if we are looking at array tabs (handled in validateTab)
+        if (['expense', 'tag', 'break'].includes(tab)) return false; 
+        
+        const val = currentFormData[field];
+        return val === null || val === undefined || String(val).trim() === '';
+      })
+      .map(({ field }) => field);
   };
 
   const validateTab = (tabId: string): ValidationResult => {
     const missingFields: string[] = [];
 
-    if (tabId === 'emergency') {
-      formData.emergencyContacts?.forEach((contact: any, index: number) => {
-        requiredFieldsByTab.emergency.forEach(({ field }) => {
-          if (!contact[field] || contact[field].toString().trim() === '') {
+    // --- A. Handle Array/Index-Wise Tabs ---
+
+    if (tabId === 'expense') {
+      formData.expenses?.forEach((item: any, index: number) => {
+        requiredFieldsByTab.expense.forEach(({ field }) => {
+          const val = item[field];
+          if (val === null || val === undefined || String(val).trim() === '') {
+            // Format: fieldName[index] -> e.g., "expenseType[0]"
             missingFields.push(`${field}[${index}]`);
           }
         });
       });
-
-      return {
-        isValid: missingFields.length === 0,
-        missingFields
-      };
+      return { isValid: missingFields.length === 0, missingFields };
     }
 
-    if (tabId === 'primaryBranch') {
-      formData.primaryBranch?.forEach((item: any, index: number) => {
-        requiredFieldsByTab.primaryBranch.forEach(({ field }) => {
-          const value = item[field];
-
-          const isEmpty =
-            value === null ||
-            value === undefined ||
-            (typeof value === 'string' && value.trim() === '') ||
-            (typeof value === 'object' && !value.value); // for select fields
-
-          if (isEmpty) {
+    if (tabId === 'tag') {
+      formData.tags?.forEach((item: any, index: number) => {
+        requiredFieldsByTab.tag.forEach(({ field }) => {
+          const val = item[field];
+          if (val === null || val === undefined || String(val).trim() === '') {
+             // Format: tag[0]
             missingFields.push(`${field}[${index}]`);
           }
         });
       });
-
-      return {
-        isValid: missingFields.length === 0,
-        missingFields
-      };
+      return { isValid: missingFields.length === 0, missingFields };
     }
 
-    if (tabId === 'criticalInfo') {
-      formData.criticalInfo?.forEach((info: any, index: number) => {
-        requiredFieldsByTab.criticalInfo.forEach(({ field }) => {
-          const value = info[field];
-          const isEmpty =
-            value === null ||
-            value === undefined ||
-            (typeof value === 'string' && value.trim() === '') ||
-            (typeof value === 'object' && !value.value); // for { label, value } objects like `type`
-
-          if (isEmpty) {
+    if (tabId === 'break') {
+      formData.breaks?.forEach((item: any, index: number) => {
+        requiredFieldsByTab.break.forEach(({ field }) => {
+          const val = item[field];
+          if (val === null || val === undefined || String(val).trim() === '') {
+             // Format: startTime[0]
             missingFields.push(`${field}[${index}]`);
           }
         });
       });
-
-      return {
-        isValid: missingFields.length === 0,
-        missingFields
-      };
+      return { isValid: missingFields.length === 0, missingFields };
     }
 
-    // All other tabs
-    const requiredFields =
-      requiredFieldsByTab[tabId as keyof typeof requiredFieldsByTab] || [];
-
+    // --- B. Handle Standard Tabs ---
+    const requiredFields = requiredFieldsByTab[tabId as keyof typeof requiredFieldsByTab] || [];
+    
     requiredFields.forEach(({ field }) => {
-      // Conditionally require timesheetSignatureNote
-      if (
-        field === 'timesheetSignatureNote' &&
-        formData['timesheetSignature'] !== false
-      ) {
-        return;
-      }
-
       const value = formData[field];
-      if (!value || (typeof value === 'string' && value.trim() === '')) {
+      const isValid = value !== null && value !== undefined && String(value).trim() !== '';
+      
+      if (!isValid) {
         missingFields.push(field);
       }
     });
@@ -266,6 +248,7 @@ export const useEditApplicant = () => {
     };
   };
 
+  // 6. Expose Validation State
   const getTabValidation = (): TabValidation => {
     const validation: TabValidation = {};
     Object.keys(requiredFieldsByTab).forEach((tabId) => {
@@ -274,44 +257,70 @@ export const useEditApplicant = () => {
     return validation;
   };
 
-  const handleFieldUpdate = async (field: string, value: any) => {
+  // 7. API Logic (Patch Request)
+  const saveFieldToBackend = async (field: string, value: any) => {
+    // Optimistic Update
+    setFormData((prev) => ({ ...prev, [field]: value }));
+    
+    if (!scheduleData?._id) return;
+
     setIsFieldSaving((prev) => ({ ...prev, [field]: true }));
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    try {
+      await axiosInstance.patch(`/schedules/${scheduleData._id}`, {
+        [field]: value
+      });
 
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    setIsFieldSaving((prev) => ({ ...prev, [field]: false }));
+      if (onScheduleUpdate) {
+        onScheduleUpdate({ _id: formData._id, [field]: value });
+      }
+    } catch (error: any) {
+      console.error(`Failed to update ${field}:`, error);
+      toast({ 
+        title: "Update Failed", 
+        description: error.response?.data?.message || `Could not save ${field}`, 
+        variant: "destructive" 
+      });
+    } finally {
+      setIsFieldSaving((prev) => ({ ...prev, [field]: false }));
+    }
+  };
+
+  // --- Handlers ---
+
+  const handleFieldUpdate = async (field: string, value: any) => {
+    await saveFieldToBackend(field, value);
   };
 
   const handleDateChange = async (field: string, value: string) => {
-    setIsFieldSaving((prev) => ({ ...prev, [field]: true }));
-
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    setIsFieldSaving((prev) => ({ ...prev, [field]: false }));
+    await saveFieldToBackend(field, value);
   };
 
   const handleSelectChange = async (field: string, value: string) => {
-    setIsFieldSaving((prev) => ({ ...prev, [field]: true }));
-
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    setIsFieldSaving((prev) => ({ ...prev, [field]: false }));
+    await saveFieldToBackend(field, value);
   };
 
   const handleCheckboxChange = async (field: string, value: boolean) => {
-    setIsFieldSaving((prev) => ({ ...prev, [field]: true }));
+    await saveFieldToBackend(field, value);
+  };
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 500));
+  // --- New: Array Handler (Crucial for Expense/Tag/Break updates) ---
+  const handleArrayUpdate = async (
+    arrayName: 'expenses' | 'tags' | 'breaks' | 'notes', 
+    index: number, 
+    field: string, 
+    value: any
+  ) => {
+    const currentArray = [...formData[arrayName]];
+    
+    // Update the specific item in the array
+    currentArray[index] = {
+      ...currentArray[index],
+      [field]: value
+    };
 
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    setIsFieldSaving((prev) => ({ ...prev, [field]: false }));
+    // Save the ENTIRE array to the backend (Standard Mongoose Patch)
+    await saveFieldToBackend(arrayName, currentArray);
   };
 
   return {
@@ -323,6 +332,7 @@ export const useEditApplicant = () => {
     handleDateChange,
     handleSelectChange,
     handleCheckboxChange,
+    handleArrayUpdate, // Exporting this for your Tabs to use
     isFieldSaving,
     getTabValidation,
     validateTab,

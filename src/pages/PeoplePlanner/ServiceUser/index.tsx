@@ -215,7 +215,7 @@ export default function ServiceUserList() {
                 <TableCell>
                   {[user.address, user.city].filter(Boolean).join(', ')}
                 </TableCell>
-                <TableCell>{user.mobilePhone}</TableCell>
+                <TableCell>{user?.phone}</TableCell>
                 <TableCell>
                   <Switch
                     checked={user.status === 'active'}

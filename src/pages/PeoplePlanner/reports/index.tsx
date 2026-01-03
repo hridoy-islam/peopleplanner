@@ -19,7 +19,7 @@ export const ReportPage = () => {
         </div>
         
         {/* Reports Section */}
-        <ReportsSection />
+        {/* <ReportsSection /> */}
       </main>
     </div>
   );

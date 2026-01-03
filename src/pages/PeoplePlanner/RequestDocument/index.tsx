@@ -1,205 +1,487 @@
-import React, { useState, useEffect } from 'react';
-import { FileText, Plus, Filter, Search } from 'lucide-react';
-import moment from 'moment';
-import { DocumentRequest } from '@/types/DocumentTypes';
-import DocumentRequestForm from './components/DocumentRequestForm';
-import DocumentRequestList from './components/DocumentRequestList';
-import DocumentViewer from './components/DocumentViewer';
-import { pdf } from '@react-pdf/renderer';
-import {
-  PayslipPDF,
-  ExperienceLetterPDF,
-  AppointmentLetterPDF,
-  JobContractPDF
-} from './components/PDFDocuments';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import {
+  CalendarIcon,
+  FileText,
+  Clock,
+  CheckCircle,
+  Download
+} from 'lucide-react';
+
+// Dialog components
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from '@/components/ui/dialog';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+
+// React Select
+import Select from 'react-select';
+import moment from 'moment';
 import { useSelector } from 'react-redux';
+import axiosInstance from '@/lib/axios'; // ✅ Import axiosInstance
+import { BlinkingDots } from '@/components/shared/blinking-dots';
+import { DynamicPagination } from '@/components/shared/DynamicPagination';
 import AdminDocumentRequestPage from './components/AdminDocumentRequestPage';
+import AdminRequestDocumentPage from './components/AdminDocumentRequestPage';
 
-const ServiceUserRequestDocument: React.FC = () => {
-  const { user } = useSelector((state: any) => state.auth);
+// Types
+type DocumentType =
+  | 'Employment Certificate'
+  | 'Tax Certificate'
+  | 'Reference Letter'
+  | 'Salary Certificate'
+  | 'Experience Letter'
+  | 'Increment Letter'
+  | 'Promotion Letter'
+  | 'Attendance Report';
 
+type RequestStatus = 'pending' | 'approved' | 'rejected';
+
+interface DocumentRequest {
+  _id: string;
+  userId: string;
+  documentType: DocumentType;
+  requestDate: string;
+  status: RequestStatus;
+  startDate?: string;
+  endDate?: string;
+  document?: string;
+}
+
+const documentTypes: DocumentType[] = [
+  'Attendance Report',
+  'Employment Certificate',
+  'Tax Certificate',
+  'Reference Letter',
+  'Salary Certificate',
+  'Experience Letter',
+  'Increment Letter',
+  'Promotion Letter'
+];
+
+// Transform for react-select
+const documentTypeOptions = documentTypes.map((type) => ({
+  value: type,
+  label: type
+}));
+
+export default function DocumentReportPage() {
+  const user = useSelector((state: any) => state.auth?.user);
   const [requests, setRequests] = useState<DocumentRequest[]>([]);
-  const [showForm, setShowForm] = useState<boolean>(false);
-  const [selectedRequest, setSelectedRequest] = useState<DocumentRequest | null>(null);
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [entriesPerPage, setEntriesPerPage] = useState(10)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
 
-  // Mock data - in real app, this would come from API
+  const [selectedDocumentType, setSelectedDocumentType] =
+    useState<DocumentType | null>(null);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  // Fetch requests on component mount
   useEffect(() => {
-    const mockRequests: DocumentRequest[] = [
-      {
-        id: '1',
-        staffId: 'STAFF001',
-        staffName: 'John Smith',
-        staffEmail: 'john.smith@company.com',
-        department: 'Care Services',
-        documentType: 'payslip',
-        requestDate: '2025-01-10',
-        status: 'approved',
-        adminNotes: 'Approved for current month payslip',
-        approvedBy: 'Sarah Johnson',
-        approvedDate: '2025-01-12',
-        documentUrl: '/documents/payslip-john-smith.pdf',
-        reason: 'Required for bank loan application'
-      },
-      {
-        id: '2',
-        staffId: 'STAFF001',
-        staffName: 'John Smith',
-        staffEmail: 'john.smith@company.com',
-        department: 'Care Services',
-        documentType: 'experience-letter',
-        requestDate: '2025-01-08',
-        status: 'pending',
-        reason: 'Needed for new job application'
-      },
-      {
-        id: '3',
-        staffId: 'STAFF001',
-        staffName: 'John Smith',
-        staffEmail: 'john.smith@company.com',
-        department: 'Care Services',
-        documentType: 'appointment-letter',
-        requestDate: '2025-01-05',
-        status: 'rejected',
-        adminNotes:
-          'Original appointment letter is not available in digital format. Please contact HR for physical copy.',
-        reason: 'Personal records'
-      }
-    ];
-    setRequests(mockRequests);
-  }, []);
+    const fetchRequests = async () => {
+      if (!user?._id) return;
 
-  const handleSubmitRequest = (
-    newRequest: Omit<DocumentRequest, 'id' | 'requestDate' | 'status'>
-  ) => {
-    const request: DocumentRequest = {
-      ...newRequest,
-      id: Date.now().toString(),
-      requestDate: moment().format('YYYY-MM-DD'),
-      status: 'pending'
+      try {
+        setLoading(true);
+        const response = await axiosInstance.get(`/hr/request-document`, {
+          params: { userId: user._id, sort:'createdAt' , page: currentPage,
+          limit: entriesPerPage,}
+        });
+              setTotalPages(response.data.data.totalPages || 1)
+
+        setRequests(response?.data?.data?.result || []); // assuming response.data.data is the array
+      } catch (err: any) {
+        console.error('Failed to fetch document requests:', err);
+        setError(err.response?.data?.message || 'Could not load requests.');
+      } finally {
+        setLoading(false);
+      }
     };
 
-    setRequests((prev) => [request, ...prev]);
-    setShowForm(false);
-  };
+    fetchRequests();
+  }, [user?._id,currentPage, entriesPerPage]);
 
-  const handleViewDocument = (request: DocumentRequest) => {
-    setSelectedRequest(request);
-  };
+  const pendingCount = requests.filter(
+    (req) => req.status === 'pending'
+  ).length;
+  const approvedCount = requests.filter(
+    (req) => req.status === 'approved'
+  ).length;
 
-  const handleDownloadDocument = async (request: DocumentRequest) => {
+  const handleSubmitRequest = async () => {
+    if (!selectedDocumentType || !user?._id) return;
+
+    const payload = {
+      userId: user._id,
+      requestDate: moment().format('MM-DD-YYYY'),
+      documentType: selectedDocumentType,
+      ...(selectedDocumentType === 'Attendance Report' && {
+        startDate,
+        endDate
+      })
+    };
+
     try {
-      let pdfComponent;
+      const response = await axiosInstance.post(
+        '/hr/request-document',
+        payload
+      );
+      const newRequest = response.data.data; // assuming server returns created request
+      setRequests((prev) => [...prev, newRequest]);
 
-      switch (request.documentType) {
-        case 'payslip':
-          pdfComponent = <PayslipPDF request={request} />;
-          break;
-        case 'experience-letter':
-          pdfComponent = <ExperienceLetterPDF request={request} />;
-          break;
-        case 'appointment-letter':
-          pdfComponent = <AppointmentLetterPDF request={request} />;
-          break;
-        case 'job-contract':
-          pdfComponent = <JobContractPDF request={request} />;
-          break;
-        default:
-          pdfComponent = <PayslipPDF request={request} />;
-      }
-
-      const blob = await pdf(pdfComponent).toBlob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-
-      const fileName = `${request.documentType}-${request.staffName.replace(/\s+/g, '-').toLowerCase()}.pdf`;
-      link.download = fileName;
-
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Error generating PDF:', error);
-      alert('Error generating PDF. Please try again.');
+      // Reset form
+      setSelectedDocumentType(null);
+      setStartDate('');
+      setEndDate('');
+      setIsDialogOpen(false);
+    } catch (err: any) {
+      console.error('Failed to submit document request:', err);
+      alert(err.response?.data?.message || 'Could not submit request.');
     }
   };
 
-  const filteredRequests = requests.filter((request) => {
-    const matchesSearch =
-      request.documentType.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      request.staffName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
-      statusFilter === 'all' || request.status === statusFilter;
-    const matchesType =
-      typeFilter === 'all' || request.documentType === typeFilter;
+  // Format selected option for react-select
+  const selectedOption = selectedDocumentType
+    ? { value: selectedDocumentType, label: selectedDocumentType }
+    : null;
 
-    return matchesSearch && matchesStatus && matchesType;
-  });
-
-  // If user is admin, render the admin page
-  if (user?.role === 'admin') {
-    return <AdminDocumentRequestPage />;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-10">
+        <BlinkingDots size="large" color="bg-supperagent" />
+      </div>
+    );
   }
 
-  // Otherwise render the service user page
-  return (
-    <div className="min-h-screen">
-      <div>
-        {/* Header */}
-        <div className="mb-4 rounded-lg bg-white p-6 shadow-sm">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Document Requests
-              </h1>
-              
-            </div>
-            <div className="mt-4 sm:mt-0">
-              <Button
-                onClick={() => setShowForm(!showForm)}
-                className="inline-flex items-center space-x-2 rounded-md bg-supperagent px-6 py-3 text-white transition-colors duration-200 hover:bg-supperagent/90 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-              >
-                <Plus className="h-5 w-5" />
-                <span>New Request</span>
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* Request Form */}
-        {showForm && (
-          <div className="mb-8">
-            <DocumentRequestForm
-              onSubmitRequest={handleSubmitRequest}
-              onCancel={() => setShowForm(false)}
-            />
-          </div>
-        )}
-
-        {/* Request List */}
-        <DocumentRequestList
-          requests={filteredRequests}
-          onViewDocument={handleViewDocument}
-          onDownloadDocument={handleDownloadDocument}
-        />
-
-        {/* Document Viewer Modal */}
-        {selectedRequest && (
-          <DocumentViewer
-            request={selectedRequest}
-            onClose={() => setSelectedRequest(null)}
-            onDownload={() => handleDownloadDocument(selectedRequest)}
-          />
-        )}
+  if (error) {
+    return (
+      <div className="flex items-center justify-center py-10">
+        <p className="text-lg text-red-600">{error}</p>
       </div>
-    </div>
-  );
-};
+    );
+  }
 
-export default ServiceUserRequestDocument;
+
+  
+  return (
+   <Card className="space-y-6">
+  {/* Header */}
+  <CardHeader className="p-6 pb-0">
+    <div className="flex flex-row justify-between items-center">
+      <div className="flex items-center gap-2">
+        <FileText className="h-6 w-6" />
+        <h1 className="text-2xl font-bold">Documents</h1>
+      </div>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogTrigger asChild>
+          <Button className="bg-supperagent text-white hover:bg-supperagent/90">
+            <FileText className="mr-2 h-4 w-4" />
+            Request New Document
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Request New Document</DialogTitle>
+            <DialogDescription>
+              Select the type of document you need and provide details.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4 py-4">
+            {/* Document Type (React Select) */}
+            <div className="space-y-2">
+              <Label>Document Type</Label>
+              <Select
+                id="document-type"
+                instanceId="document-type-select"
+                value={selectedOption}
+                onChange={(option) =>
+                  setSelectedDocumentType(
+                    option ? (option.value as DocumentType) : null
+                  )
+                }
+                options={documentTypeOptions}
+                placeholder="Select document type"
+                isSearchable
+                styles={{
+                  control: (base, { isFocused }) => ({
+                    ...base,
+                    borderRadius: '0.5rem',
+                    borderColor: isFocused ? '#2563eb' : '#d1d5db',
+                    boxShadow: isFocused ? '0 0 0 1px #2563eb' : 'none',
+                    '&:hover': {
+                      borderColor: '#9ca3af'
+                    }
+                  }),
+                  menu: (base) => ({
+                    ...base,
+                    zIndex: 9999
+                  }),
+                  option: (base, { isFocused, isSelected }) => ({
+                    ...base,
+                    backgroundColor: isSelected
+                      ? '#2563eb'
+                      : isFocused
+                        ? '#eff6ff'
+                        : 'white',
+                    color: isSelected ? 'white' : 'black'
+                  })
+                }}
+              />
+            </div>
+
+            {/* Date Range for Attendance Report */}
+            {selectedDocumentType === 'Attendance Report' && (
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                {/* Start Date */}
+                <div className="space-y-2">
+                  <Label>Start Date</Label>
+                  <div className="relative">
+                    <DatePicker
+                      selected={
+                        startDate
+                          ? moment(startDate, 'MM-DD-YYYY', true).toDate()
+                          : null
+                      }
+                      onChange={(date: Date | null) => {
+                        if (date && moment(date).isValid()) {
+                          setStartDate(moment(date).format('MM-DD-YYYY'));
+                        }
+                      }}
+                      selectsStart
+                      startDate={
+                        startDate
+                          ? moment(startDate, 'MM-DD-YYYY', true).toDate()
+                          : undefined
+                      }
+                      endDate={
+                        endDate
+                          ? moment(endDate, 'MM-DD-YYYY', true).toDate()
+                          : undefined
+                      }
+                      dateFormat="MM-dd-yyyy"
+                      dropdownMode="select"
+                      showMonthDropdown
+                      showYearDropdown
+                      customInput={
+                        <div className="relative">
+                          <Input
+                            type="text"
+                            value={startDate || ''}
+                            readOnly
+                            className="pl-3 pr-10"
+                          />
+                          <CalendarIcon className="pointer-events-none absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
+                        </div>
+                      }
+                      wrapperClassName="w-full"
+                    />
+                  </div>
+                </div>
+
+                {/* End Date */}
+                <div className="space-y-2">
+                  <Label>End Date</Label>
+                  <div className="relative">
+                    <DatePicker
+                      selected={
+                        endDate
+                          ? moment(endDate, 'MM-DD-YYYY', true).toDate()
+                          : null
+                      }
+                      onChange={(date: Date | null) => {
+                        if (date && moment(date).isValid()) {
+                          setEndDate(moment(date).format('MM-DD-YYYY'));
+                        }
+                      }}
+                      selectsEnd
+                      startDate={
+                        startDate
+                          ? moment(startDate, 'MM-DD-YYYY', true).toDate()
+                          : undefined
+                      }
+                      endDate={
+                        endDate
+                          ? moment(endDate, 'MM-DD-YYYY', true).toDate()
+                          : undefined
+                      }
+                      minDate={
+                        startDate
+                          ? moment(startDate, 'MM-DD-YYYY', true).toDate()
+                          : undefined
+                      }
+                      dateFormat="MM-dd-yyyy"
+                      dropdownMode="select"
+                      showMonthDropdown
+                      showYearDropdown
+                      customInput={
+                        <div className="relative">
+                          <Input
+                            type="text"
+                            value={endDate || ''}
+                            readOnly
+                            className="pl-3 pr-10"
+                          />
+                          <CalendarIcon className="pointer-events-none absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
+                        </div>
+                      }
+                      wrapperClassName="w-full"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end">
+            <Button
+              onClick={handleSubmitRequest}
+              className="bg-supperagent text-white hover:bg-supperagent/90"
+              disabled={
+                !selectedDocumentType ||
+                (selectedDocumentType === 'Attendance Report' &&
+                  (!startDate || !endDate))
+              }
+            >
+              Submit Request
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  </CardHeader>
+
+  {/* Requests Table */}
+  <CardContent className="p-6 pt-0">
+    <div className="mt-6">
+      
+
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Document Type</TableHead>
+            <TableHead>Request Date</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Period</TableHead>
+            <TableHead className="text-right">Action</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {requests.length === 0 ? (
+            <TableRow>
+              <TableCell
+                colSpan={5}
+                className="py-4 text-center text-muted-foreground"
+              >
+                No requests found.
+              </TableCell>
+            </TableRow>
+          ) : (
+            requests.map((request) => (
+              <TableRow key={request._id}>
+                <TableCell className="font-medium">
+                  {request.documentType}
+                </TableCell>
+                <TableCell>
+                  {request.requestDate
+                    ? moment(request.requestDate).format('DD MMM, YYYY')
+                    : '-'}
+                </TableCell>
+                <TableCell>
+                  <div
+                    className={`inline-flex rounded-full px-3 py-1 text-xs font-medium capitalize
+                      ${
+                        request.status === 'approved'
+                          ? 'bg-green-100 text-green-800'
+                          : request.status === 'rejected'
+                            ? 'bg-red-100 text-red-800'
+                            : 'bg-orange-100 text-orange-800' // pending
+                      }
+                    `}
+                  >
+                    {request.status}
+                  </div>
+                </TableCell>
+                <TableCell>
+                  {request.startDate && request.endDate ? (
+                    <span className="text-sm text-muted-foreground">
+                      {moment(request.startDate).format('DD MMM, YYYY')} -{' '}
+                      {moment(request.endDate).format('DD MMM, YYYY')}
+                    </span>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">-</span>
+                  )}
+                </TableCell>
+                <TableCell className="text-right">
+                  {request.document ? (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="bg-supperagent text-white hover:bg-supperagent"
+                      onClick={() => {
+                        const link = document.createElement('a');
+                        link.href = request.document;
+                        link.setAttribute('download', '');
+                        link.setAttribute('target', '_blank');
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                      }}
+                      aria-label="Download document"
+                    >
+                      <Download className="h-4 w-4 mr-2" /> Download
+                    </Button>
+                  ) : (
+                    <span className="text-sm text-muted-foreground">-</span>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+    </div>
+  {requests.length > 2 && (
+                  <div className="mt-4">
+                    <DynamicPagination
+                      pageSize={entriesPerPage}
+                      setPageSize={setEntriesPerPage}
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={setCurrentPage}
+                    />
+                  </div>
+                )}
+  </CardContent>
+</Card>
+  );
+}

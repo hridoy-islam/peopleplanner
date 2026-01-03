@@ -1,25 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Plus,
   FileText,
   Users,
-  Calendar,
-  DollarSign,
-  Search,
   Filter,
   MoreHorizontal,
-  Clock,
-  Calendar as CalendarIcon
+  Search,
+  Loader2
 } from 'lucide-react';
+import Select from 'react-select'; // Import react-select
 import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle
 } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
@@ -27,8 +22,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import BulkInvoiceModal from './BlukInvoiceModal';
-import PaymentModal from './PaymentModal';
 import {
   Table,
   TableBody,
@@ -37,422 +30,334 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { downloadPayslipPDF } from './PayslipPDF';
 
+// Import your modals and utilities
+import BulkInvoiceModal from './BlukInvoiceModal';
+import PaymentModal from './PaymentModal';
+import { downloadPayslipPDF } from './PayslipPDF';
+import axiosInstance from '@/lib/axios';
+
+// --- Interfaces based on your Mongoose Schema ---
+
+interface User {
+  _id: string;
+  name: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+}
+
+interface ServiceItem {
+  _id: string;
+  startDate: string;
+  endDate: string;
+}
+
+interface Payroll {
+  _id: string;
+  userId: User; // Populated field
+  serviceNumber: number;
+  period: string;
+  amount: number;
+  amountPaid: number;
+  status: 'due' | 'paid' | 'partial';
+  services: ServiceItem[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface OptionType {
+  value: string;
+  label: string;
+}
 
 interface PayslipsPageProps {
   onCreatePayslip: () => void;
 }
 
-const mockInvoices = [
-  {
-    id: 'INV-001',
-    userId: 'user1',
-    userName: 'John Smith',
-    amount: 1250.0,
-    status: 'finalized',
-    createdDate: '2025-01-15',
-    dueDate: '2025-02-14',
-    serviceCount: 8,
-    period: 'Jan 1 - Jan 14, 2025',
-    type: 'time_based',
-    services: [
-      {
-        id: 'srv-001',
-        date: '2025-01-05',
-        hours: 4,
-        type: 'Care',
-        rate: 36.6,
-        value: 146.4,
-        startTime: '09:00',
-        endTime: '13:00',
-        description: 'Personal care and medication support'
-      },
-      {
-        id: 'srv-002',
-        date: '2025-01-12',
-        hours: 4,
-        type: 'Care',
-        rate: 36.6,
-        value: 146.4,
-        startTime: '14:00',
-        endTime: '18:00',
-        description: 'Meal preparation and companionship'
-      }
-    ]
-  },
-  {
-    id: 'INV-002',
-    userId: 'user2',
-    userName: 'Sarah Johnson',
-    amount: 875.5,
-    status: 'paid',
-    createdDate: '2025-01-14',
-    dueDate: '2025-02-13',
-    serviceCount: 6,
-    period: 'Jan 1 - Jan 14, 2025',
-    type: 'standard',
-    services: [
-      {
-        id: 'srv-003',
-        date: '2025-01-07',
-        hours: 3,
-        type: 'Support',
-        rate: 25.0,
-        value: 75.0,
-        description: 'General support services'
-      },
-      {
-        id: 'srv-004',
-        date: '2025-01-10',
-        hours: 2.5,
-        type: 'Cleaning',
-        rate: 20.0,
-        value: 50.0,
-        description: 'House cleaning services'
-      }
-    ]
-  },
-  {
-    id: 'INV-003',
-    userId: 'user3',
-    userName: 'Michael Brown',
-    amount: 2100.0,
-    status: 'draft',
-    createdDate: '2025-01-15',
-    dueDate: '2025-02-14',
-    serviceCount: 12,
-    period: 'Jan 1 - Jan 14, 2025',
-    type: 'time_based',
-    services: [
-      {
-        id: 'srv-005',
-        date: '2025-01-08',
-        hours: 6,
-        type: 'Care',
-        rate: 40.0,
-        value: 240.0,
-        startTime: '08:00',
-        endTime: '14:00',
-        description: 'Extended care support'
-      },
-      {
-        id: 'srv-006',
-        date: '2025-01-11',
-        hours: 4,
-        type: 'Transport',
-        rate: 30.0,
-        value: 120.0,
-        startTime: '10:00',
-        endTime: '14:00',
-        description: 'Medical appointment transport'
-      }
-    ]
-  }
-];
-
 export default function PayslipsPage({ onCreatePayslip }: PayslipsPageProps) {
-  const [invoices] = useState(mockInvoices);
-  const [searchTerm, setSearchTerm] = useState('');
+  // --- State ---
+  const [payrolls, setPayrolls] = useState<Payroll[]>([]);
+  const [userOptions, setUserOptions] = useState<OptionType[]>([]);
+  const [selectedUserFilter, setSelectedUserFilter] = useState<OptionType | null>(null);
+  
+  const [loading, setLoading] = useState(false);
+  const [loadingUsers, setLoadingUsers] = useState(false);
+  
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<{
     id: string;
     name: string;
   } | null>(null);
+  const [paymentAmount, setPaymentAmount] = useState<number>(0);
 
-  const getStatusColor = (status) => {
+
+  // 1. Fetch Users for the Select Filter
+  const fetchUsers = async () => {
+    try {
+      setLoadingUsers(true);
+      const response = await axiosInstance.get('/users', {
+        params: {
+          role: 'serviceUser',
+          limit: 'all'
+        }
+      });
+      
+      const users = response.data.data?.result;
+      
+      const options = users.map((user: User) => ({
+        value: user._id,
+        label: user?.firstName + ' ' + user?.lastName
+      }));
+      setUserOptions(options);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  // 2. Fetch Payrolls (Triggered on mount and on search click)
+  const fetchPayrolls = async () => {
+    try {
+      setLoading(true);
+      const params: any = {};
+      
+      // Apply filter if selected
+      if (selectedUserFilter) {
+        params.userId = selectedUserFilter.value;
+      }
+
+      const response = await axiosInstance.get('/payrolls', { params });
+      // Adjust strictly to your API response structure
+      setPayrolls(response.data.data?.result || response.data); 
+    } catch (error) {
+      console.error("Error fetching payrolls:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- Effects ---
+
+  useEffect(() => {
+    fetchUsers();
+    fetchPayrolls(); // Initial load of all payrolls
+  }, []);
+
+  // --- Helpers ---
+
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'draft':
-        return 'bg-gray-100 text-gray-800';
-      case 'ready':
-        return 'bg-blue-100 text-blue-800';
-      case 'finalized':
-        return 'bg-purple-100 text-purple-800';
       case 'paid':
         return 'bg-green-100 text-green-800';
-      case 'partially_paid':
+      case 'partial':
         return 'bg-yellow-100 text-yellow-800';
-      case 'unpaid':
+      case 'due':
         return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getTypeColor = (type) => {
-    switch (type) {
-      case 'time_based':
-        return 'bg-blue-50 text-blue-700 border-blue-200';
-      case 'standard':
-        return 'bg-green-50 text-green-700 border-green-200';
-      default:
-        return 'bg-gray-50 text-gray-700 border-gray-200';
-    }
+  const getStatusText = (status: string) => {
+    return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
-  const getStatusText = (status) => {
-    return status
-      .split('_')
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ');
+  const handlePayClick = (payroll: Payroll) => {
+    setSelectedUser({
+      id: payroll.userId._id,
+      name: payroll.userId.name
+    });
+    setPaymentAmount(payroll.amount - payroll.amountPaid); // Pay remaining balance
+    setShowPaymentModal(true);
   };
 
-  const getTypeText = (type) => {
-    switch (type) {
-      case 'time_based':
-        return 'Time Based';
-      case 'standard':
-        return 'Standard';
-      default:
-        return type;
-    }
-  };
-
-  const filteredInvoices = invoices.filter(
-    (invoice) =>
-      invoice.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.id.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const totalAmount = invoices.reduce(
-    (sum, invoice) => sum + invoice.amount,
-    0
-  );
-  const paidAmount = invoices
-    .filter((invoice) => invoice.status === 'paid')
-    .reduce((sum, invoice) => sum + invoice.amount, 0);
-  const pendingAmount = totalAmount - paidAmount;
-
-  const timeBasedCount = invoices.filter(inv => inv.type === 'time_based').length;
-  const standardCount = invoices.filter(inv => inv.type === 'standard').length;
-
-  const handleDownloadPDF = async (invoice) => {
+  // --- PDF Handlers ---
+  const handleDownloadPDF = async (payroll: Payroll, detailed: boolean) => {
     try {
-      await downloadPayslipPDF(invoice);
+      // You might need to map the backend 'payroll' object to the structure your PDF generator expects
+      // dependent on how strictly typed downloadPayslipPDF is.
+      await downloadPayslipPDF(payroll, detailed);
     } catch (error) {
       console.error('Error downloading PDF:', error);
     }
   };
 
-  const handleDownloadDetailedPDF = async (invoice) => {
-    try {
-      await downloadPayslipPDF(invoice, true); // Pass true for detailed version
-    } catch (error) {
-      console.error('Error downloading detailed PDF:', error);
-    }
-  };
-
-  const handleDownloadNormalPDF = async (invoice) => {
-    try {
-      await downloadPayslipPDF(invoice, false); // Pass false for normal version
-    } catch (error) {
-      console.error('Error downloading normal PDF:', error);
-    }
-  };
   return (
-    <div className="space-y-6 bg-white  p-4 rounded-lg shadow-sm">
-      {/* Header */}
-      <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Payslips</h1>
-        </div>
-        <div className="flex gap-3">
-          <Button
-            onClick={() => setShowBulkModal(true)}
-            className="bg-supperagent text-white hover:bg-supperagent/90"
-          >
-            <Users className="mr-2 h-4 w-4" />
-            Generate Payslip (Bulk)
-          </Button>
-          <Button onClick={onCreatePayslip} variant="outline">
-            <Plus className="mr-2 h-4 w-4" />
-            Create Payslip
-          </Button>
-        </div>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Payslips
-            </CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{invoices.length}</div>
-            <p className="text-xs text-muted-foreground">
-              Active Payslips in system
-            </p>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Time-Based</CardTitle>
-            <Clock className="h-4 w-4 text-blue-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{timeBasedCount}</div>
-            <p className="text-xs text-muted-foreground">With start/end times</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Standard</CardTitle>
-            <CalendarIcon className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{standardCount}</div>
-            <p className="text-xs text-muted-foreground">Hours-based only</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Pending Amount
-            </CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
-              ${pendingAmount.toLocaleString()}
-            </div>
-            <p className="text-xs text-muted-foreground">Awaiting payment</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Search and Filters */}
-      <Card className='shadow-none'>
+    <div className="space-y-6 rounded-lg bg-white shadow-sm">
+      <Card className="shadow-none">
         <CardHeader>
           <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
-            <div>
-              <CardTitle>All Payslips</CardTitle>
-              <CardDescription>
-                Manage time-based and standard Payslips
-              </CardDescription>
-            </div>
-            <div className="flex w-full gap-2 sm:w-auto">
-              <div className="relative flex-1 sm:flex-none">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
-                <Input
-                  placeholder="Search Payslips..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 sm:w-80"
-                />
+            
+            {/* Title and Filter Section */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
+              <h1 className="text-2xl font-bold text-gray-900">Payslips</h1>
+              
+              <div className="flex w-full sm:w-auto gap-2 items-center">
+                {/* React Select for Filtering */}
+                <div className="w-full sm:w-64 z-20">
+                  <Select
+                    options={userOptions}
+                    value={selectedUserFilter}
+                    onChange={(option) => setSelectedUserFilter(option)}
+                    isLoading={loadingUsers}
+                    placeholder="Select User..."
+                    isClearable
+                    className="text-sm"
+                    classNames={{
+                      control: () => "border-input bg-background border rounded-md shadow-sm h-10 px-1",
+                      menu: () => "bg-background  rounded-md shadow-lg mt-1",
+                      option: ({ isFocused, isSelected }) => 
+                        `px-3 py-2 cursor-pointer ${isSelected ? 'bg-primary text-primary-foreground' : isFocused ? 'bg-accent text-accent-foreground' : 'text-foreground'}`
+                    }}
+                  />
+                </div>
+                
+                {/* Search Trigger Button */}
+                <Button variant="outline" size="icon" onClick={fetchPayrolls} disabled={loading}>
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                </Button>
+                
+                
               </div>
-              <Button variant="outline" size="icon">
-                <Filter className="h-4 w-4" />
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3 w-full sm:w-auto">
+              <Button
+                onClick={() => setShowBulkModal(true)}
+                className="bg-supperagent text-white hover:bg-supperagent/90"
+              >
+                <Users className="mr-2 h-4 w-4" />
+                Generate Payslip (Bulk)
+              </Button>
+              <Button onClick={onCreatePayslip} variant="outline">
+                <Plus className="mr-2 h-4 w-4" />
+                Create Payslip
               </Button>
             </div>
           </div>
         </CardHeader>
+
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Invoice ID</TableHead>
                 <TableHead>User</TableHead>
                 <TableHead>Services</TableHead>
                 <TableHead>Period</TableHead>
-                <TableHead>Created</TableHead>
-                <TableHead>Due</TableHead>
-                <TableHead>Amount</TableHead>
+                <TableHead>Total / Paid</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredInvoices.map((invoice) => (
-                <TableRow key={invoice.id}>
-                  <TableCell className="font-semibold">{invoice.id}</TableCell>
-                  <TableCell>
-                    <Badge variant="outline" className={getTypeColor(invoice.type)}>
-                      {invoice.type === 'time_based' && <Clock className="w-3 h-3 mr-1" />}
-                      {invoice.type === 'standard' && <CalendarIcon className="w-3 h-3 mr-1" />}
-                      {getTypeText(invoice.type)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge className={getStatusColor(invoice.status)}>
-                      {getStatusText(invoice.status)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{invoice.userName}</TableCell>
-                  <TableCell>{invoice.serviceCount}</TableCell>
-                  <TableCell>{invoice.period}</TableCell>
-                  <TableCell>
-                    {new Date(invoice.createdDate).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
-                    {new Date(invoice.dueDate).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell className="font-bold text-gray-900">
-                    ${invoice.amount.toLocaleString()}
-                  </TableCell>
-                  <TableCell className="flex justify-end gap-2">
-                    <Button
-                      size="sm"
-                      className="bg-blue-600 text-white hover:bg-blue-700"
-                      onClick={() => {
-                        setSelectedUser({
-                          id: invoice.userId,
-                          name: invoice.userName
-                        });
-                        setShowPaymentModal(true);
-                      }}
-                    >
-                      Pay
-                    </Button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          size="sm"
-                          variant="default"
-                          className=" text-white hover:bg-supperagent/90 bg-supperagent"
-                        >
-                          <FileText className="mr-2 h-4 w-4" />
-                          Download PDF
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        align="end"
-                        className="border-gray-300 bg-white text-black"
-                      >
-                        <DropdownMenuItem onClick={() => handleDownloadDetailedPDF(invoice)}>
-                          Detailed PDF
-                        
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleDownloadNormalPDF(invoice)}>
-                          Normal PDF
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        align="end"
-                        className="border-gray-300 bg-white text-black"
-                      >
-                        <DropdownMenuItem className="text-red-600 hover:text-red-600">
-                          Delete Payslip
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+              {loading ? (
+                 <TableRow>
+                    <TableCell colSpan={7} className="h-24 text-center">
+                      <div className="flex justify-center items-center gap-2 text-gray-500">
+                        <Loader2 className="h-5 w-5 animate-spin" /> Loading data...
+                      </div>
+                    </TableCell>
+                 </TableRow>
+              ) : payrolls.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="h-24 text-center text-gray-500">
+                    No payslips found.
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : (
+                payrolls.map((payroll) => (
+                  <TableRow key={payroll._id}>
+                    {/* Displaying last 6 chars of ID for brevity, or full ID */}
+                    <TableCell className="font-semibold text-gray-600">
+                      #{payroll._id.slice(-6).toUpperCase()}
+                    </TableCell>
+
+                    <TableCell className="font-medium">
+                      {payroll.userId?.name || 'Unknown User'}
+                    </TableCell>
+                    
+                    {/* Using serviceNumber from schema */}
+                    <TableCell>
+                      {payroll.serviceNumber} Items
+                    </TableCell>
+                    
+                    <TableCell>{payroll.period}</TableCell>
+                    
+                    <TableCell className="font-bold text-gray-900">
+                       {/* Display Amount and Amount Paid */}
+                       <div className="flex flex-col">
+                        <span>${payroll.amount.toLocaleString()}</span>
+                        <span className="text-xs font-normal text-gray-500">
+                          Paid: ${payroll.amountPaid.toLocaleString()}
+                        </span>
+                       </div>
+                    </TableCell>
+                    
+                    <TableCell>
+                      <Badge className={getStatusColor(payroll.status)}>
+                        {getStatusText(payroll.status)}
+                      </Badge>
+                    </TableCell>
+                    
+                    <TableCell className="flex justify-end gap-2">
+                      {payroll.status !== 'paid' && (
+                        <Button
+                          size="sm"
+                          className="bg-blue-600 text-white hover:bg-blue-700"
+                          onClick={() => handlePayClick(payroll)}
+                        >
+                          Pay
+                        </Button>
+                      )}
+                      
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="default"
+                            className="bg-supperagent text-white hover:bg-supperagent/90"
+                          >
+                            <FileText className="mr-2 h-4 w-4" />
+                            Download
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align="end"
+                          className="border-gray-300 bg-white text-black"
+                        >
+                          <DropdownMenuItem onClick={() => handleDownloadPDF(payroll, true)}>
+                            Detailed PDF
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDownloadPDF(payroll, false)}>
+                            Normal PDF
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align="end"
+                          className="border-gray-300 bg-white text-black"
+                        >
+                          <DropdownMenuItem className="text-red-600 hover:text-red-600">
+                            Delete Payslip
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>
@@ -467,7 +372,7 @@ export default function PayslipsPage({ onCreatePayslip }: PayslipsPageProps) {
       <PaymentModal
         isOpen={showPaymentModal}
         onClose={() => setShowPaymentModal(false)}
-        invoiceAmount={totalAmount}
+        invoiceAmount={paymentAmount} // Passing calculated remaining amount
         userInfo={selectedUser}
       />
     </div>

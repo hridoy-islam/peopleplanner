@@ -3,24 +3,43 @@ import { EditableField } from '../components/EditableField';
 import { Button } from '@/components/ui/button';
 
 interface Break {
-  startDate: string; // e.g., "23/07/2025"
-  startTime: string; // e.g., "14:30"
-  endTime: string; // e.g., "15:00"
-  type: string; // e.g., "Meeting", "Training", etc.
+  startDate: string; 
+  startTime: string; 
+  endTime: string; 
+  type: string; 
+}
+
+// Define the validation result structure
+interface ValidationResult {
+  isValid: boolean;
+  missingFields: string[];
 }
 
 interface BreakTabProps {
   formData: any;
   onUpdate: (field: string, value: any) => void;
   isFieldSaving: Record<string, boolean>;
+  // 1. Add validateTab to props
+  validateTab: (tabId: string) => ValidationResult;
 }
 
 const BreakTab: React.FC<BreakTabProps> = ({
   formData,
   onUpdate,
-  isFieldSaving
+  isFieldSaving,
+  validateTab // 2. Destructure here
 }) => {
   const breaks: Break[] = formData.breaks || [];
+
+  // 3. Get current validation errors for the 'break' tab
+  // This returns arrays like ['startDate[0]', 'type[1]']
+  const validationResult = validateTab('break');
+  const missingFields = validationResult.missingFields;
+
+  // 4. Helper to check if a specific field at a specific index is missing
+  const isFieldMissing = (index: number, fieldName: string) => {
+    return missingFields.includes(`${fieldName}[${index}]`);
+  };
 
   // Define options
   const typeOptions = [
@@ -43,7 +62,7 @@ const BreakTab: React.FC<BreakTabProps> = ({
   const addNewBreak = () => {
     const updated = [
       ...breaks,
-      {
+       {
         startDate: '',
         startTime: '',
         endTime: '',
@@ -87,6 +106,8 @@ const BreakTab: React.FC<BreakTabProps> = ({
               onUpdate={(val) => updateBreakField(index, 'startDate', val)}
               isSaving={isFieldSaving[`startDate-${index}`]}
               required
+              // 5. Pass validation status
+              isMissing={isFieldMissing(index, 'startDate')}
             />
             
             <EditableField
@@ -97,6 +118,8 @@ const BreakTab: React.FC<BreakTabProps> = ({
               onUpdate={(val) => updateBreakField(index, 'startTime', val)}
               isSaving={isFieldSaving[`startTime-${index}`]}
               required
+              // 5. Pass validation status
+              isMissing={isFieldMissing(index, 'startTime')}
             />
 
             <EditableField
@@ -107,6 +130,8 @@ const BreakTab: React.FC<BreakTabProps> = ({
               onUpdate={(val) => updateBreakField(index, 'endTime', val)}
               isSaving={isFieldSaving[`endTime-${index}`]}
               required
+              // 5. Pass validation status
+              isMissing={isFieldMissing(index, 'endTime')}
             />
 
             <EditableField
@@ -118,6 +143,8 @@ const BreakTab: React.FC<BreakTabProps> = ({
               onUpdate={(val) => updateBreakField(index, 'type', val)}
               isSaving={isFieldSaving[`type-${index}`]}
               required
+              // 5. Pass validation status
+              isMissing={isFieldMissing(index, 'type')}
             />
           </div>
         </div>
@@ -126,7 +153,7 @@ const BreakTab: React.FC<BreakTabProps> = ({
       <div className="flex justify-end">
         <Button
           onClick={addNewBreak}
-          className=" rounded bg-supperagent  text-white hover:bg-supperagent/90"
+          className=" rounded bg-supperagent text-white hover:bg-supperagent/90"
         >
           Add Break
         </Button>

@@ -58,26 +58,7 @@ export const Tabs: React.FC<TabsProps> = ({ tabs, activeTab, onChange, validatio
 
   return (
     <div className="mb-8">
-      {/* <div className="mb-6 border-b border-gray-200 bg-white rounded-t-lg">
-        <div className="flex flex-wrap -mb-px overflow-x-auto ">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => onChange(tab.id)}
-              className={`inline-flex items-center gap-2 px-6 py-4 text-sm font-medium border-b-2 transition-all duration-200 ease-in-out whitespace-nowrap ${getTabStyles(tab.id)}`}
-              aria-current={activeTab === tab.id ? 'page' : undefined}
-            >
-              {getTabIcon(tab.id)}
-              <span>{tab.label}</span>
-              {validation[tab.id] && !validation[tab.id].isValid && (
-                <span className="ml-1 inline-flex items-center justify-center w-5 h-5 text-xs font-bold text-white bg-red-500 rounded-full">
-                  {validation[tab.id].missingFields.length}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-      </div> */}
+   
       <div className="tab-content">
         {tabs.find((tab) => tab.id === activeTab)?.component}
       </div>

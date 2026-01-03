@@ -8,6 +8,12 @@ interface NoteItem {
   note: string;
 }
 
+// 1. Define Validation Interface
+interface ValidationResult {
+  isValid: boolean;
+  missingFields: string[];
+}
+
 interface NoteTabProps {
   formData: {
     notes: NoteItem[];
@@ -16,9 +22,9 @@ interface NoteTabProps {
   onDateChange: () => void;
   onSelectChange: (field: string, value: string) => void;
   isFieldSaving: Record<string, boolean>;
+  // 2. Add validateTab for consistency
+  validateTab: (tabId: string) => ValidationResult;
 }
-
-
 
 const NoteTab: React.FC<NoteTabProps> = ({
   formData,
@@ -26,8 +32,17 @@ const NoteTab: React.FC<NoteTabProps> = ({
   onSelectChange,
   onDateChange,
   isFieldSaving,
+  validateTab
 }) => {
   const notes = formData.notes || [];
+
+  // 3. Validation Logic
+  const validationResult = validateTab('note');
+  const missingFields = validationResult.missingFields;
+
+  const isFieldMissing = (index: number, fieldName: string) => {
+    return missingFields.includes(`${fieldName}[${index}]`);
+  };
 
   const handleNoteChange = (
     index: number,
@@ -35,42 +50,70 @@ const NoteTab: React.FC<NoteTabProps> = ({
     value: string
   ) => {
     const updatedNotes = [...notes];
-    updatedNotes[index][field] = value;
+    updatedNotes[index] = {
+      ...updatedNotes[index],
+      [field]: value
+    };
     onUpdate('notes', updatedNotes);
   };
 
   const addNote = () => {
     const updatedNotes = [
       ...notes,
-      { note: '' }
+      { date: '', type: '', note: '' } // Initialize with empty values
     ];
     onUpdate('notes', updatedNotes);
   };
 
-  return (
-    <div className="space-y-8">
-      <div className="space-y-4 rounded-lg border border-gray-200 bg-white p-2 shadow-sm">
-        <h3 className="mb-4 border-b border-gray-200  text-lg font-semibold text-gray-900">
-          Notes
-        </h3>
+  // 4. Remove Logic
+  const removeNote = (index: number) => {
+    const updatedNotes = [...notes];
+    updatedNotes.splice(index, 1);
+    onUpdate('notes', updatedNotes);
+  };
 
-        {notes.map((note, index) => (
-          <div key={index} className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        
+  return (
+    <div className="space-y-4">
+      {notes.map((note, index) => (
+        <div
+          key={index}
+          className="rounded-lg border border-gray-300 bg-white p-6 shadow-sm"
+        >
+          {/* Header Row with Remove Button */}
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Note #{index + 1}
+            </h3>
+            <button
+              onClick={() => removeNote(index)}
+              className="text-red-600 hover:text-red-800"
+            >
+              Remove
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4">
             <EditableField
               id={`note-text-${index}`}
-              label="Note"
+              label="Note Details"
               value={note.note}
               type="textarea"
               onUpdate={(val) => handleNoteChange(index, 'note', val)}
               isSaving={isFieldSaving[`notes.${index}.note`]}
+              // Pass validation status if note is required
+              isMissing={isFieldMissing(index, 'note')} 
             />
           </div>
-        ))}
+        </div>
+      ))}
 
-        <Button type="button" onClick={addNote}           className="  bg-supperagent  text-white hover:bg-supperagent/90"
->
-          + Add Note
+      <div className="flex justify-end pt-2">
+        <Button
+          type="button"
+          onClick={addNote}
+          className="bg-supperagent text-white hover:bg-supperagent/90"
+        >
+          Add Note
         </Button>
       </div>
     </div>

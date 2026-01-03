@@ -30,31 +30,20 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import ExpenseTab from './scheduleTabs/tabs/ExpenseTab';
 import LogTab from './scheduleTabs/tabs/LogTab';
-
+import { useToast } from '@/components/ui/use-toast';
+import axiosInstance from '@/lib/axios';
 interface ScheduleDetailDialogProps {
   schedule: schedule | null;
   isOpen: boolean;
   onClose: () => void;
+  onScheduleUpdate: (updatedFields: any) => void;
 }
-
-const mockUser = {
-  id: '12345',
-  firstName: 'John',
-  lastName: 'Doe',
-  email: 'johndoe@example.com',
-  phone: '123-456-7890',
-  role: 'Admin',
-  scheduleId: 'schedule-001',
-  scheduleTitle: 'Weekly Team Meeting',
-  profilePicture: 'https://randomuser.me/api/portraits/men/1.jpg', // Mocked profile picture URL
-  createdAt: new Date('2022-06-15T14:48:00Z'),
-  updatedAt: new Date('2023-04-25T10:22:00Z')
-};
 
 export function ScheduleDetailComponent({
   schedule,
   isOpen,
-  onClose
+  onClose,
+  onScheduleUpdate
 }: ScheduleDetailDialogProps) {
   if (!isOpen || !schedule) return null;
   const [cancelReason, setCancelReason] = useState('');
@@ -67,15 +56,17 @@ export function ScheduleDetailComponent({
     formData,
     handleFieldUpdate,
     handleDateChange,
+    handleArrayUpdate,
     handleSelectChange,
     handleCheckboxChange,
     isFieldSaving,
     getMissingFields,
-    getTabValidation
-  } = useEditApplicant();
-
+    getTabValidation,
+    validateTab
+  } = useEditApplicant(schedule, onScheduleUpdate);
+  const [isDeleting, setIsDeleting] = useState(false);
   const tabValidation = getTabValidation();
-
+  const { toast } = useToast();
   const tabs = [
     {
       id: 'general',
@@ -112,6 +103,7 @@ export function ScheduleDetailComponent({
           onUpdate={handleFieldUpdate}
           onSelectChange={handleSelectChange}
           isFieldSaving={isFieldSaving}
+          validateTab={validateTab}
         />
       )
     },
@@ -124,6 +116,7 @@ export function ScheduleDetailComponent({
           onUpdate={handleFieldUpdate}
           onSelectChange={handleSelectChange}
           isFieldSaving={isFieldSaving}
+          validateTab={validateTab}
         />
       )
     },
@@ -150,6 +143,7 @@ export function ScheduleDetailComponent({
           onSelectChange={handleSelectChange}
           isFieldSaving={isFieldSaving}
           getMissingFields={getMissingFields}
+          validateTab={validateTab}
         />
       )
     },
@@ -174,6 +168,7 @@ export function ScheduleDetailComponent({
           onUpdate={handleFieldUpdate}
           onSelectChange={handleSelectChange}
           isFieldSaving={isFieldSaving}
+          validateTab={validateTab}
         />
       )
     },
@@ -188,17 +183,48 @@ export function ScheduleDetailComponent({
     setActiveTab(tabId);
   };
   const handleCancel = () => {
-    console.log(
-      `$${mockUser.firstName} ${mockUser.lastName} canceled the action. Reason: ${cancelReason}`
-    );
     setIsCancelDialogOpen(false);
   };
 
-  const handleDelete = () => {
-    console.log(
-      `${mockUser.firstName} ${mockUser.lastName} deleted the schedule with ID: ${schedule?.id}`
-    );
-    setIsDeleteDialogOpen(false);
+  const handleDelete = async () => {
+    if (!schedule?._id) {
+      toast({
+        title: 'Error',
+        description: 'Invalid Schedule ID',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    const scheduleId = schedule._id;
+
+    setIsDeleting(true);
+
+    try {
+      // 2. Perform API Delete Request
+      await axiosInstance.delete(`/schedules/${scheduleId}`);
+
+      toast({
+        title: 'Success',
+        description: 'Schedule deleted successfully.'
+      });
+
+      // 3. Close the Confirmation Dialog
+      setIsDeleteDialogOpen(false);
+
+      // 4. Close the Main Schedule Detail Modal (refresh parent list)
+      onClose();
+    } catch (error: any) {
+      console.error('Delete failed:', error);
+      toast({
+        title: 'Deletion Failed',
+        description:
+          error.response?.data?.message || 'Could not delete schedule.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -338,18 +364,21 @@ export function ScheduleDetailComponent({
                   cannot be undone.
                 </DialogDescription>
               </DialogHeader>
+              {/* Delete Confirmation Dialog Footer */}
               <DialogFooter>
                 <Button
                   variant="outline"
                   onClick={() => setIsDeleteDialogOpen(false)}
+                  disabled={isDeleting} // Disable cancel while deleting
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={handleDelete}
                   className="bg-red-500 text-white hover:bg-red-500/80"
+                  disabled={isDeleting} // Disable double-click
                 >
-                  Confirm Delete
+                  {isDeleting ? 'Deleting...' : 'Confirm Delete'}
                 </Button>
               </DialogFooter>
             </DialogContent>

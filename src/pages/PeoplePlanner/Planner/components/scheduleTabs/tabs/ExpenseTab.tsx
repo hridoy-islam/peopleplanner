@@ -12,18 +12,36 @@ interface Expense {
   notes: string;
 }
 
+// 1. Define Validation Interface
+interface ValidationResult {
+  isValid: boolean;
+  missingFields: string[];
+}
+
 interface ExpenseTabProps {
   formData: any;
   onUpdate: (field: string, value: any) => void;
   isFieldSaving: Record<string, boolean>;
+  // 2. Add validateTab to props
+  validateTab: (tabId: string) => ValidationResult;
 }
 
 const ExpenseTab: React.FC<ExpenseTabProps> = ({
   formData,
   onUpdate,
-  isFieldSaving
+  isFieldSaving,
+  validateTab // 3. Destructure here
 }) => {
   const expenses: Expense[] = formData.expenses || [];
+
+  // 4. Get current validation errors for the 'expense' tab
+  const validationResult = validateTab('expense');
+  const missingFields = validationResult.missingFields;
+
+  // 5. Helper to check if a specific field at a specific index is missing
+  const isFieldMissing = (index: number, fieldName: string) => {
+    return missingFields.includes(`${fieldName}[${index}]`);
+  };
 
   // Define options
   const booleanOptions = [
@@ -36,13 +54,6 @@ const ExpenseTab: React.FC<ExpenseTabProps> = ({
     { value: 'Lodging', label: 'Lodging' },
     { value: 'Meals', label: 'Meals' },
     { value: 'Transportation', label: 'Transportation' },
-    { value: 'Other', label: 'Other' }
-  ];
-
-  const distanceOptions = [
-    { value: '50 miles', label: '50 miles' },
-    { value: '100 miles', label: '100 miles' },
-    { value: '200 miles', label: '200 miles' },
     { value: 'Other', label: 'Other' }
   ];
 
@@ -107,6 +118,8 @@ const ExpenseTab: React.FC<ExpenseTabProps> = ({
               onUpdate={(val) => updateExpenseField(index, 'expenseType', val)}
               isSaving={isFieldSaving[`expenseType-${index}`]}
               required
+              // 6. Pass validation status
+              isMissing={isFieldMissing(index, 'expenseType')}
             />
 
             <EditableField
@@ -116,7 +129,9 @@ const ExpenseTab: React.FC<ExpenseTabProps> = ({
               type="number"
               onUpdate={(val) => updateExpenseField(index, 'distance', val)}
               isSaving={isFieldSaving[`distance-${index}`]}
-              required
+              // Optional: Add required here if needed
+              // required
+              // isMissing={isFieldMissing(index, 'distance')}
             />
 
             <EditableField
@@ -150,6 +165,9 @@ const ExpenseTab: React.FC<ExpenseTabProps> = ({
                 updateExpenseField(index, 'payAmount', Number(val) || null)
               }
               isSaving={isFieldSaving[`payAmount-${index}`]}
+              required
+              // 6. Pass validation status
+              isMissing={isFieldMissing(index, 'payAmount')}
             />
 
             <EditableField
@@ -161,6 +179,7 @@ const ExpenseTab: React.FC<ExpenseTabProps> = ({
                 updateExpenseField(index, 'invoiceAmount', Number(val) || null)
               }
               isSaving={isFieldSaving[`invoiceAmount-${index}`]}
+              // Optional: Add isMissing if Invoice Amount becomes required
             />
 
             <div className="md:col-span-2">
@@ -180,7 +199,7 @@ const ExpenseTab: React.FC<ExpenseTabProps> = ({
       <div className="flex justify-end">
         <button
           onClick={addNewExpense}
-          className="hover:bg-supperagent/90  rounded bg-supperagent px-4 py-1 text-white"
+          className="hover:bg-supperagent/90 rounded bg-supperagent px-4 py-1 text-white"
         >
           Add Expense
         </button>

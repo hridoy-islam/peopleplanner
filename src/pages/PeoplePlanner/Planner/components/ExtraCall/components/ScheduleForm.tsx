@@ -37,24 +37,50 @@ const Step1Schema = z.object({
   visitType: z.string().min(1, 'Visit type is required'),
   payRate: z.string().min(1, 'Pay rate is required'),
   invoiceRate: z.string().min(1, 'Invoice rate is required'),
-  timeInMinutes: z.string().min(1, 'Time in minutes is required'),
-  travelTime: z.string().min(1, 'Travel time is required')
+  timeInMinutes: z
+    .union([z.string(), z.number()])
+    .transform((val) => Number(val)),
+  travelTime: z.union([z.string(), z.number()]).transform((val) => Number(val))
 });
-
 const Step2Schema = z.object({
-  notes: z.string().optional(),
-  tags: z.array(z.string()).optional(),
+  // UI Helper fields (converted to arrays on submit)
+  noteInput: z.string().optional(),
+
+  // Booleans
   glovesAprons: z.boolean().default(false),
   uniform: z.boolean().default(false),
-  idBadge: z.boolean().default(false)
+  idBadge: z.boolean().default(false),
+  purchaseOrder: z.boolean().default(false),
+
+  // We define the strict array structures here for validation,
+  // even if we populate them via helper logic in onSubmit
+  expenses: z
+    .array(
+      z.object({
+        expenseType: z.string().optional(),
+        distance: z.string().optional(),
+        payEmployee: z.boolean().optional(),
+        invoiceCustomer: z.boolean().optional(),
+        payAmount: z.number().nullable().optional(),
+        invoiceAmount: z.number().nullable().optional(),
+        notes: z.string().optional()
+      })
+    )
+    .optional(),
+
+  tags: z
+    .array(
+      z.object({
+        tag: z.string(),
+        message: z.string().optional(),
+        deliveryDuration: z.number().nullable().optional(),
+        deliveryOption: z.string().optional()
+      })
+    )
+    .optional()
 });
 
-const FormSchema = z.object({
-  // Step 1
-  ...Step1Schema.shape,
-  // Step 2
-  ...Step2Schema.shape
-});
+const FormSchema = Step1Schema.merge(Step2Schema);
 
 type FormData = z.infer<typeof FormSchema>;
 
@@ -74,11 +100,11 @@ interface Option {
   label: string;
 }
 
-export function ScheduleForm() {
+export function ScheduleForm({onClose, onScheduleCreated}: {onClose: () => void; onScheduleCreated: (newSchedule: any) => void}) {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [fetchingUsers, setFetchingUsers] = useState(false);
-  
+
   // State for dynamic options
   const [employeeOptions, setEmployeeOptions] = useState<Option[]>([]);
   const [serviceUserOptions, setServiceUserOptions] = useState<Option[]>([]);
@@ -117,22 +143,24 @@ export function ScheduleForm() {
   const fetchUsers = async () => {
     setFetchingUsers(true);
     try {
-      const response = await axiosInstance.get('/users?role=serviceUser&role=staff&limit=all');
+      const response = await axiosInstance.get(
+        '/users?role=serviceUser&role=staff&limit=all'
+      );
       const users: User[] = response.data.data.result;
 
       // Separate users by role
-      const staffUsers = users.filter(user => user.role === 'staff');
-      const serviceUsers = users.filter(user => user.role === 'serviceUser');
+      const staffUsers = users.filter((user) => user.role === 'staff');
+      const serviceUsers = users.filter((user) => user.role === 'serviceUser');
 
       // Transform to options format
-      const staffOptions: Option[] = staffUsers.map(user => ({
+      const staffOptions: Option[] = staffUsers.map((user) => ({
         value: user._id,
-        label: user.name
+        label: user.firstName + ' ' + user.lastName
       }));
 
-      const serviceUserOptions: Option[] = serviceUsers.map(user => ({
+      const serviceUserOptions: Option[] = serviceUsers.map((user) => ({
         value: user._id,
-        label: user.name
+        label: user.firstName + ' ' + user.lastName
       }));
 
       setEmployeeOptions(staffOptions);
@@ -140,9 +168,10 @@ export function ScheduleForm() {
 
       // You can also fetch branches and areas here if needed
       // For now, using static options as placeholder
-      setBranchOptions([{ value: 'branch1', label: 'Everycare Romford' }]);
-      setAreaOptions([{ value: 'area1', label: 'Care' }]);
-
+      setBranchOptions([
+        { value: 'Everycare Romford', label: 'Everycare Romford' }
+      ]);
+      setAreaOptions([{ value: 'care', label: 'Care' }]);
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -251,43 +280,61 @@ export function ScheduleForm() {
 
   const onSubmit = async (data: FormData) => {
     setLoading(true);
-
     try {
+      // 1. Transform Form Data to Mongoose Model Structure
       const payload = {
-        date: data.date?.toISOString().split('T')[0],
+        // General Info
+        date: data.date.toISOString(),
         startTime: data.startTime,
         endTime: data.endTime,
+        timeInMinutes: Number(data.timeInMinutes),
+        travelTime: Number(data.travelTime),
+
+        // Relationships (IDs)
         employee: data.employee,
         serviceUser: data.serviceUser,
         branch: data.branch,
         area: data.area,
+
+        // Service & Rates
         serviceType: data.serviceType,
         visitType: data.visitType,
-        payRate: Number.parseFloat(data.payRate),
-        invoiceRate: Number.parseFloat(data.invoiceRate),
-        timeInMinutes: Number.parseInt(data.timeInMinutes),
-        travelTime: Number.parseInt(data.travelTime),
-        notes: data.notes,
-        tags: data.tags,
+        payRate: data.payRate,
+        invoiceRate: data.invoiceRate,
+
+        // Booleans
         glovesAprons: data.glovesAprons,
         uniform: data.uniform,
-        idBadge: data.idBadge
+        idBadge: data.idBadge,
+        purchaseOrder: data.purchaseOrder,
+
+
+        notes: data.noteInput ? [{ note: data.noteInput }] : [],
+
+        tags: data.tags || [],
+
+        expenses: data.expenses || [],
+
+        breaks: [],
+
+        plannedDate: data.date.toISOString().split('T')[0],
+        plannedStartTime: data.startTime
       };
 
-      await axiosInstance.post('/schedules', payload);
+      // 2. Send Request
+      const res= await axiosInstance.post('/schedules', payload);
+      toast({ title: 'Success', description: 'Schedule created successfully' });
+      onScheduleCreated();
       form.reset();
+      onClose();
       setCurrentStep(1);
-      
+    } catch (error: any) {
+      console.error('Submit Error:', error);
       toast({
-        title: 'Success',
-        description: 'Schedule created successfully!',
-        variant: 'default'
-      });
-    } catch (err: any) {
-      toast({
-        variant: 'destructive',
         title: 'Error',
-        description: err.response?.data?.message || 'Failed to create schedule'
+        description:
+          error.response?.data?.message || 'Failed to create schedule',
+        variant: 'destructive'
       });
     } finally {
       setLoading(false);
@@ -318,7 +365,7 @@ export function ScheduleForm() {
   // Show loading state while fetching users
   if (fetchingUsers) {
     return (
-      <div className="mx-auto w-full bg-white p-8 flex justify-center items-center">
+      <div className="mx-auto flex w-full items-center justify-center bg-white p-8">
         <div className="flex items-center gap-2">
           <Loader2 size={24} className="animate-spin" />
           <span>Loading form data...</span>
@@ -348,7 +395,7 @@ export function ScheduleForm() {
                         <DatePicker
                           selected={field.value}
                           onChange={field.onChange}
-                          dateFormat="yyyy-MM-dd"
+                          dateFormat="dd-MM-yyyy"
                           className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                           placeholderText="Select date"
                           wrapperClassName="w-full"
@@ -371,8 +418,12 @@ export function ScheduleForm() {
                       <FormControl>
                         <Select
                           options={branchOptions}
-                          value={branchOptions.find(option => option.value === field.value)}
-                          onChange={(selected) => field.onChange(selected?.value || '')}
+                          value={branchOptions.find(
+                            (option) => option.value === field.value
+                          )}
+                          onChange={(selected) =>
+                            field.onChange(selected?.value || '')
+                          }
                           placeholder="Select branch"
                           isLoading={fetchingUsers}
                         />
@@ -436,8 +487,12 @@ export function ScheduleForm() {
                       <FormControl>
                         <Select
                           options={areaOptions}
-                          value={areaOptions.find(option => option.value === field.value)}
-                          onChange={(selected) => field.onChange(selected?.value || '')}
+                          value={areaOptions.find(
+                            (option) => option.value === field.value
+                          )}
+                          onChange={(selected) =>
+                            field.onChange(selected?.value || '')
+                          }
                           placeholder="Select area"
                           isLoading={fetchingUsers}
                         />
@@ -456,8 +511,12 @@ export function ScheduleForm() {
                       <FormControl>
                         <Select
                           options={employeeOptions}
-                          value={employeeOptions.find(option => option.value === field.value)}
-                          onChange={(selected) => field.onChange(selected?.value || '')}
+                          value={employeeOptions.find(
+                            (option) => option.value === field.value
+                          )}
+                          onChange={(selected) =>
+                            field.onChange(selected?.value || '')
+                          }
                           placeholder="Select employee"
                           isLoading={fetchingUsers}
                         />
@@ -479,8 +538,12 @@ export function ScheduleForm() {
                       <FormControl>
                         <Select
                           options={serviceUserOptions}
-                          value={serviceUserOptions.find(option => option.value === field.value)}
-                          onChange={(selected) => field.onChange(selected?.value || '')}
+                          value={serviceUserOptions.find(
+                            (option) => option.value === field.value
+                          )}
+                          onChange={(selected) =>
+                            field.onChange(selected?.value || '')
+                          }
                           placeholder="Select service user"
                           isLoading={fetchingUsers}
                         />
@@ -499,8 +562,12 @@ export function ScheduleForm() {
                       <FormControl>
                         <Select
                           options={serviceTypeOptions}
-                          value={serviceTypeOptions.find(option => option.value === field.value)}
-                          onChange={(selected) => field.onChange(selected?.value || '')}
+                          value={serviceTypeOptions.find(
+                            (option) => option.value === field.value
+                          )}
+                          onChange={(selected) =>
+                            field.onChange(selected?.value || '')
+                          }
                           placeholder="Select service type"
                         />
                       </FormControl>
@@ -518,8 +585,12 @@ export function ScheduleForm() {
                       <FormControl>
                         <Select
                           options={visitTypeOptions}
-                          value={visitTypeOptions.find(option => option.value === field.value)}
-                          onChange={(selected) => field.onChange(selected?.value || '')}
+                          value={visitTypeOptions.find(
+                            (option) => option.value === field.value
+                          )}
+                          onChange={(selected) =>
+                            field.onChange(selected?.value || '')
+                          }
                           placeholder="Select visit type"
                         />
                       </FormControl>
@@ -622,7 +693,7 @@ export function ScheduleForm() {
               {/* Notes */}
               <FormField
                 control={form.control}
-                name="notes"
+                name="noteInput"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Notes</FormLabel>
@@ -643,29 +714,40 @@ export function ScheduleForm() {
               <FormField
                 control={form.control}
                 name="tags"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tags</FormLabel>
-                    <FormControl>
-                      <Select
-                        isMulti
-                        options={tagOptions}
-                        value={tagOptions.filter((opt) =>
-                          field.value?.includes(opt.value)
-                        )}
-                        onChange={(selectedOptions) => {
-                          field.onChange(
-                            selectedOptions
-                              ? selectedOptions.map((opt) => opt.value)
-                              : []
-                          );
-                        }}
-                        placeholder="Select tags..."
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  // Convert array of tag objects → array of string values for react-select
+                  const selectedValues = field.value?.map((t) => t.tag) || [];
+
+                  return (
+                    <FormItem>
+                      <FormLabel>Tags</FormLabel>
+                      <FormControl>
+                        <Select
+                          isMulti
+                          options={tagOptions}
+                          value={tagOptions.filter((opt) =>
+                            selectedValues.includes(opt.value)
+                          )}
+                          onChange={(selectedOptions) => {
+                            // Transform selected options into full tag objects
+                            const tagObjects = (selectedOptions || []).map(
+                              (opt) => ({
+                                tag: opt.value,
+                                message: '', // or omit if your schema allows undefined
+                                deliveryDuration: null,
+                                deliveryOption: ''
+                              })
+                            );
+
+                            field.onChange(tagObjects);
+                          }}
+                          placeholder="Select tags..."
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
 
               {/* Equipment Checkboxes */}

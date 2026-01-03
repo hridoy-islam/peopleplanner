@@ -49,7 +49,8 @@ import {
   AlignCenterHorizontal,
   FileArchive,
   FileSearch,
-  Clock4
+  Clock4,
+  Clock1
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
@@ -87,6 +88,12 @@ const navItems = [
     label: 'Schedule',
     href: 'schedule',
     roles: ['staff']
+  },
+   {
+    icon: Clock1,
+    label: 'Upcoming Schedule',
+    href: 'upcoming-schedule',
+    roles: ['staff', 'serviceUser']
   },
   {
     icon: FileBadge,
@@ -194,7 +201,7 @@ const navItems = [
       {
         icon: LucideUserPlus,
         label: 'Document Requests',
-        href: 'request/document',
+        href: 'request-documents',
         roles: ['admin']
       },
       {
@@ -242,6 +249,7 @@ const navItems = [
     href: 'request/document',
     roles: ['staff']
   },
+ 
   {
     icon: File,
     label: 'Report',

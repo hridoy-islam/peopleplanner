@@ -4,12 +4,14 @@ interface ExtraCallComponentDialogProps {
 
   isOpen: boolean;
   onClose: () => void;
+  onScheduleCreated: (newSchedule: any) => void;
 }
 
 
 export function ExtraCallComponent({
   isOpen,
-  onClose
+  onClose,
+  onScheduleCreated
 }: ExtraCallComponentDialogProps) {
   if (!isOpen) return null;
   return (
@@ -23,7 +25,7 @@ export function ExtraCallComponent({
         </div>
 
         <div className="p-6">
-          <ScheduleForm />
+          <ScheduleForm onClose={onClose} onScheduleCreated={onScheduleCreated} />
         </div>
       </div>
     </div>

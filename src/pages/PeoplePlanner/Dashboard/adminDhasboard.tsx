@@ -1,696 +1,321 @@
-import { useState, useMemo } from 'react';
-import { Calendar, Clock, Filter } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { 
+  Calendar, 
+  Clock, 
+  Users, 
+  UserCheck, 
+  Activity, 
+  Briefcase, 
+} from 'lucide-react';
 import moment from 'moment';
-import DatePicker from 'react-datepicker';
-import 'react-datepicker/dist/react-datepicker.css';
+import axiosInstance from '@/lib/axios';
 
+// UI Components
+// Added CardHeader and CardTitle to imports
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-
-// Mock data for services
-const mockServices = [
-  {
-    id: 1,
-    carerName: 'Sarah Johnson',
-    carerImage: '/placeholder.svg?height=40&width=40',
-    serviceType: 'Personal Care',
-    date: moment().format('YYYY-MM-DD'),
-    startTime: '09:00',
-    endTime: '11:00',
-    duration: 2,
-    status: 'pending',
-    notes: 'Morning routine assistance'
-  },
-  {
-    id: 2,
-    carerName: 'Michael Brown',
-    carerImage: '/placeholder.svg?height=40&width=40',
-    serviceType: 'Medication Support',
-    date: moment().format('YYYY-MM-DD'),
-    startTime: '14:00',
-    endTime: '14:30',
-    duration: 0.5,
-    status: 'pending',
-    notes: 'Afternoon medication reminder'
-  },
-  {
-    id: 3,
-    carerName: 'Emma Wilson',
-    carerImage: '/placeholder.svg?height=40&width=40',
-    serviceType: 'Companionship',
-    date: moment().add(1, 'day').format('YYYY-MM-DD'),
-    startTime: '10:00',
-    endTime: '12:00',
-    duration: 2,
-    status: 'pending',
-    notes: 'Social visit and light activities'
-  },
-  {
-    id: 4,
-    carerName: 'David Lee',
-    carerImage: '/placeholder.svg?height=40&width=40',
-    serviceType: 'Household Tasks',
-    date: moment().add(1, 'day').format('YYYY-MM-DD'),
-    startTime: '15:00',
-    endTime: '17:00',
-    duration: 2,
-    status: 'scheduled',
-    notes: 'Cleaning and meal preparation'
-  },
-  {
-    id: 5,
-    carerName: 'Lisa Garcia',
-    carerImage: '/placeholder.svg?height=40&width=40',
-    serviceType: 'Personal Care',
-    date: moment().add(2, 'days').format('YYYY-MM-DD'),
-    startTime: '08:30',
-    endTime: '10:30',
-    duration: 2,
-    status: 'pending',
-    notes: 'Morning care routine'
-  },
-  {
-    id: 6,
-    carerName: 'James Taylor',
-    carerImage: '/placeholder.svg?height=40&width=40',
-    serviceType: 'Transportation',
-    date: moment().add(3, 'days').format('YYYY-MM-DD'),
-    startTime: '13:00',
-    endTime: '15:00',
-    duration: 2,
-    status: 'scheduled',
-    notes: 'Medical appointment transport'
-  },
-  {
-    id: 7,
-    carerName: 'Olivia Martinez',
-    carerImage: '/placeholder.svg?height=40&width=40',
-    serviceType: 'Personal Care',
-    date: moment().subtract(1, 'week').format('YYYY-MM-DD'),
-    startTime: '09:00',
-    endTime: '11:00',
-    duration: 2,
-    status: 'completed',
-    notes: 'Morning routine assistance'
-  },
-  {
-    id: 8,
-    carerName: 'Robert Wilson',
-    carerImage: '/placeholder.svg?height=40&width=40',
-    serviceType: 'Companionship',
-    date: moment().add(1, 'month').format('YYYY-MM-DD'),
-    startTime: '14:00',
-    endTime: '16:00',
-    duration: 2,
-    status: 'scheduled',
-    notes: 'Social visit'
-  }
-];
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { BlinkingDots } from '@/components/shared/blinking-dots';
 
 export default function AdminDashboardPage() {
-  const [viewMode, setViewMode] = useState<
-    'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom'
-  >('daily');
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
-  const [selectedYear, setSelectedYear] = useState<string>(
-    moment().year().toString()
-  );
-  const [selectedMonth, setSelectedMonth] = useState<string>('all');
-
-  // Months array for month selection
-  const months = [
-    { value: '01', name: 'January' },
-    { value: '02', name: 'February' },
-    { value: '03', name: 'March' },
-    { value: '04', name: 'April' },
-    { value: '05', name: 'May' },
-    { value: '06', name: 'June' },
-    { value: '07', name: 'July' },
-    { value: '08', name: 'August' },
-    { value: '09', name: 'September' },
-    { value: '10', name: 'October' },
-    { value: '11', name: 'November' },
-    { value: '12', name: 'December' }
-  ];
-
+  const [todaysSchedules, setTodaysSchedules] = useState<any[]>([]);
+  const [users, setUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useSelector((state: any) => state.auth);
+  const navigate= useNavigate();
   const currentDate = moment();
-  const todayFormatted = currentDate.format('dddd, MMMM Do YYYY');
+  const todayFormatted = currentDate.format('dddd, MMMM Do, YYYY');
+  const todayDateString = currentDate.format('YYYY-MM-DD');
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const usersRes = await axiosInstance.get('/users', {
+          params: { limit: 'all', fields: 'firstName lastName role image' }
+        });
 
-  // Generate years from 30 years ago to 50 years in the future
-  const years = Array.from({ length: 81 }, (_, i) =>
-    (currentDate.year() - 30 + i).toString()
-  );
+        const schedulesRes = await axiosInstance.get('/schedules', {
+          params: { date: todayDateString, limit: 'all' }
+        });
 
-  // Filter services based on selected filters
-  const filteredServices = useMemo(() => {
-    return mockServices.filter((service) => {
-      const serviceDate = moment(service.date);
-      const serviceYear = serviceDate.year().toString();
-
-      // First filter by year if selected
-      if (selectedYear !== 'all' && serviceYear !== selectedYear) return false;
-
-      // Then filter by view mode
-      switch (viewMode) {
-        case 'daily':
-          return serviceDate.isSame(selectedDate, 'day');
-        case 'weekly':
-          return serviceDate.isSame(selectedDate, 'week');
-        case 'monthly':
-          return serviceDate.isSame(selectedDate, 'month');
-        case 'yearly':
-          return serviceDate.isSame(selectedDate, 'year');
-        default:
-          return true;
+        setUsers(usersRes?.data?.data?.result || usersRes?.data?.data || []);
+        setTodaysSchedules(schedulesRes?.data?.data?.result || schedulesRes?.data?.data || []);
+      } catch (error) {
+        console.error("Failed to fetch dashboard data:", error);
+      } finally {
+        setLoading(false);
       }
+    };
+    fetchData();
+  }, [todayDateString]);
+
+  // --- FILTERING LOGIC ---
+  const filteredSchedules = useMemo(() => {
+    return todaysSchedules.filter((schedule) => {
+      const scheduleDate = moment(schedule.date);
+      return scheduleDate.isSame(todayDateString, 'day');
     });
-  }, [viewMode, selectedDate, selectedYear]);
+  }, [todaysSchedules, todayDateString]);
 
-  // Calculate statistics
-  const todaysServices = mockServices.filter((service) =>
-    moment(service.date).isSame(currentDate, 'day')
-  );
-  const upcomingServices = mockServices.filter((service) =>
-    moment(service.date).isAfter(currentDate, 'day')
-  );
-  const completedServices = mockServices.filter((service) =>
-    moment(service.date).isBefore(currentDate, 'day')
-  );
+  // --- Statistics ---
+  const totalServicesCount = filteredSchedules.length;
 
-  const totalHoursToday = todaysServices.reduce(
-    (sum, service) => sum + service.duration,
-    0
-  );
-  const totalHoursUpcoming = upcomingServices.reduce(
-    (sum, service) => sum + service.duration,
-    0
-  );
-  const totalHoursCompleted = completedServices.reduce(
-    (sum, service) => sum + service.duration,
-    0
-  );
-  const totalHoursFiltered = filteredServices.reduce(
-    (sum, service) => sum + service.duration,
-    0
-  );
+  const activeCarersCount = useMemo(() => {
+     return users.filter(u => u.role === 'staff').length;
+  }, [filteredSchedules]);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'confirmed':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'scheduled':
-        return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'completed':
-        return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800 border-red-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+  const totalServiceUsersCount = useMemo(() => {
+    return users.filter(u => u.role === 'serviceUser').length;
+  }, [users]);
+
+  // --- Helpers ---
+  const getStatusStyles = (status: string) => {
+    switch (status?.toLowerCase()) {
+      case 'completed': return 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100';
+      case 'scheduled': return 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100';
+      case 'cancelled': return 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100';
+      case 'unallocated': return 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'; 
+      default: return 'bg-slate-100 text-slate-700 border-slate-200';
     }
   };
 
-  const getServiceTypeIcon = (type: string) => {
-    switch (type) {
-      case 'Personal Care':
-        return '👤';
-      case 'Medication Support':
-        return '💊';
-      case 'Companionship':
-        return '🤝';
-      case 'Household Tasks':
-        return '🏠';
-      case 'Transportation':
-        return '🚗';
-      default:
-        return '📋';
-    }
-  };
-
-  const formatDateRange = () => {
-    switch (viewMode) {
-      case 'daily':
-        return moment(selectedDate).format('MMMM D, YYYY');
-      case 'weekly':
-        return `${moment(selectedDate).startOf('week').format('MMM D')} - ${moment(selectedDate).endOf('week').format('MMM D, YYYY')}`;
-      case 'monthly':
-        return moment(selectedDate).format('MMMM YYYY');
-      case 'yearly':
-        return moment(selectedDate).format('YYYY');
-      default:
-        return '';
-    }
-  };
+  if (loading) {
+    return (
+       <div className="flex h-[calc(100vh-14vh)] w-full items-center justify-center">
+              <BlinkingDots size="large" color="bg-supperagent" />
+            </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50 ">
-      <div className="space-y-4">
-        {/* Header */}
-        <div className="rounded-lg bg-white p-6 shadow-sm">
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 md:text-3xl">
-                Welcome back, Hasan
-              </h1>
-              <p className="mt-1 flex items-center gap-2 text-gray-600">
-                <Calendar className="h-4 w-4" />
-                {todayFormatted}
-              </p>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="default" className="bg-blue-50 text-blue-700">
-                {filteredServices.length} services
-              </Badge>
-              <Badge variant="default" className="bg-green-50 text-green-700">
-                {totalHoursFiltered} hours
-              </Badge>
-            </div>
+    <div className="min-h-screen bg-slate-50/50 ">
+      <div className="mx-auto max-w-[1600px] space-y-8">
+        
+        {/* --- Header Section --- */}
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-slate-900">Welcome Back! {user?.firstName} {user?.lastName}</h1>
+            <p className="mt-1 flex items-center gap-2 text-sm text-slate-500">
+              <Calendar className="h-4 w-4 text-slate-400" />
+              {todayFormatted}
+            </p>
           </div>
         </div>
 
-        {/* Overview Cards */}
-        {/* Overview Cards */}
-<div className="grid grid-cols-1 gap-4 md:grid-cols-6">
-  <Card>
-    <CardHeader className="pb-2">
-      <CardTitle className="text-sm font-medium text-gray-600">
-        Today's Services
-      </CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div className="text-2xl font-bold text-blue-600">
-        {todaysServices.length}
-      </div>
-      <p className="mt-1 text-xs text-gray-500">
-        {totalHoursToday} hours total
-      </p>
-    </CardContent>
-  </Card>
+        {/* --- Stats Grid --- */}
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+  <StatsCard 
+    title="Today's Services" 
+    value={totalServicesCount} 
+    subtitle="Scheduled visits today"
+    icon={Activity}
+    color="indigo"
+    to="/admin/people-planner/planner"
+  />
 
-  <Card>
-    <CardHeader className="pb-2">
-      <CardTitle className="text-sm font-medium text-gray-600">
-        Upcoming Services
-      </CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div className="text-2xl font-bold text-green-600">
-        {upcomingServices.length}
-      </div>
-      <p className="mt-1 text-xs text-gray-500">
-        {totalHoursUpcoming} hours total
-      </p>
-    </CardContent>
-  </Card>
+  <StatsCard 
+    title="Active Carers" 
+    value={activeCarersCount} 
+    subtitle="Currently in the field"
+    icon={Briefcase}
+    color="emerald"
+    to="/admin/people-planner/employee"
+  />
 
-  <Card>
-    <CardHeader className="pb-2">
-      <CardTitle className="text-sm font-medium text-gray-600">
-        Completed Services
-      </CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div className="text-2xl font-bold text-purple-600">
-        {completedServices.length}
-      </div>
-      <p className="mt-1 text-xs text-gray-500">
-        {totalHoursCompleted} hours total
-      </p>
-    </CardContent>
-  </Card>
-
-  <Card>
-    <CardHeader className="pb-2">
-      <CardTitle className="text-sm font-medium text-gray-600">
-        Active Carers
-      </CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div className="text-2xl font-bold text-orange-600">
-        {new Set(mockServices.map((s) => s.carerName)).size}
-      </div>
-      <p className="mt-1 text-xs text-gray-500">Assigned to you</p>
-    </CardContent>
-  </Card>
-
-  {/* NEW CARD: Service Users Count */}
-  <Card>
-    <CardHeader className="pb-2">
-      <CardTitle className="text-sm font-medium text-gray-600">
-        Service Users
-      </CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div className="text-2xl font-bold text-pink-600">
-        {new Set(mockServices.map((s) => s.carerName)).size}
-      </div>
-      <p className="mt-1 text-xs text-gray-500">Unique service users</p>
-    </CardContent>
-  </Card>
-
-  {/* NEW CARD: Pending Tasks */}
-  <Card>
-    <CardHeader className="pb-2">
-      <CardTitle className="text-sm font-medium text-gray-600">
-        Pending Tasks
-      </CardTitle>
-    </CardHeader>
-    <CardContent>
-      <div className="text-2xl font-bold text-red-600">
-        {mockServices.filter((s) => s.status === 'pending').length}
-      </div>
-      <p className="mt-1 text-xs text-gray-500">Awaiting confirmation</p>
-    </CardContent>
-  </Card>
+  <StatsCard 
+    title="Total Service Users" 
+    value={totalServiceUsersCount} 
+    subtitle="Registered active clients"
+    icon={Users}
+    color="violet"
+    to="/admin/people-planner/service-user"
+  />
 </div>
 
 
-        {/* Filters */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Filter className="h-5 w-5" />
-              Filter Services
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
-                  View Mode
-                </label>
-                <Select
-                  value={viewMode}
-                  onValueChange={(
-                    value: 'daily' | 'weekly' | 'monthly' | 'yearly' | 'custom'
-                  ) => {
-                    setViewMode(value);
-                    if (value !== 'custom') {
-                      setSelectedDate(new Date());
-                    }
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select view mode" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="daily">Daily</SelectItem>
-                    <SelectItem value="weekly">Weekly</SelectItem>
-                    <SelectItem value="monthly">Monthly</SelectItem>
-                    <SelectItem value="yearly">Yearly</SelectItem>
-                    <SelectItem value="custom">Custom Date Range</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {viewMode === 'custom' ? (
-                <>
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      Year
-                    </label>
-                    <Select
-                      value={selectedYear}
-                      onValueChange={setSelectedYear}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select year" />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-[300px] overflow-y-auto">
-                        <SelectItem value="all">All Years</SelectItem>
-                        {years.map((year) => (
-                          <SelectItem key={year} value={year}>
-                            {year}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+        {/* --- Main Schedule Section --- */}
+        <div className="grid gap-6">
+          <Card className="shadow-sm overflow-hidden">
+            {/* ADDED: Card Header with Title */}
+            <CardHeader className="px-6 py-4 border-b border-slate-100 bg-white">
+               <CardTitle className="text-lg font-semibold text-slate-900 flex items-center gap-2">
+                 <Calendar className="h-5 w-5 text-indigo-500" />
+                 Today's Schedule
+               </CardTitle>
+            </CardHeader>
+            
+            <CardContent className="p-0">
+              {filteredSchedules.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-24 text-center">
+                  <div className="rounded-full bg-slate-50 p-4 mb-4">
+                    <Calendar className="h-8 w-8 text-slate-400" />
                   </div>
-
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700">
-                      Month
-                    </label>
-                    <Select
-                      value={selectedMonth}
-                      onValueChange={setSelectedMonth}
-                      disabled={selectedYear === 'all'}
-                    >
-                      <SelectTrigger>
-                        <SelectValue
-                          placeholder={
-                            selectedYear === 'all'
-                              ? 'Select year first'
-                              : 'Select month'
-                          }
-                        >
-                          {selectedMonth === 'all'
-                            ? 'All Months'
-                            : months.find((m) => m.value === selectedMonth)
-                                ?.name}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Months</SelectItem>
-                        {months.map((month) => (
-                          <SelectItem key={month.value} value={month.value}>
-                            {month.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </>
-              ) : (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">
-                    {viewMode === 'yearly'
-                      ? 'Select Year'
-                      : `Select ${viewMode.charAt(0).toUpperCase() + viewMode.slice(1)}`}
-                  </label>
-
-                  {viewMode === 'yearly' ? (
-                    <Select
-                      value={selectedYear}
-                      onValueChange={setSelectedYear}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select year" />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-[300px] overflow-y-auto">
-                        {years.map((year) => (
-                          <SelectItem key={year} value={year}>
-                            {year}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <div className="flex flex-col space-y-2">
-                      <DatePicker
-                        selected={selectedDate}
-                        onChange={(date: Date) => setSelectedDate(date)}
-                        selectsStart
-                        startDate={selectedDate}
-                        dateFormat={
-                          viewMode === 'daily'
-                            ? 'MMMM d, yyyy'
-                            : viewMode === 'weekly'
-                              ? 'MMMM d, yyyy'
-                              : 'MMMM yyyy'
-                        }
-                        showWeekPicker={viewMode === 'weekly'}
-                        showMonthYearPicker={viewMode === 'monthly'}
-                        className="flex h-10 w-full rounded-md border border-gray-300 px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      />
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div className="flex items-end">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setViewMode('daily');
-                    setSelectedDate(new Date());
-                    setSelectedYear(moment().year().toString());
-                    setSelectedMonth('all');
-                  }}
-                  className="w-full"
-                >
-                  Reset to Today
-                </Button>
-              </div>
-            </div>
-
-            <div className="mt-4 flex items-center justify-between">
-              <div>
-                <h3 className="font-medium text-gray-900">
-                  Showing services for:{' '}
-                  <span className="text-blue-600">
-                    {viewMode === 'custom' ? (
-                      <>
-                        {selectedYear === 'all' ? 'All years' : selectedYear}
-                        {selectedMonth !== 'all' &&
-                          selectedYear !== 'all' &&
-                          `, ${months.find((m) => m.value === selectedMonth)?.name}`}
-                        {selectedYear === 'all' && selectedMonth !== 'all'
-                          ? ' (Select year first)'
-                          : ''}
-                      </>
-                    ) : (
-                      formatDateRange()
-                    )}
-                  </span>
-                </h3>
-              </div>
-              <Badge variant="default" className="bg-gray-50">
-                {filteredServices.length} services found
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Upcoming Services Card */}
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <CardTitle>Upcoming Services</CardTitle>
-                <p className="text-sm text-gray-600">
-                  {
-                    mockServices.filter((s) =>
-                      moment(s.date).isSameOrAfter(moment(), 'day')
-                    ).length
-                  }{' '}
-                  upcoming service
-                  {mockServices.filter((s) =>
-                    moment(s.date).isSameOrAfter(moment(), 'day')
-                  ).length !== 1
-                    ? 's'
-                    : ''}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="default" className="bg-green-50 text-green-700">
-                  {mockServices
-                    .filter((s) => moment(s.date).isAfter(moment(), 'day'))
-                    .reduce((sum, s) => sum + s.duration, 0)}{' '}
-                  upcoming hours
-                </Badge>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {mockServices.filter((s) =>
-                moment(s.date).isAfter(moment(), 'day')
-              ).length === 0 ? (
-                <div className="py-12 text-center text-gray-500">
-                  <Calendar className="mx-auto mb-4 h-12 w-12 opacity-50" />
-                  <h3 className="text-lg font-medium text-gray-700">
-                    No upcoming services found
-                  </h3>
+                  <h3 className="text-lg font-medium text-slate-900">No Services Scheduled</h3>
+                  <p className="text-slate-500 max-w-md mt-1">There are no visits or services scheduled for today.</p>
                 </div>
               ) : (
-                mockServices
-                  .filter((service) =>
-                    moment(service.date).isAfter(moment(), 'day')
-                  )
-                  .map((service) => (
-                    <div key={service.id}>
-                      <div className="flex flex-col gap-4 rounded-lg border border-gray-200 bg-white p-4 transition-shadow hover:shadow-md md:flex-row md:items-center">
-                        <div className="flex min-w-[200px] items-center gap-3">
-                          <Avatar className="h-12 w-12">
-                            <AvatarImage
-                              src={service.carerImage || '/placeholder.svg'}
-                              alt={service.carerName}
-                            />
-                            <AvatarFallback>
-                              {service.carerName
-                                .split(' ')
-                                .map((n) => n[0])
-                                .join('')}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <h3 className="font-semibold text-gray-900">
-                              {service.carerName}
-                            </h3>
-                            <p className="flex items-center gap-1 text-sm text-gray-600">
-                              <span>
-                                {getServiceTypeIcon(service.serviceType)}
+                <Table>
+                  <TableHeader className="bg-slate-50/50">
+                    <TableRow className="hover:bg-transparent border-b border-slate-100">
+                      <TableHead className="w-[180px] font-semibold text-slate-600 pl-6">Time / Duration</TableHead>
+                      <TableHead className="font-semibold text-slate-600">Staff Member</TableHead>
+                      <TableHead className="font-semibold text-slate-600">Service User</TableHead>
+                      <TableHead className="hidden md:table-cell font-semibold text-slate-600">Service Type</TableHead>
+                      <TableHead className="text-right font-semibold text-slate-600 pr-6">Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredSchedules.map((service) => {
+                      const employee = typeof service.employee === 'object' ? service.employee : users.find(u => u._id === service.employee);
+                      const client = typeof service.serviceUser === 'object' ? service.serviceUser : users.find(u => u._id === service.serviceUser);
+                      
+                      const start = moment(service.startTime, 'HH:mm');
+                      const end = moment(service.endTime, 'HH:mm');
+                      const durationHrs = moment.duration(end.diff(start)).asHours().toFixed(2);
+
+                      return (
+                        <TableRow key={service._id} className="hover:bg-slate-50/50 transition-colors border-b border-slate-50 cursor-pointer" onClick={()=> navigate('/admin/people-planner/planner')}>
+                          <TableCell className="align-top py-4 pl-6">
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-2">
+                                <Clock className="h-3.5 w-3.5 text-slate-400" />
+                                <span className="font-mono text-sm font-semibold text-slate-700">
+                                  {service.startTime}
+                                </span> -
+                                <span className="font-mono text-sm font-semibold text-slate-700">
+                                  {service.endTime}
+                                </span>
+                              </div>
+                              <span className="text-xs text-slate-400 pl-5.5 tabular-nums font-medium">
+                                {durationHrs} hrs
                               </span>
-                              {service.serviceType}
-                            </p>
-                          </div>
-                        </div>
+                            </div>
+                          </TableCell>
+                          
+                          <TableCell className="align-middle">
+                             <UserCell 
+                                user={employee} 
+                                role="Carer" 
+                                fallback="Unallocated" 
+                                fallbackIcon={UserCheck}
+                                isUnallocated={!employee}
+                             />
+                          </TableCell>
 
-                        <div className="grid flex-1 grid-cols-1 gap-4 md:grid-cols-3">
-                          <div>
-                            <p className="text-sm font-medium text-gray-700">
-                              Date & Time
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              {moment(service.date).format('MMM DD, YYYY')}
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              {service.startTime} - {service.endTime}
-                            </p>
-                          </div>
+                          <TableCell className="align-middle">
+                             <UserCell 
+                                user={client} 
+                                role="Service User" 
+                                fallback="Unknown" 
+                                fallbackIcon={Users}
+                             />
+                          </TableCell>
 
-                          <div>
-                            <p className="text-sm font-medium text-gray-700">
-                              Duration
-                            </p>
-                            <p className="flex items-center gap-1 text-sm text-gray-600">
-                              <Clock className="h-3 w-3" />
-                              {service.duration} hour
-                              {service.duration !== 1 ? 's' : ''}
-                            </p>
-                          </div>
+                          <TableCell className="hidden md:table-cell align-middle">
+                             <div className="flex items-center gap-2">
+                                <span className="inline-flex h-2 w-2 rounded-full bg-indigo-500 ring-2 ring-indigo-100"></span>
+                                <span className="text-sm font-medium text-slate-700 truncate max-w-[150px]">
+                                  {service.serviceType || 'General Care'}
+                                </span>
+                             </div>
+                          </TableCell>
 
-                          <div>
-                            <p className="text-sm font-medium text-gray-700">
-                              Status
-                            </p>
-                            <Badge
-                              className={`${getStatusColor(service.status)} capitalize`}
+                          <TableCell className="text-right align-middle pr-6">
+                            <Badge 
+                              variant="outline"
+                              className={`rounded-full px-2.5 py-0.5 text-xs font-semibold shadow-sm ${getStatusStyles(service.employee ? 'scheduled' : 'unallocated')}`}
                             >
-                              {service.status}
+                              {service.employee ? 'Scheduled' : 'Unallocated'}
                             </Badge>
-                          </div>
-                        </div>
-
-                        {service.notes && (
-                          <div className="md:w-64">
-                            <p className="text-sm font-medium text-gray-700">
-                              Notes
-                            </p>
-                            <p className="line-clamp-2 text-sm text-gray-600">
-                              {service.notes}
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
               )}
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// --- Sub-Components (Unchanged) ---
+
+
+function StatsCard({ title, value, subtitle, icon: Icon, color, to }: any) {
+  const navigate = useNavigate();
+
+  const colors: Record<string, string> = {
+    indigo: "bg-indigo-50 text-indigo-600",
+    emerald: "bg-emerald-50 text-emerald-600",
+    violet: "bg-violet-50 text-violet-600",
+  };
+
+  return (
+    <Card
+      onClick={() => to && navigate(to)}
+      className="cursor-pointer shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 bg-white"
+    >
+      <CardContent className="p-6">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-sm font-medium text-slate-500">{title}</p>
+            <h3 className="mt-2 text-3xl font-bold tracking-tight text-slate-900 tabular-nums">
+              {value}
+            </h3>
+          </div>
+
+          <div className={`rounded-xl p-2.5 ${colors[color] || colors.indigo}`}>
+            <Icon className="h-5 w-5" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function UserCell({ user, role, fallback, fallbackIcon: Icon, isUnallocated }: any) {
+  if (isUnallocated) {
+    return (
+      <div className="flex items-center gap-3">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-amber-50 border border-amber-100 border-dashed shrink-0">
+          <Icon className="h-4 w-4 text-amber-500" />
+        </div>
+        <div className="flex flex-col">
+          <span className="text-sm font-medium text-amber-700 italic">Unallocated</span>
+          <span className="text-[10px] text-amber-600/70 font-medium">Assign staff</span>
+        </div>
+      </div>
+    );
+  }
+
+  const name = user ? `${user.firstName} ${user.lastName}` : fallback;
+  const initials = user ? `${user.firstName?.[0] || ''}${user.lastName?.[0] || ''}` : '--';
+
+  return (
+    <div className="flex items-center gap-3">
+      <Avatar className="h-9 w-9 border border-slate-100 shadow-sm shrink-0">
+        <AvatarImage src={user?.image} />
+        <AvatarFallback className={`text-xs font-bold ${role === 'Carer' ? 'bg-indigo-50 text-indigo-700' : 'bg-violet-50 text-violet-700'}`}>
+          {initials}
+        </AvatarFallback>
+      </Avatar>
+      <div className="flex flex-col">
+        <span className="text-sm font-semibold text-slate-900 line-clamp-1">{name}</span>
+        <span className="text-xs text-slate-500 font-medium">{role}</span>
       </div>
     </div>
   );

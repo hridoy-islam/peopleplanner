@@ -9,26 +9,42 @@ interface Tag {
   deliveryOption: string;
 }
 
+// 1. Define Validation Interface
+interface ValidationResult {
+  isValid: boolean;
+  missingFields: string[];
+}
+
 interface TagTabProps {
   formData: any;
   onUpdate: (field: string, value: any) => void;
   isFieldSaving: Record<string, boolean>;
+  // 2. Add validateTab to props
+  validateTab: (tabId: string) => ValidationResult;
 }
 
 const TagTab: React.FC<TagTabProps> = ({
   formData,
   onUpdate,
-  isFieldSaving
+  isFieldSaving,
+  validateTab // 3. Destructure here
 }) => {
   const tags: Tag[] = formData.tags || [];
 
+  // 4. Get current validation errors for the 'tag' tab
+  const validationResult = validateTab('tag');
+  const missingFields = validationResult.missingFields;
+
+  // 5. Helper to check if a specific field at a specific index is missing
+  const isFieldMissing = (index: number, fieldName: string) => {
+    return missingFields.includes(`${fieldName}[${index}]`);
+  };
+
   // Define options
   const tagOptions = [
-    { value: 'Please call office', label: 'Please call office' },
-    { value: 'Out of stock', label: 'Out of stock' },
-    { value: 'Custom tag', label: 'Custom tag' },
-    { value: 'Urgent', label: 'Urgent' },
-    { value: 'Fragile', label: 'Fragile' }
+    { value: 'urgent', label: 'Urgent' },
+    { value: 'fragile', label: 'Fragile' },
+    { value: 'call_office', label: 'Please call office' }
   ];
 
   const deliveryOptionOptions = [
@@ -96,6 +112,8 @@ const TagTab: React.FC<TagTabProps> = ({
               onUpdate={(val) => updateTagField(index, 'tag', val)}
               isSaving={isFieldSaving[`tag-${index}`]}
               required
+              // 6. Pass validation status
+              isMissing={isFieldMissing(index, 'tag')}
             />
 
             <EditableField
@@ -107,6 +125,8 @@ const TagTab: React.FC<TagTabProps> = ({
               onUpdate={(val) => updateTagField(index, 'deliveryOption', val)}
               isSaving={isFieldSaving[`deliveryOption-${index}`]}
               required
+              // 6. Pass validation status
+              isMissing={isFieldMissing(index, 'deliveryOption')}
             />
 
             <EditableField
@@ -118,6 +138,7 @@ const TagTab: React.FC<TagTabProps> = ({
                 updateTagField(index, 'deliveryDuration', Number(val) || null)
               }
               isSaving={isFieldSaving[`deliveryDuration-${index}`]}
+              // Optional: Add isMissing here if duration becomes required
             />
 
             <div className="md:col-span-2">
@@ -137,7 +158,7 @@ const TagTab: React.FC<TagTabProps> = ({
       <div className="flex justify-end">
         <Button
           onClick={addNewTag}
-          className="  bg-supperagent  text-white hover:bg-supperagent/90"
+          className=" bg-supperagent text-white hover:bg-supperagent/90"
         >
           Add Tag
         </Button>

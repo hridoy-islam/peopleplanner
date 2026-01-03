@@ -1,5 +1,3 @@
-
-
 import React, { useState, useRef, useEffect } from 'react';
 import {
   FileText,
@@ -9,18 +7,18 @@ import {
   Check,
   X,
   Download,
-  Upload,
+  Upload
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import Select from 'react-select';
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
+  TableRow
 } from '@/components/ui/table';
 import {
   Dialog,
@@ -28,9 +26,8 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
+  DialogFooter
 } from '@/components/ui/dialog';
-import { BlinkingDots } from '@/components/shared/blinking-dots';
 import { DynamicPagination } from '@/components/shared/DynamicPagination';
 import axiosInstance from '@/lib/axios';
 import moment from 'moment';
@@ -62,28 +59,30 @@ interface DocumentRequest {
   endDate?: Date;
 }
 
+// Interface for React Select options
+interface StaffOption {
+  value: string;
+  label: string;
+}
+
 type RequestStatus = 'pending' | 'approved' | 'rejected';
 
-const documentTypes = [
-  'Attendance Report',
-  'Employment Certificate',
-  'Tax Certificate',
-  'Reference Letter',
-  'Salary Certificate',
-  'Experience Letter',
-  'Increment Letter',
-  'Promotion Letter',
-];
-
-const RequestDocumentPage = () => {
+const AdminRequestDocumentPage = () => {
   const { user } = useSelector((state: any) => state.auth);
 
   const [requests, setRequests] = useState<DocumentRequest[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  
+  // State for the User Filter
+  const [selectedStaff, setSelectedStaff] = useState<StaffOption | null>(null);
+  const [staffOptions, setStaffOptions] = useState<StaffOption[]>([]);
+  
   const [entriesPerPage, setEntriesPerPage] = useState(100);
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
   const [loading, setLoading] = useState(false);
-  const [selectedRequest, setSelectedRequest] = useState<DocumentRequest | null>(null);
+  const [selectedRequest, setSelectedRequest] =
+    useState<DocumentRequest | null>(null);
   const [showApproveDialog, setShowApproveDialog] = useState(false);
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [rejectId, setRejectId] = useState<string | null>(null);
@@ -95,46 +94,74 @@ const RequestDocumentPage = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  // Fetch pending requests on mount
-  useEffect(() => {
-    const fetchRequests = async () => {
-      try {
-        const response = await axiosInstance.get('/hr/request-document', {
-          params: {
-            status: 'pending',
-            limit: 'all',
-          },
-        });
-        setRequests(response.data.data?.result || []);
-      } catch (error) {
-        console.error('Failed to fetch document requests:', error);
-      }
-    };
+  // --- 1. Fetch Staff for Dropdown ---
+  const fetchStaffUsers = async () => {
+    try {
+      const response = await axiosInstance.get('/users', {
+        params: {
+          role: 'staff',
+          limit: 'all'
+        }
+      });
+      
+      const users = response.data.data?.result || response.data.data || [];
+      
+      const options = users.map((u: any) => ({
+        value: u._id,
+        label: `${u.firstName} ${u.lastName} (${u.email || u.employeeId})`
+      }));
+      
+      setStaffOptions(options);
+    } catch (error) {
+      console.error('Failed to fetch staff users:', error);
+    }
+  };
 
-    fetchRequests();
+  useEffect(() => {
+    fetchStaffUsers();
   }, []);
 
-  const pendingRequests = requests.filter((req) => req.status === 'pending');
+  // --- 2. Fetch Requests ---
+  const fetchRequests = async (
+    page: number,
+    entriesPerPage: number,
+    userId = '' // Argument renamed to userId for clarity
+  ) => {
+    try {
+      // Build params object dynamically
+      const params: any = {
+        status: 'pending',
+        page,
+        limit: entriesPerPage,
+      };
 
-  const filteredRequests = pendingRequests.filter((req) => {
-    const firstName = req.userId?.firstName ?? '';
-    const lastName = req.userId?.lastName ?? '';
-    const userId = req.userId?._id ?? '';
-    const departmentName = req.userId?.departmentId?.departmentName ?? '';
-    const documentType = req.documentType ?? '';
+      // Corrected: Send userId key instead of searchTerm
+      if (userId) {
+        params.userId = userId;
+      }
 
-    return (
-      firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      userId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      departmentName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      documentType.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  });
+      const response = await axiosInstance.get('/hr/request-document', {
+        params
+      });
+      setTotalPages(response.data.data.meta.totalPage);
+      setRequests(response.data.data?.result || []);
+    } catch (error) {
+      console.error('Failed to fetch document requests:', error);
+    }
+  };
 
-  const totalPages = Math.ceil(filteredRequests.length / entriesPerPage);
-  const startIndex = (currentPage - 1) * entriesPerPage;
-  const currentRequests = filteredRequests.slice(startIndex, startIndex + entriesPerPage);
+  // Initial fetch and on pagination change
+  useEffect(() => {
+    fetchRequests(currentPage, entriesPerPage, selectedStaff?.value || '');
+  }, [currentPage, entriesPerPage]); 
+
+  // Handle Dropdown Change
+  const handleStaffChange = (newValue: StaffOption | null) => {
+    setSelectedStaff(newValue);
+    setCurrentPage(1); // Reset to first page
+    // Pass the user ID directly
+    fetchRequests(1, entriesPerPage, newValue?.value || '');
+  };
 
   const handleApproveClick = (request: DocumentRequest) => {
     setSelectedRequest(request);
@@ -156,11 +183,13 @@ const RequestDocumentPage = () => {
     try {
       await axiosInstance.patch(`/hr/request-document/${rejectId}`, {
         status: 'rejected',
-        updatedBy: user?._id,
+        updatedBy: user?._id
       });
 
       setRequests((prev) =>
-        prev.map((req) => (req._id === rejectId ? { ...req, status: 'rejected' } : req))
+        prev.map((req) =>
+          req._id === rejectId ? { ...req, status: 'rejected' } : req
+        )
       );
 
       setShowRejectDialog(false);
@@ -173,7 +202,7 @@ const RequestDocumentPage = () => {
     }
   };
 
-  // === NEW: Upload to /documents ===
+  // === Upload to /documents ===
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user?._id) return;
@@ -194,7 +223,7 @@ const RequestDocumentPage = () => {
 
     try {
       const res = await axiosInstance.post('/documents', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+        headers: { 'Content-Type': 'multipart/form-data' }
       });
       const fileUrl = res.data?.data?.fileUrl;
       if (!fileUrl) throw new Error('No file URL returned');
@@ -233,8 +262,8 @@ const RequestDocumentPage = () => {
     try {
       const payload = {
         status: 'approved',
-        document: uploadedFileUrl, 
-        updatedBy: user?._id,
+        document: uploadedFileUrl,
+        updatedBy: user?._id
       };
 
       const response = await axiosInstance.patch(
@@ -242,7 +271,8 @@ const RequestDocumentPage = () => {
         payload
       );
 
-      const approvedPdfUrl = response.data.data?.approvedPdfUrl || uploadedFileUrl;
+      const approvedPdfUrl =
+        response.data.data?.approvedPdfUrl || uploadedFileUrl;
 
       setRequests((prev) =>
         prev.map((req) =>
@@ -266,31 +296,42 @@ const RequestDocumentPage = () => {
   };
 
   return (
-    <div className="min-h-screen ">
+    <div className="min-h-screen bg-gray-50">
       <div className="space-y-6">
         {/* Requests Table */}
         <div className="rounded-xl bg-white p-6 shadow-lg">
-          <div className="flex justify-between items-center mb-6">
+          <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center ">
             <h2 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
               <FileText className="h-6 w-6" />
               Pending Requests
             </h2>
-            <div className="relative w-full max-w-md">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <Input
-                placeholder="Search by name, ID, department, or document..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10"
+            
+            {/* React Select for Staff Filtering */}
+            <div className="w-full max-w-md">
+              <Select
+                options={staffOptions}
+                value={selectedStaff}
+                onChange={handleStaffChange}
+                isClearable
+                isSearchable
+                placeholder="Select staff to filter..."
+                className="basic-single"
+                classNamePrefix="select"
               />
             </div>
           </div>
 
-          {currentRequests.length === 0 ? (
+          {requests.length === 0 ? (
             <div className="py-12 text-center">
               <FileText className="mx-auto mb-4 h-12 w-12 text-gray-300" />
-              <h3 className="text-lg font-medium text-gray-900">No pending requests</h3>
-              <p className="text-gray-500">All document requests have been processed.</p>
+              <h3 className="text-lg font-medium text-gray-900">
+                No pending requests
+              </h3>
+              <p className="text-gray-500">
+                {selectedStaff 
+                  ? "No requests found for this staff member." 
+                  : "All document requests have been processed."}
+              </p>
             </div>
           ) : (
             <>
@@ -306,7 +347,7 @@ const RequestDocumentPage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {currentRequests.map((req) => (
+                  {requests.map((req) => (
                     <TableRow key={req._id} className="hover:bg-gray-50">
                       <TableCell>
                         <div>
@@ -331,7 +372,9 @@ const RequestDocumentPage = () => {
                             {moment(req.endDate).format('DD MMM, YYYY')}
                           </span>
                         ) : (
-                          <span className="text-sm text-muted-foreground">-</span>
+                          <span className="text-sm text-muted-foreground">
+                            -
+                          </span>
                         )}
                       </TableCell>
                       <TableCell className="space-x-2 text-right">
@@ -339,7 +382,7 @@ const RequestDocumentPage = () => {
                           variant="default"
                           size="sm"
                           onClick={() => handleApproveClick(req)}
-                          className="bg-supperagent hover:bg-supperagent/90 text-white"
+                          className="bg-supperagent text-white hover:bg-supperagent/90"
                         >
                           <Check className="mr-1 h-4 w-4" />
                           Approve
@@ -348,7 +391,7 @@ const RequestDocumentPage = () => {
                           variant="default"
                           size="sm"
                           onClick={() => handleRejectConfirm(req._id)}
-                          className="bg-red-600 hover:bg-red-700 text-white"
+                          className="bg-red-600 text-white hover:bg-red-700"
                         >
                           <X className="mr-1 h-4 w-4" />
                           Reject
@@ -358,16 +401,19 @@ const RequestDocumentPage = () => {
                   ))}
                 </TableBody>
               </Table>
-
-              <div className="mt-6">
-                <DynamicPagination
-                  pageSize={entriesPerPage}
-                  setPageSize={setEntriesPerPage}
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={setCurrentPage}
-                />
-              </div>
+              {requests.length > 40 && (
+                <>
+                  <div className="mt-6">
+                    <DynamicPagination
+                      pageSize={entriesPerPage}
+                      setPageSize={setEntriesPerPage}
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={setCurrentPage}
+                    />
+                  </div>
+                </>
+              )}
             </>
           )}
         </div>
@@ -381,7 +427,8 @@ const RequestDocumentPage = () => {
             <DialogDescription>
               You are approving a request from{' '}
               <strong>
-                {selectedRequest?.userId.firstName} {selectedRequest?.userId.lastName}
+                {selectedRequest?.userId.firstName}{' '}
+                {selectedRequest?.userId.lastName}
               </strong>{' '}
               for a <strong>{selectedRequest?.documentType}</strong>.
             </DialogDescription>
@@ -390,15 +437,17 @@ const RequestDocumentPage = () => {
           <div className="space-y-4 py-4">
             {/* Styled Upload Zone */}
             <div>
-              <Label htmlFor="pdfUpload">Upload Final Document (PDF - Required)</Label>
+              <Label htmlFor="pdfUpload">
+                Upload Final Document (PDF - Required)
+              </Label>
               <div
                 className={cn(
                   'relative mt-1 flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-4 transition-colors',
                   uploadedFileUrl
                     ? 'border-green-500 bg-green-50'
                     : isUploading
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-300 bg-gray-50'
+                      ? 'border-blue-500 bg-blue-50'
+                      : 'border-gray-300 bg-gray-50'
                 )}
                 onClick={triggerFileInput}
               >
@@ -421,8 +470,14 @@ const RequestDocumentPage = () => {
                     <div className="flex items-center gap-2">
                       <FileText className="h-4 w-4 text-green-600" />
                       <div>
-                        <p className="text-sm font-medium text-green-600">Uploaded</p>
-                        {selectedFileName && <p className="text-xs text-gray-600">{selectedFileName}</p>}
+                        <p className="text-sm font-medium text-green-600">
+                          Uploaded
+                        </p>
+                        {selectedFileName && (
+                          <p className="text-xs text-gray-600">
+                            {selectedFileName}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <Button
@@ -440,11 +495,15 @@ const RequestDocumentPage = () => {
                 ) : (
                   <div className="flex flex-col items-center gap-2 text-center">
                     <Upload className="h-6 w-6 text-gray-400" />
-                    <div className="text-sm font-medium text-gray-700">Click to Upload </div>
+                    <div className="text-sm font-medium text-gray-700">
+                      Click to Upload{' '}
+                    </div>
                   </div>
                 )}
 
-                {uploadError && <p className="mt-2 text-sm text-destructive">{uploadError}</p>}
+                {uploadError && (
+                  <p className="mt-2 text-sm text-destructive">{uploadError}</p>
+                )}
               </div>
             </div>
           </div>
@@ -465,7 +524,7 @@ const RequestDocumentPage = () => {
             <Button
               onClick={handleApproveWithPdf}
               disabled={!uploadedFileUrl || loading || isUploading}
-              className="bg-supperagent hover:bg-supperagent/90 text-white"
+              className="bg-supperagent text-white hover:bg-supperagent/90"
             >
               {loading ? 'Approving...' : 'Approve'}
             </Button>
@@ -479,7 +538,8 @@ const RequestDocumentPage = () => {
           <DialogHeader>
             <DialogTitle>Confirm Rejection</DialogTitle>
             <DialogDescription>
-              Are you sure you want to reject this document request? This action cannot be undone.
+              Are you sure you want to reject this document request? This action
+              cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -495,7 +555,7 @@ const RequestDocumentPage = () => {
             <Button
               variant="destructive"
               onClick={handleRejectConfirmed}
-              className="bg-red-600 hover:bg-red-700 text-white"
+              className="bg-red-600 text-white hover:bg-red-700"
             >
               Yes, Reject
             </Button>
@@ -506,4 +566,4 @@ const RequestDocumentPage = () => {
   );
 };
 
-export default RequestDocumentPage;
+export default AdminRequestDocumentPage;

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AlertCircle, PaperclipIcon, Pen, Plus, Users2 } from 'lucide-react';
+import { Pen, Plus, Calendar as CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -15,11 +15,12 @@ import { useToast } from '@/components/ui/use-toast';
 import { BlinkingDots } from '@/components/shared/blinking-dots';
 import moment from 'moment';
 import { DynamicPagination } from '@/components/shared/DynamicPagination';
-import { DateRangePicker } from 'react-date-range';
-import 'react-date-range/dist/styles.css';
-import 'react-date-range/dist/theme/default.css';
 import Select from 'react-select';
 import NoticeDialog from './noticeDialog';
+
+// --- IMPORTS FOR REACT DATEPICKER ---
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 export default function AdminNoticeBoard() {
   const [notice, setNotice] = useState<any[]>([]);
@@ -27,18 +28,17 @@ export default function AdminNoticeBoard() {
   const [editingNotice, setEditingNotice] = useState<any>();
   const [initialLoading, setInitialLoading] = useState(true);
   const { toast } = useToast();
+
+  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [entriesPerPage, setEntriesPerPage] = useState(10);
-  const [showCalendar, setShowCalendar] = useState(false);
 
-  const [dateRange, setDateRange] = useState([
-    {
-      startDate: null,
-      endDate: null,
-      key: 'selection'
-    }
-  ]);
+  // --- DATE PICKER STATE ---
+  // We store start and end date in a single array or separate variables.
+  // react-datepicker range mode uses [start, end]
+  const [dateRange, setDateRange] = useState<(Date | null)[]>([null, null]);
+  const [startDate, endDate] = dateRange;
 
   // Filter states
   const [departments, setDepartments] = useState<any[]>([]);
@@ -56,7 +56,7 @@ export default function AdminNoticeBoard() {
         const [deptRes, desigRes, userRes] = await Promise.all([
           axiosInstance.get('/hr/department'),
           axiosInstance.get('/hr/designation'),
-          axiosInstance.get('/users')
+          axiosInstance.get('/users?role=staff&limit=all')
         ]);
         setDepartments(deptRes.data.data.result);
         setDesignations(desigRes.data.data.result);
@@ -71,8 +71,8 @@ export default function AdminNoticeBoard() {
   const fetchData = async (
     page: number,
     entries: number,
-    startDate?: string | null,
-    endDate?: string | null,
+    startStr?: string | null,
+    endStr?: string | null,
     departmentIds?: string[],
     designationIds?: string[],
     userIds?: string[]
@@ -83,8 +83,8 @@ export default function AdminNoticeBoard() {
         params: {
           page,
           limit: entries,
-          ...(startDate && { startDate }),
-          ...(endDate && { endDate }),
+          ...(startStr && { startDate: startStr }),
+          ...(endStr && { endDate: endStr }),
           ...(departmentIds?.length && { department: departmentIds.join(',') }),
           ...(designationIds?.length && {
             designation: designationIds.join(',')
@@ -124,7 +124,7 @@ export default function AdminNoticeBoard() {
           className: 'bg-red-500 border-none text-white'
         });
       }
-      fetchData(currentPage, entriesPerPage);
+      handleSearch();
       setEditingNotice(undefined);
     } catch (error) {
       toast({
@@ -142,7 +142,7 @@ export default function AdminNoticeBoard() {
         title: 'Record updated successfully',
         className: 'bg-green-500 border-none text-white'
       });
-      fetchData(currentPage, entriesPerPage);
+      handleSearch();
     } catch (error) {
       console.error('Error updating status:', error);
     }
@@ -153,42 +153,44 @@ export default function AdminNoticeBoard() {
     setDialogOpen(true);
   };
 
-  useEffect(() => {
-    const { startDate, endDate } = dateRange[0];
-    fetchData(
-      currentPage,
-      entriesPerPage,
-      startDate ? moment(startDate).format('YYYY-MM-DD') : undefined,
-      endDate ? moment(endDate).format('YYYY-MM-DD') : undefined,
-      selectedDepartments.map((d) => d.value),
-      selectedDesignations.map((d) => d.value),
-      selectedUsers.map((d) => d.value)
-    );
-  }, [
-    currentPage,
-    entriesPerPage,
-    selectedDepartments,
-    selectedDesignations,
-    selectedUsers
-  ]);
-
+  // Helper to format dates and fetch
   const handleSearch = () => {
-    const { startDate, endDate } = dateRange[0];
+    const formattedStart = startDate
+      ? moment(startDate).format('YYYY-MM-DD')
+      : undefined;
+    const formattedEnd = endDate
+      ? moment(endDate).format('YYYY-MM-DD')
+      : undefined;
+
     fetchData(
       currentPage,
       entriesPerPage,
-      startDate ? moment(startDate).format('YYYY-MM-DD') : undefined,
-      endDate ? moment(endDate).format('YYYY-MM-DD') : undefined,
+      formattedStart,
+      formattedEnd,
       selectedDepartments.map((d) => d.value),
       selectedDesignations.map((d) => d.value),
       selectedUsers.map((d) => d.value)
     );
   };
 
+  // Auto-fetch when filters change
+  useEffect(() => {
+    handleSearch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    currentPage,
+    entriesPerPage,
+    selectedDepartments,
+    selectedDesignations,
+    selectedUsers,
+    startDate, // Trigger when start date changes
+    endDate // Trigger when end date changes
+  ]);
+
   return (
-    <div className="space-y-3  bg-white p-4 rounded-md shadow-sm ">
+    <div className="space-y-3 rounded-md bg-white p-4 shadow-sm">
       <div className="flex items-center justify-between">
-        <h2 className=" flex items-center gap-2 text-2xl font-bold text-gray-900">
+        <h2 className="flex items-center gap-2 text-2xl font-bold text-gray-900">
           All Notice
         </h2>
         <Button
@@ -199,7 +201,8 @@ export default function AdminNoticeBoard() {
           <Plus className="mr-2 h-4 w-4" /> New Notice
         </Button>
       </div>
-      <div className=" ">
+
+      <div className="">
         {/* Filters */}
         <div className="flex flex-wrap items-center gap-4">
           <div className="w-64">
@@ -210,6 +213,13 @@ export default function AdminNoticeBoard() {
                 value: d._id,
                 label: d.departmentName
               }))}
+               menuPortalTarget={document.body}
+              menuPosition="fixed"
+              styles={{
+                menuPortal: (base) => ({ ...base, zIndex: 9999 })
+              }}
+              className="react-select-container"
+              classNamePrefix="react-select"
               value={selectedDepartments}
               onChange={(val) => setSelectedDepartments(val as any)}
             />
@@ -225,6 +235,13 @@ export default function AdminNoticeBoard() {
                 value: d._id,
                 label: d.title
               }))}
+               menuPortalTarget={document.body}
+              menuPosition="fixed"
+              styles={{
+                menuPortal: (base) => ({ ...base, zIndex: 9999 })
+              }}
+              className="react-select-container"
+              classNamePrefix="react-select"
               value={selectedDesignations}
               onChange={(val) => setSelectedDesignations(val as any)}
             />
@@ -238,81 +255,38 @@ export default function AdminNoticeBoard() {
                 value: u._id,
                 label: `${u.firstName} ${u.lastName}`
               }))}
+              menuPortalTarget={document.body}
+              menuPosition="fixed"
+              styles={{
+                menuPortal: (base) => ({ ...base, zIndex: 9999 })
+              }}
+              className="react-select-container"
+              classNamePrefix="react-select"
               value={selectedUsers}
               onChange={(val) => setSelectedUsers(val as any)}
             />
           </div>
 
-          {/* Date filter */}
-          <div className="relative">
+          {/* --- REACT DATEPICKER IMPLEMENTATION --- */}
+          <div className="w-">
             <label className="mb-1 block text-sm font-medium">
               Filter By Date
             </label>
-            <div
-              onClick={() => setShowCalendar((prev) => !prev)}
-              className="relative mt-1 flex cursor-pointer items-center justify-between rounded-md border border-gray-300 px-4 py-2 shadow-sm hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-supperagent focus:ring-offset-2 sm:w-[300px]"
-            >
-              <span className="text-sm text-gray-700">
-                {dateRange[0].startDate && dateRange[0].endDate
-                  ? `${moment(dateRange[0].startDate).format('MMM D, YYYY')} – ${moment(
-                      dateRange[0].endDate
-                    ).format('MMM D, YYYY')}`
-                  : 'Select date range'}
-              </span>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-5 w-5 text-gray-500"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
+            <div className="relative">
+              <DatePicker
+                selectsRange={true}
+                startDate={startDate}
+                endDate={endDate}
+                onChange={(update) => {
+                  setDateRange(update);
+                }}
+                popperClassName="z-[99999]"
+                portalId="root-portal"
+                isClearable={true}
+                placeholderText="Select Date Range"
+                className="flex h-10 w-64 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              />
             </div>
-            {showCalendar && (
-              <div className="absolute z-10 mt-2">
-                <div className="rounded-lg bg-white p-4 shadow-xl ring-1 ring-black ring-opacity-5">
-                  <DateRangePicker
-                    ranges={dateRange}
-                    onChange={(ranges) => setDateRange([ranges.selection])}
-                    showSelectionPreview={true}
-                    moveRangeOnFirstSelection={false}
-                    months={2}
-                    direction="horizontal"
-                    rangeColors={['#3B82F6']}
-                  />
-                  <div className="mt-4 flex justify-end space-x-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setShowCalendar(false);
-                        setDateRange([
-                          { startDate: null, endDate: null, key: 'selection' }
-                        ]);
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        setShowCalendar(false);
-                        handleSearch();
-                      }}
-                      className="bg-supperagent text-white hover:bg-supperagent/90"
-                    >
-                      Apply
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
         </div>
 
