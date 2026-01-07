@@ -1,7 +1,5 @@
-import { HoursOverview } from "./components/HoursOverview";
 import { HoursTable } from "./components/HoursTable";
-import { ReportsSection } from "./components/ReportsSection";
-import { WorkingHoursHeader } from "./components/WorkingHoursHeader";
+
 
 export const ReportPage = () => {
   return (

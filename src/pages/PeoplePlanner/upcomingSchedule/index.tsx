@@ -186,6 +186,9 @@ export default function UpcomingSchedulePage() {
               <Table>
                 <TableHeader className="">
                   <TableRow className="hover:bg-transparent">
+                    <TableHead className="font-semibold text-slate-600">
+                      Date
+                    </TableHead>
                     <TableHead className="w-[180px] pl-6 font-semibold text-slate-600">
                       Time / Duration
                     </TableHead>
@@ -229,6 +232,7 @@ export default function UpcomingSchedulePage() {
                           navigate('/admin/people-planner/planner')
                         }
                       >
+                        <TableCell>{moment(service.date).format("DD MMM YYYY")}</TableCell>
                         <TableCell className="py-4 pl-6 align-top">
                           <div className="flex flex-col gap-1">
                             <div className="flex items-center gap-2">

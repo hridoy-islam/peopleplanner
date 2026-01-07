@@ -20,7 +20,7 @@ import PServiceUserList from '@/pages/PeoplePlanner/ServiceUser';
 import ServiceFunderList from '@/pages/PeoplePlanner/ServiceFunder';
 import CreateServiceFunderPage from '@/pages/PeoplePlanner/ServiceFunder/create-funder';
 import PlannerPage from '@/pages/PeoplePlanner/Planner';
-import ServiceuserDetailPage from '@/pages/PeoplePlanner/ServiceUser/view-serviceUser';
+import ServiceuserDetailPage from '@/pages/PeoplePlanner/ServiceUser/serviceUserDetail';
 import ServiceFunderDetailPage from '@/pages/PeoplePlanner/ServiceFunder/view-funder';
 import JobPage from '@/pages/PeoplePlanner/Jobs';
 import ServiceUserFunder from '@/pages/PeoplePlanner/ServiceUser/funder';
@@ -101,6 +101,7 @@ import RequestDocumentPage from '@/pages/PeoplePlanner/RequestDocument';
 import DocumentReportPage from '@/pages/PeoplePlanner/RequestDocument';
 import AdminRequestDocumentPage from '@/pages/PeoplePlanner/Request-Documents';
 import UpcomingSchedulePage from '@/pages/PeoplePlanner/upcomingSchedule';
+import ServiceUserModulePage from '@/pages/PeoplePlanner/ServiceUser/serviceUserModules';
 
 const SignInPage = lazy(() => import('@/pages/auth/signin'));
 
@@ -124,7 +125,7 @@ export default function AppRouter() {
           element: <DashboardPage />,
           index: true
         },
-      
+
         {
           path: 'people-planner',
           element: <PeoplePlannerLayout />,
@@ -137,6 +138,10 @@ export default function AppRouter() {
             {
               path: 'service-user',
               element: <PServiceUserList />
+            },
+            {
+              path: 'service-user/:id/modules',
+              element: <ServiceUserModulePage />
             },
             {
               path: 'hr-dashboard',
@@ -203,11 +208,11 @@ export default function AppRouter() {
               element: <ProfilePage />
             },
             {
-              path: 'needs',
+              path: 'needs/:id',
               element: <NeedPage />
             },
             {
-              path: 'important-people',
+              path: 'important-people/:id',
               element: <ImportantPeoplePage />
             },
             {
@@ -238,11 +243,11 @@ export default function AppRouter() {
               path: 'training',
               element: <TrainingPage />
             },
-              {
+            {
               path: 'training/create',
               element: <CreateTraining />
             },
-              {
+            {
               path: 'training/edit/:id',
               element: <EditTraining />
             },
@@ -290,7 +295,7 @@ export default function AppRouter() {
               path: 'email-setup',
               element: <EmailSetup />
             },
-          
+
             {
               path: 'employee',
               element: <Employee />
@@ -360,7 +365,7 @@ export default function AppRouter() {
               path: 'recruit-applicant/:id',
               element: <RecruitApplicantForm />
             },
-             {
+            {
               path: 'attendance',
               element: <Attendance />
             },
@@ -388,7 +393,7 @@ export default function AppRouter() {
               path: 'staff-attendance',
               element: <StaffAttendancePage />
             },
-             {
+            {
               path: 'company-details',
               element: <CompanyDetails />
             },
@@ -456,11 +461,11 @@ export default function AppRouter() {
               path: 'stock/:id',
               element: <StockDetailPage />
             },
-              {
+            {
               path: 'consents',
               element: <ConsentPage />
             },
-              {
+            {
               path: 'consents/add-capacity-form',
               element: <AddCapacityFormPage />
             },
@@ -472,14 +477,14 @@ export default function AppRouter() {
               path: 'holiday',
               element: <Holiday />
             },
-              {
+            {
               path: 'bank-holiday',
               element: <BankHolidayPage />
             },
-              {
+            {
               path: 'pending-employee',
               element: <PendingHiring />
-            },
+            }
           ]
         }
       ]

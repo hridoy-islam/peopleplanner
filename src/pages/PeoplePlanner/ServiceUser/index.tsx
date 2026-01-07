@@ -13,7 +13,7 @@ import {
 import { Eye, Search } from 'lucide-react';
 import { DynamicPagination } from '@/components/shared/DynamicPagination';
 import { Input } from '@/components/ui/input';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axiosInstance from '@/lib/axios';
 import { BlinkingDots } from '@/components/shared/blinking-dots';
 
@@ -207,11 +207,13 @@ export default function ServiceUserList() {
           ) : (
             paginatedUsers.map((user) => (
               <TableRow key={user._id}>
-                <TableCell>
+                <Link to={`${user._id}/modules`}>
+                <TableCell className='hover:underline hover:text-blue-600'>
                   {[user.title, user.firstName, user.initial, user.lastName]
                     .filter(Boolean)
                     .join(' ')}
                 </TableCell>
+                    </Link>
                 <TableCell>
                   {[user.address, user.city].filter(Boolean).join(', ')}
                 </TableCell>

@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router-dom';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import { ArrowLeft } from 'lucide-react';
 import {
   Form,
@@ -7,7 +9,7 @@ import {
   FormField,
   FormItem,
   FormLabel,
-  FormMessage,
+  FormMessage
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -17,29 +19,143 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from '@/components/ui/select';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { useToast } from '@/components/ui/use-toast';
+import axiosInstance from '@/lib/axios';
 
-export default function ProfessionalForm() {
-  const navigate = useNavigate();
-  const form = useForm();
+// Validation Schema
+const professionalSchema = z.object({
+  firstName: z.string().min(1, 'First name is required'),
+  lastName: z.string().min(1, 'Last name is required'),
+  role: z.string().min(1, 'Role is required'),
+  organization: z.string().optional(),
+  specialty: z.string().optional(),
+  lastingPowerOfAttorney: z.array(z.string()).default([]),
+  observation: z.string().optional(),
+  postcode: z.string().optional(),
+  telephone1: z.string().optional(),
+  telephone2: z.string().optional(),
+  email: z.string().email().optional().or(z.literal('')),
+  // Select field explicitly required
+  contactStatus: z.enum(['Priority', 'Secondary', 'Do not contact'], {
+    required_error: 'Contact status is required'
+  }),
+  contactableTimes: z.string().optional(),
+  // Boolean field explicitly required (cannot be undefined on submit)
+  access: z.boolean({ required_error: 'Please select Yes or No' }),
+  justification: z.string().optional()
+});
 
-  const onSubmit = (data: any) => {
-    console.log('Professional Contact Data:', data);
-    // Save logic here
-    form.reset();
-    navigate(-1);
+type ProfessionalFormProps = {
+  userId?: string;
+  contactId: string | null;
+  onSuccess: () => void;
+  onCancel: () => void;
+};
+
+export default function ProfessionalForm({
+  userId,
+  contactId,
+  onSuccess,
+  onCancel
+}: ProfessionalFormProps) {
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+
+  const form = useForm<z.infer<typeof professionalSchema>>({
+    resolver: zodResolver(professionalSchema),
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      role: '',
+      organization: '',
+      specialty: '',
+      lastingPowerOfAttorney: [],
+      observation: '',
+      postcode: '',
+      telephone1: '',
+      telephone2: '',
+      email: '',
+      contactStatus: undefined, // Explicitly undefined to show placeholder
+      contactableTimes: '',
+      access: undefined, // Explicitly undefined so neither checkbox is checked
+      justification: ''
+    }
+  });
+
+  useEffect(() => {
+    if (contactId) {
+      const fetchData = async () => {
+        try {
+          const res = await axiosInstance.get(`/important-people/${contactId}`);
+          const data = res.data?.data || res.data;
+
+          form.reset({
+            ...data,
+            lastingPowerOfAttorney: data.lastingPowerOfAttorney || [],
+            access: data.access // Ensure boolean remains boolean
+          });
+        } catch (error) {
+          toast({
+            title: 'Error',
+            description: 'Failed to load contact data',
+            variant: 'destructive'
+          });
+        }
+      };
+      fetchData();
+    }
+  }, [contactId, form, toast]);
+
+  const onSubmit = async (values: z.infer<typeof professionalSchema>) => {
+    setLoading(true);
+    try {
+      const payload = {
+        ...values,
+        userId,
+        type: 'professional'
+      };
+
+      if (contactId) {
+        await axiosInstance.patch(`/important-people/${contactId}`, payload);
+        toast({
+          title: 'Success',
+          description: 'Contact updated successfully'
+        });
+      } else {
+        await axiosInstance.post('/important-people', payload);
+        toast({
+          title: 'Success',
+          description: 'Contact created successfully'
+        });
+      }
+      onSuccess();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error?.response?.data?.message || 'Something went wrong',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="space-y-4 mx-auto">
-      <div className="flex justify-between items-center gap-2">
-        <h1 className="text-xl font-semibold">Add Professional Contact</h1>
-        <Button variant="default" className='bg-supperagent text-white hover:bg-supperagent/90' onClick={() => navigate(-1)}>
-          <ArrowLeft className="h-4 w-4" />
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-2">
+        <h1 className="text-xl font-semibold">
+          {contactId ? 'Edit' : 'Add'} Professional Contact
+        </h1>
+        <Button
+          variant="default"
+          className="bg-supperagent text-white hover:bg-supperagent/90"
+          onClick={onCancel}
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
           Back
         </Button>
       </div>
@@ -51,49 +167,52 @@ export default function ProfessionalForm() {
             <CardHeader className="pb-3">
               <CardTitle className="text-base">General Information</CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
                 name="firstName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>First Name</FormLabel>
+                    <FormLabel>
+                      First Name <span className="text-red-500">*</span>
+                    </FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter first name" {...field} />
+                      <Input placeholder="First name" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="lastName"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Last Name</FormLabel>
+                    <FormLabel>
+                      Last Name <span className="text-red-500">*</span>
+                    </FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter last name" {...field} />
+                      <Input placeholder="Last name" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="role"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Role</FormLabel>
+                    <FormLabel>
+                      Role <span className="text-red-500">*</span>
+                    </FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter role" {...field} />
+                      <Input placeholder="e.g. Doctor, Solicitor" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="organization"
@@ -101,13 +220,12 @@ export default function ProfessionalForm() {
                   <FormItem>
                     <FormLabel>Organization</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter organization" {...field} />
+                      <Input placeholder="e.g. NHS, Law Firm" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="specialty"
@@ -115,7 +233,7 @@ export default function ProfessionalForm() {
                   <FormItem>
                     <FormLabel>Specialty</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter specialty" {...field} />
+                      <Input placeholder="e.g. Cardiology" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -125,39 +243,44 @@ export default function ProfessionalForm() {
               <FormField
                 control={form.control}
                 name="lastingPowerOfAttorney"
-                render={() => (
-                  <FormItem className="space-y-2">
+                render={({ field }) => (
+                  <FormItem>
                     <FormLabel>Lasting Power of Attorney</FormLabel>
                     <div className="space-y-2">
-                      <FormItem className="flex items-center space-x-2">
-                        <FormControl>
-                          <Checkbox value="Health and wellbeing" />
-                        </FormControl>
-                        <FormLabel className="font-normal">Health and wellbeing</FormLabel>
-                      </FormItem>
-                      <FormItem className="flex items-center space-x-2">
-                        <FormControl>
-                          <Checkbox value="Financial" />
-                        </FormControl>
-                        <FormLabel className="font-normal">Financial</FormLabel>
-                      </FormItem>
+                      {['Health and wellbeing', 'Financial'].map((item) => (
+                        <FormItem
+                          key={item}
+                          className="flex items-center space-x-2"
+                        >
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value?.includes(item)}
+                              onCheckedChange={(checked) => {
+                                return checked
+                                  ? field.onChange([...field.value, item])
+                                  : field.onChange(
+                                      field.value?.filter(
+                                        (value) => value !== item
+                                      )
+                                    );
+                              }}
+                            />
+                          </FormControl>
+                          <FormLabel className="font-normal">{item}</FormLabel>
+                        </FormItem>
+                      ))}
                     </div>
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="observation"
                 render={({ field }) => (
                   <FormItem className="md:col-span-2">
-                    <FormLabel>Observation about this person</FormLabel>
+                    <FormLabel>Observation</FormLabel>
                     <FormControl>
-                      <Textarea
-                        placeholder="Enter any observations"
-                        className="min-h-[100px]"
-                        {...field}
-                      />
+                      <Textarea className="min-h-[100px]" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -171,26 +294,20 @@ export default function ProfessionalForm() {
             <CardHeader className="pb-3">
               <CardTitle className="text-base">Contact Details</CardTitle>
             </CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <FormField
                 control={form.control}
                 name="postcode"
                 render={({ field }) => (
                   <FormItem className="md:col-span-2">
                     <FormLabel>Postcode</FormLabel>
-                    <div className="flex items-center gap-2">
-                      <FormControl>
-                        <Input placeholder="Enter postcode" {...field} />
-                      </FormControl>
-                      <span className="text-sm text-muted-foreground">
-                        Type in address manually
-                      </span>
-                    </div>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="telephone1"
@@ -198,13 +315,12 @@ export default function ProfessionalForm() {
                   <FormItem>
                     <FormLabel>Telephone 1</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter telephone number" {...field} />
+                      <Input {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="telephone2"
@@ -212,64 +328,51 @@ export default function ProfessionalForm() {
                   <FormItem>
                     <FormLabel>Telephone 2</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter telephone number" {...field} />
+                      <Input {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email address</FormLabel>
+                    <FormLabel>Email</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter email address" {...field} />
+                      <Input type="email" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="contactStatus"
                 render={({ field }) => (
                   <FormItem className="space-y-3">
-                    <FormLabel>Contact Status</FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="space-y-1"
-                      >
-                        <FormItem className="flex items-center space-x-2 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="Priority" />
-                          </FormControl>
-                          <FormLabel className="font-normal">Priority</FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-2 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="Secondary" />
-                          </FormControl>
-                          <FormLabel className="font-normal">Secondary</FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-2 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="Do not contact" />
-                          </FormControl>
-                          <FormLabel className="font-normal">Do not contact</FormLabel>
-                        </FormItem>
-                      </RadioGroup>
-                    </FormControl>
+                    <FormLabel>
+                      Contact Status <span className="text-red-500">*</span>
+                    </FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="Priority">Priority</SelectItem>
+                        <SelectItem value="Secondary">Secondary</SelectItem>
+                        <SelectItem value="Do not contact">
+                          Do not contact
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="contactableTimes"
@@ -277,7 +380,7 @@ export default function ProfessionalForm() {
                   <FormItem>
                     <FormLabel>Contactable Times</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter contactable times" {...field} />
+                      <Input {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -297,35 +400,45 @@ export default function ProfessionalForm() {
                 name="access"
                 render={({ field }) => (
                   <FormItem className="space-y-3">
-                    <FormLabel>Access</FormLabel>
-                    <FormControl>
-                      <RadioGroup
-                        onValueChange={field.onChange}
-                        defaultValue={field.value}
-                        className="flex space-x-4"
-                      >
-                        <FormItem className="flex items-center space-x-2 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="Yes" />
-                          </FormControl>
-                          <FormLabel className="font-normal">Yes</FormLabel>
-                        </FormItem>
-                        <FormItem className="flex items-center space-x-2 space-y-0">
-                          <FormControl>
-                            <RadioGroupItem value="No" />
-                          </FormControl>
-                          <FormLabel className="font-normal">No</FormLabel>
-                        </FormItem>
-                      </RadioGroup>
-                    </FormControl>
-                    <p className="text-sm text-muted-foreground mt-2">
-                      This decision should always be in Alma Begum Khan's best interest. If no is selected, you will not be able to send an invite.
-                    </p>
+                    <FormLabel>
+                      Access <span className="text-red-500">*</span>
+                    </FormLabel>
+                    <div className="flex gap-6">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="access-yes"
+                          checked={field.value === true}
+                          onCheckedChange={(checked) => {
+                            if (checked) field.onChange(true);
+                          }}
+                        />
+                        <label
+                          htmlFor="access-yes"
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          Yes
+                        </label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="access-no"
+                          checked={field.value === false}
+                          onCheckedChange={(checked) => {
+                            if (checked) field.onChange(false);
+                          }}
+                        />
+                        <label
+                          htmlFor="access-no"
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          No
+                        </label>
+                      </div>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
               <FormField
                 control={form.control}
                 name="justification"
@@ -333,11 +446,7 @@ export default function ProfessionalForm() {
                   <FormItem>
                     <FormLabel>Justification of Decision</FormLabel>
                     <FormControl>
-                      <Textarea
-                        placeholder="Enter justification"
-                        className="min-h-[100px]"
-                        {...field}
-                      />
+                      <Textarea className="min-h-[100px]" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -347,10 +456,16 @@ export default function ProfessionalForm() {
           </Card>
 
           <div className="flex justify-end gap-2">
-            <Button variant="outline" type="button" onClick={() => navigate(-1)}>
+            <Button variant="outline" type="button" onClick={onCancel}>
               Cancel
             </Button>
-            <Button type="submit" className='bg-supperagent text-white hover:bg-supperagent/90'>Save Contact</Button>
+            <Button
+              className="bg-supperagent text-white hover:bg-supperagent/90"
+              type="submit"
+              disabled={loading}
+            >
+              {loading ? 'Saving...' : 'Save Contact'}
+            </Button>
           </div>
         </form>
       </Form>

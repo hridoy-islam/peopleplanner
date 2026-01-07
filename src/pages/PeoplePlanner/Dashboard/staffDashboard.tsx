@@ -395,7 +395,7 @@ const StaffDashboardPage = () => {
           </Card>
 
           {/* Upcoming Shifts Timeline */}
-          <Card className="overflow-hidden border-slate-200/60 bg-white shadow-sm">
+          {/* <Card className="overflow-hidden border-slate-200/60 bg-white shadow-sm">
             <CardHeader className="border-b border-slate-100 pb-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -432,7 +432,6 @@ const StaffDashboardPage = () => {
                       onClick={()=> navigate('upcoming-schedule')}
                       className="group flex flex-col gap-5 p-5 transition-colors cursor-pointer hover:bg-slate-50/50 sm:flex-row"
                     >
-                      {/* Date Visual */}
                       <div className="flex h-16 w-full flex-shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-200/60 bg-slate-100/50 transition-colors group-hover:border-supperagent/30 sm:h-20 sm:w-20 sm:flex-col sm:gap-0">
                         <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
                           {moment(shift.date).format('MMM')}
@@ -445,7 +444,6 @@ const StaffDashboardPage = () => {
                         </span>
                       </div>
 
-                      {/* Shift Details */}
                       <div className="flex flex-1 flex-col justify-center space-y-2">
                         <div className="flex items-start justify-between">
                           <div>
@@ -480,7 +478,7 @@ const StaffDashboardPage = () => {
                 </div>
               )}
             </CardContent>
-          </Card>
+          </Card> */}
 
           {/* Training Section */}
           <Card className="border-slate-200/60 shadow-sm">
@@ -489,7 +487,7 @@ const StaffDashboardPage = () => {
                 <div className="h-8 w-1 rounded-full bg-supperagent" />
                 <div>
                   <CardTitle className="text-lg font-bold text-slate-900">
-                    Compliance & Training
+                    Training
                   </CardTitle>
                 </div>
               </div>

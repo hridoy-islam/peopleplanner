@@ -58,7 +58,116 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
 import { logout } from '@/redux/features/authSlice';
 
-const navItems = [
+
+
+// === Recursive Filter Function Based on User Role ===
+const filterNavItemsByRole = (items, userRole) => {
+  return (
+    items
+      .filter((item) => !item.roles || item.roles.includes(userRole))
+      .map((item) => {
+        if (item.subItems) {
+          return {
+            ...item,
+            subItems: filterNavItemsByRole(item.subItems, userRole)
+          };
+        }
+        return item;
+      })
+      // Remove parent items that have no visible subItems left
+      .filter((item) => {
+        if (item.subItems && item.subItems.length === 0) {
+          return false;
+        }
+        return true;
+      })
+  );
+};
+
+// === NavItem Component (Unchanged, but supports filtered items) ===
+const NavItem = ({ item, expandedItems, toggleExpanded, depth = 0 }) => {
+  const location = useLocation();
+
+  // Check if current path matches this leaf node
+  const isActiveLeaf =
+    !item.subItems && location.pathname.startsWith('/' + item.href);
+
+  // Handle expanded state for dropdowns
+  const isExpanded = expandedItems[item.label];
+
+  if (item.subItems) {
+    return (
+      <div className="space-y-1" key={item.label}>
+        <button
+          onClick={() => toggleExpanded(item.label)}
+          className={cn(
+            'group flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-all duration-200 hover:bg-supperagent hover:text-white',
+            depth > 0 && 'pl-6'
+          )}
+        >
+          <div className="flex items-center space-x-3">
+            <item.icon className="h-4 w-4 text-supperagent group-hover:text-white" />
+            <span className="text-black group-hover:text-white">
+              {item.label}
+            </span>
+          </div>
+          {isExpanded ? (
+            <ChevronDown className="h-4 w-4 text-supperagent group-hover:text-white" />
+          ) : (
+            <ChevronRight className="h-4 w-4 text-supperagent group-hover:text-white" />
+          )}
+        </button>
+
+        <div
+          className={cn(
+            'overflow-hidden transition-all duration-300 ease-in-out',
+            isExpanded ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'
+          )}
+        >
+          <div className="ml-4 space-y-1 border-l-2 border-gray-300">
+            {item.subItems.map((subItem) => (
+              <NavItem
+                key={subItem.label}
+                item={subItem}
+                expandedItems={expandedItems}
+                toggleExpanded={toggleExpanded}
+                depth={depth + 1}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Link
+      to={item.href}
+      className={cn(
+        'group flex w-full items-center space-x-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 hover:bg-supperagent hover:text-white',
+        isActiveLeaf && 'bg-blue-50 text-supperagent shadow-sm',
+        depth > 0 && 'pl-6'
+      )}
+    >
+      <item.icon className="h-4 w-4 text-supperagent group-hover:text-white" />
+      <span className="text-black group-hover:text-white">{item.label}</span>
+    </Link>
+  );
+};
+
+// === Main Component: PeoplePlannerSideNav ===
+export function PeoplePlannerSideNav() {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const user = useSelector((state: any) => state.auth?.user) || null;
+  const userRole = user?.role || 'admin'; // Default to admin if no role
+
+  const [expandedItems, setExpandedItems] = useState({});
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+
+  const navItems = [
   {
     icon: LayoutDashboard,
     label: 'Dashboard',
@@ -291,13 +400,13 @@ const navItems = [
       {
         icon: AlarmClock,
         label: 'Needs',
-        href: 'needs',
+        href: `needs/${user?._id}`,
         roles: ['serviceUser']
       },
       {
         icon: SquareUserRound,
         label: 'Important People',
-        href: 'important-people',
+        href: `important-people/${user?._id}`,
         roles: ['serviceUser']
       },
       {
@@ -425,112 +534,7 @@ const navItems = [
   }
 ];
 
-// === Recursive Filter Function Based on User Role ===
-const filterNavItemsByRole = (items, userRole) => {
-  return (
-    items
-      .filter((item) => !item.roles || item.roles.includes(userRole))
-      .map((item) => {
-        if (item.subItems) {
-          return {
-            ...item,
-            subItems: filterNavItemsByRole(item.subItems, userRole)
-          };
-        }
-        return item;
-      })
-      // Remove parent items that have no visible subItems left
-      .filter((item) => {
-        if (item.subItems && item.subItems.length === 0) {
-          return false;
-        }
-        return true;
-      })
-  );
-};
-
-// === NavItem Component (Unchanged, but supports filtered items) ===
-const NavItem = ({ item, expandedItems, toggleExpanded, depth = 0 }) => {
-  const location = useLocation();
-
-  // Check if current path matches this leaf node
-  const isActiveLeaf =
-    !item.subItems && location.pathname.startsWith('/' + item.href);
-
-  // Handle expanded state for dropdowns
-  const isExpanded = expandedItems[item.label];
-
-  if (item.subItems) {
-    return (
-      <div className="space-y-1" key={item.label}>
-        <button
-          onClick={() => toggleExpanded(item.label)}
-          className={cn(
-            'group flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm font-medium transition-all duration-200 hover:bg-supperagent hover:text-white',
-            depth > 0 && 'pl-6'
-          )}
-        >
-          <div className="flex items-center space-x-3">
-            <item.icon className="h-4 w-4 text-supperagent group-hover:text-white" />
-            <span className="text-black group-hover:text-white">
-              {item.label}
-            </span>
-          </div>
-          {isExpanded ? (
-            <ChevronDown className="h-4 w-4 text-supperagent group-hover:text-white" />
-          ) : (
-            <ChevronRight className="h-4 w-4 text-supperagent group-hover:text-white" />
-          )}
-        </button>
-
-        <div
-          className={cn(
-            'overflow-hidden transition-all duration-300 ease-in-out',
-            isExpanded ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'
-          )}
-        >
-          <div className="ml-4 space-y-1 border-l-2 border-gray-300">
-            {item.subItems.map((subItem) => (
-              <NavItem
-                key={subItem.label}
-                item={subItem}
-                expandedItems={expandedItems}
-                toggleExpanded={toggleExpanded}
-                depth={depth + 1}
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <Link
-      to={item.href}
-      className={cn(
-        'group flex w-full items-center space-x-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 hover:bg-supperagent hover:text-white',
-        isActiveLeaf && 'bg-blue-50 text-supperagent shadow-sm',
-        depth > 0 && 'pl-6'
-      )}
-    >
-      <item.icon className="h-4 w-4 text-supperagent group-hover:text-white" />
-      <span className="text-black group-hover:text-white">{item.label}</span>
-    </Link>
-  );
-};
-
-// === Main Component: PeoplePlannerSideNav ===
-export function PeoplePlannerSideNav() {
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const user = useSelector((state: any) => state.auth?.user) || null;
-  const userRole = user?.role || 'admin'; // Default to admin if no role
-
-  const [expandedItems, setExpandedItems] = useState({});
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
+  
   // Logout handler
   const handleLogout = async () => {
     await dispatch(logout());
