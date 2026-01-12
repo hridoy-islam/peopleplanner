@@ -43,9 +43,8 @@ import {
   DialogFooter
 } from '@/components/ui/dialog';
 import { toast } from '@/components/ui/use-toast';
-import { BlinkingDots } from '@/components/shared/blinking-dots';
 
-interface TCapacity {
+interface TConsent {
   _id: string;
   userId: string;
   title: string;
@@ -76,20 +75,22 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-export default function AddCapacityFormPage() {
+export default function EditConsentFormPage() {
   const navigate = useNavigate();
-  const { id } = useParams();
-  const userId = id;
+  // Expecting route: /users/:id/edit-consent-form/:consentId
+  const { id: userId, consentId } = useParams();
 
   // Data State
-  const [capacities, setCapacities] = useState<TCapacity[]>([]);
-  const [selectedCapacityId, setSelectedCapacityId] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [consents, setConsents] = useState<TConsent[]>([]);
+  const [selectedConsentId, setSelectedConsentId] = useState<string | null>(null);
+  
+  const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formTitle, setFormTitle] = useState('');
 
   // Custom Entry & Edit State
   const [isCustomEntryOpen, setIsCustomEntryOpen] = useState(false);
-  const [newCapacityTitle, setNewCapacityTitle] = useState('');
+  const [newConsentTitle, setNewConsentTitle] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
 
@@ -111,7 +112,8 @@ export default function AddCapacityFormPage() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       signNow: false,
-      reviewPeriod: undefined, // Force validation error if not selected
+      reviewPeriod: undefined,
+      nextReviewDate: undefined,
     },
   });
 
@@ -119,88 +121,97 @@ export default function AddCapacityFormPage() {
   const reviewPeriod = watch("reviewPeriod");
   const documentUrl = watch("documentUrl");
 
-  // --- API: Fetch Capacities ---
-  const fetchCapacities = async () => {
+  // --- 1. Fetch Consent Statements (Sidebar List) ---
+  const fetchConsents = async () => {
     if (!userId) return;
-    setIsLoading(true);
     try {
-      // Using /statements endpoint with type=capacity to match consent logic
-      const res = await axiosInstance.get(`/statements?userId=${userId}&type=capacity&limit=all`);
+      const res = await axiosInstance.get(`/statements?userId=${userId}&type=consent&limit=all`);
       if (res.data?.data?.result) {
-        setCapacities(res.data.data.result);
+        setConsents(res.data.data.result);
       }
     } catch (error) {
       console.error(error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load capacity types.',
-        variant: 'destructive'
-      });
-    } finally {
-      setIsLoading(false);
+      toast({ title: 'Error', description: 'Failed to load consent types.', variant: 'destructive' });
     }
   };
 
   useEffect(() => {
-    fetchCapacities();
+    fetchConsents();
   }, [userId]);
 
-  // Reset form when changing selected capacity
+  // --- 2. Fetch Existing Form Data (To Edit) ---
   useEffect(() => {
-    if (selectedCapacityId) {
-      reset({
-        signNow: false,
-        documentUrl: undefined,
-        reviewPeriod: undefined,
-        nextReviewDate: undefined,
-      });
-      setUploadError(null);
-    }
-  }, [selectedCapacityId, reset]);
+    const fetchFormData = async () => {
+      if (!consentId) return;
+      setIsLoading(true);
+      try {
+        const res = await axiosInstance.get(`/consent-form/${consentId}`);
+        const data = res.data?.data;
 
-  // --- Date Calculation ---
-  useEffect(() => {
-    if (reviewPeriod && reviewPeriod !== 'custom') {
-      const date = moment();
-      if (reviewPeriod === '3months') date.add(3, 'months');
-      else if (reviewPeriod === '6months') date.add(6, 'months');
-      else if (reviewPeriod === '1year') date.add(1, 'year');
+        if (data) {
+          setFormTitle(data.title);
+          setSelectedConsentId(data.statementId); // Pre-select the sidebar item
+          
+          // Pre-fill form
+          reset({
+            signNow: data.signatureOption === 'now',
+            documentUrl: data.signature || undefined,
+            reviewPeriod: data.reviewPeriod,
+            nextReviewDate: data.nextReviewDate ? new Date(data.nextReviewDate) : undefined,
+          });
+        }
+      } catch (error) {
+        console.error(error);
+        toast({ title: 'Error', description: 'Failed to load form details.', variant: 'destructive' });
+        navigate(-1); 
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-      setValue("nextReviewDate", date.toDate(), { shouldValidate: true });
-    }
-  }, [reviewPeriod, setValue]);
+    fetchFormData();
+  }, [consentId, navigate, reset]);
 
-  // --- API Operations ---
-  const handleCreateCapacity = async () => {
-    if (!newCapacityTitle.trim() || !userId) return;
+  // --- Sidebar Operations ---
+  const handleCreateConsent = async () => {
+    if (!newConsentTitle.trim() || !userId) return;
     try {
-      await axiosInstance.post(`/statements`, { 
-        userId, 
-        title: newCapacityTitle,
-        type: 'capacity' 
-      });
-      toast({ title: 'Success', description: 'New capacity statement added.' });
-      setNewCapacityTitle('');
+      await axiosInstance.post(`/statements`, { userId, title: newConsentTitle, type: 'consent' });
+      toast({ title: 'Success', description: 'New consent category added.' });
+      setNewConsentTitle('');
       setIsCustomEntryOpen(false);
-      fetchCapacities();
+      fetchConsents();
     } catch (error) {
-      toast({ title: 'Error', description: 'Failed to create capacity.', variant: 'destructive' });
+      toast({ title: 'Error', description: 'Failed to create consent.', variant: 'destructive' });
     }
   };
 
-  const handleUpdateCapacity = async (statementId: string) => {
+  const handleUpdateConsent = async (id: string) => {
     if (!editTitle.trim()) return;
     try {
-      await axiosInstance.patch(`/statements/${statementId}`, { title: editTitle });
-      toast({ title: 'Updated', description: 'Capacity statement updated.' });
+      await axiosInstance.patch(`/statements/${id}`, { title: editTitle });
+      toast({ title: 'Updated', description: 'Consent category updated.' });
       setEditingId(null);
-      fetchCapacities();
+      fetchConsents();
     } catch (error) {
-      toast({ title: 'Error', description: 'Failed to update capacity.', variant: 'destructive' });
+      toast({ title: 'Error', description: 'Failed to update consent.', variant: 'destructive' });
     }
   };
 
-  // --- File Upload ---
+  // --- Date Calculation ---
+  const handlePeriodChange = (newPeriod: string) => {
+    setValue("reviewPeriod", newPeriod);
+    
+    if (newPeriod && newPeriod !== 'custom') {
+      const date = moment();
+      if (newPeriod === '3months') date.add(3, 'months');
+      else if (newPeriod === '6months') date.add(6, 'months');
+      else if (newPeriod === '1year') date.add(1, 'year');
+      setValue("nextReviewDate", date.toDate(), { shouldValidate: true });
+    }
+  };
+
+  // --- File Upload Logic ---
   const validateFile = (file: File) => {
     if (file.size > 5 * 1024 * 1024) {
       setUploadError('File size exceeds 5MB limit.');
@@ -225,14 +236,11 @@ export default function AddCapacityFormPage() {
     try {
       const res = await axiosInstance.post('/documents', formData);
       const url = res.data?.data?.fileUrl;
-
-      if (!url) throw new Error('No file URL returned from server');
-
+      if (!url) throw new Error('No file URL');
       setValue("documentUrl", url, { shouldValidate: true });
-      // toast({ title: 'Success', description: 'Signature file uploaded.' });
+    //   toast({ title: 'Success', description: 'File uploaded successfully.' });
     } catch (err) {
-      console.error('Upload failed:', err);
-      setUploadError('Upload failed. Please try again.');
+      setUploadError('Upload failed.');
       setValue("documentUrl", undefined);
     } finally {
       setIsUploading(false);
@@ -249,48 +257,51 @@ export default function AddCapacityFormPage() {
     if (!isUploading) fileInputRef.current?.click();
   };
 
-  // --- Submit Handler ---
+  // --- Update Handler ---
   const onSubmit = async (data: FormValues) => {
-    if (!selectedCapacityId || !userId) {
-      toast({ title: "Error", description: "No capacity selected or invalid user.", variant: "destructive" });
+    if (!consentId || !selectedConsentId) {
+      toast({ title: "Error", description: "Invalid form state", variant: "destructive" });
       return;
     }
     
     setIsSubmitting(true);
-    const selectedCapacity = capacities.find((c) => c._id === selectedCapacityId);
+
+    const currentStatement = consents.find(c => c._id === selectedConsentId);
 
     const payload = {
-      userId,
-      statementId: selectedCapacityId,
-      title: selectedCapacity?.title || 'Untitled',
+      statementId: selectedConsentId,
+      title: currentStatement?.title || formTitle,
       type: 'consent',
       signatureOption: data.signNow ? 'now' : 'later',
-      signature: data.documentUrl, // Mapping documentUrl to signature field
+      signature: data.documentUrl,
       reviewPeriod: data.reviewPeriod,
       nextReviewDate: moment(data.nextReviewDate).toISOString(),
     };
 
     try {
-      await axiosInstance.post(`/consent-form`, payload);
-      toast({
-        title: 'Success',
-        description: 'Capacity form saved successfully.'
-      });
+      await axiosInstance.patch(`/consent-form/${consentId}`, payload);
+      toast({ title: 'Updated', description: 'Consent form updated successfully.' });
       navigate(-1);
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to save form.',
-        variant: 'destructive'
-      });
+      toast({ title: 'Error', description: 'Failed to update form.', variant: 'destructive' });
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-50/50">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen">
-      <div className="mx-auto space-y-6">
+    <div >
+      <div className="mx-auto  space-y-6">
+        
+        {/* Header */}
         <div className="flex justify-end">
           <Button onClick={() => navigate(-1)} >
             <ArrowLeft className="mr-2 h-4 w-4" /> Back
@@ -298,33 +309,30 @@ export default function AddCapacityFormPage() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-12">
-          {/* Sidebar */}
+          
+          {/* Sidebar: List of Consents */}
           <div className="lg:col-span-4">
             <Card className="h-full border-none shadow-md overflow-y-auto">
               <CardHeader>
-                <CardTitle>Capacity Statements</CardTitle>
-                <CardDescription>Select a statement type</CardDescription>
+                <CardTitle>Consent Types</CardTitle>
+                <CardDescription>Select a consent type to assign</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="custom-scrollbar max-h-[500px] space-y-2 overflow-y-auto pr-2">
-                  {isLoading ? (
-                    <div className="flex justify-center p-4">
-              <BlinkingDots size="large" color="bg-supperagent" />
-                    </div>
-                  ) : capacities.length === 0 ? (
+                  {consents.length === 0 ? (
                     <p className="text-center text-sm text-muted-foreground">No types found.</p>
                   ) : (
-                    capacities.map((cap) => (
+                    consents.map((consent) => (
                       <div
-                        key={cap._id}
+                        key={consent._id}
                         className={`group flex cursor-pointer items-center justify-between rounded-md border border-gray-300 p-3 transition-all ${
-                          selectedCapacityId === cap._id
+                          selectedConsentId === consent._id
                             ? 'ring-1 ring-gray-300 bg-gray-50'
                             : 'bg-white'
                         }`}
-                        onClick={() => setSelectedCapacityId(cap._id)}
+                        onClick={() => setSelectedConsentId(consent._id)}
                       >
-                        {editingId === cap._id ? (
+                        {editingId === consent._id ? (
                           <div className="flex w-full items-center gap-2" onClick={(e) => e.stopPropagation()}>
                             <Input
                               value={editTitle}
@@ -332,7 +340,7 @@ export default function AddCapacityFormPage() {
                               className="h-8 text-sm"
                               autoFocus
                             />
-                            <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600" onClick={() => handleUpdateCapacity(cap._id)}>
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-green-600" onClick={() => handleUpdateConsent(consent._id)}>
                               <Check className="h-4 w-4" />
                             </Button>
                             <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500" onClick={() => setEditingId(null)}>
@@ -343,15 +351,15 @@ export default function AddCapacityFormPage() {
                           <>
                             <div className="flex items-center gap-3 overflow-hidden">
                               <Checkbox
-                                id={cap._id}
-                                checked={selectedCapacityId === cap._id}
-                                onCheckedChange={(checked) => setSelectedCapacityId(checked ? cap._id : null)}
+                                id={consent._id}
+                                checked={selectedConsentId === consent._id}
+                                onCheckedChange={(checked) => setSelectedConsentId(checked ? consent._id : null)}
                               />
-                              <label htmlFor={cap._id} className="pointer-events-none cursor-pointer truncate text-sm font-medium">
-                                {cap.title}
+                              <label htmlFor={consent._id} className="pointer-events-none cursor-pointer truncate text-sm font-medium">
+                                {consent.title}
                               </label>
                             </div>
-                            <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); setEditingId(cap._id); setEditTitle(cap.title); }}>
+                            <Button size="icon" variant="ghost" onClick={(e) => { e.stopPropagation(); setEditingId(consent._id); setEditTitle(consent.title); }}>
                               <Edit2 className="h-4 w-4 text-muted-foreground" />
                             </Button>
                           </>
@@ -366,28 +374,29 @@ export default function AddCapacityFormPage() {
                     <Button className="w-full" ><Plus className="mr-2 h-4 w-4" /> Custom Entry</Button>
                   </DialogTrigger>
                   <DialogContent>
-                    <DialogHeader><DialogTitle>Add Capacity Statement</DialogTitle></DialogHeader>
+                    <DialogHeader><DialogTitle>Add New Consent Type</DialogTitle></DialogHeader>
                     <div className="py-4">
                       <Label>Title</Label>
-                      <Input value={newCapacityTitle} onChange={(e) => setNewCapacityTitle(e.target.value)} className="mt-2" />
+                      <Input value={newConsentTitle} onChange={(e) => setNewConsentTitle(e.target.value)} className="mt-2" />
                     </div>
-                    <DialogFooter><Button onClick={handleCreateCapacity}>Save</Button></DialogFooter>
+                    <DialogFooter><Button onClick={handleCreateConsent}>Save</Button></DialogFooter>
                   </DialogContent>
                 </Dialog>
               </CardContent>
             </Card>
           </div>
 
-          {/* Form Area */}
+          {/* Main Form Area */}
           <div className="lg:col-span-8">
             <Card className="min-h-[600px] border-none shadow-md">
               <CardContent className="p-8">
-                {selectedCapacityId ? (
-                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 duration-500 animate-in fade-in slide-in-from-bottom-4">
+                {selectedConsentId ? (
+                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div>
                       <h2 className="text-2xl font-bold">
-                        {capacities.find((c) => c._id === selectedCapacityId)?.title}
+                        {consents.find(c => c._id === selectedConsentId)?.title || formTitle}
                       </h2>
+                      <p className="text-muted-foreground text-sm">Edit details for this consent record.</p>
                     </div>
 
                     {/* Signature Section */}
@@ -410,12 +419,11 @@ export default function AddCapacityFormPage() {
                         </div>
 
                         {signNow && (
-                          <div className="rounded-md border border-gray-300 bg-white p-4 duration-200 animate-in fade-in zoom-in-95">
+                          <div className="rounded-md border border-gray-300 bg-white p-4 animate-in fade-in zoom-in-95 duration-200">
                             <div className="space-y-2">
                               <Label className="block text-sm font-medium">Upload Document <span className="text-red-500">*</span></Label>
-                              
                               <input ref={fileInputRef} type="file" onChange={handleFileSelect} className="hidden" disabled={isUploading} accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
-
+                              
                               <div onClick={triggerFileInput} className={`relative flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 text-center transition-all ${isUploading ? 'cursor-wait border-blue-300 bg-blue-50' : documentUrl ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-gray-50 hover:border-primary hover:bg-gray-100'}`}>
                                 {isUploading ? (
                                   <><Loader2 className="mb-2 h-8 w-8 animate-spin text-blue-500" /><p className="text-sm font-medium text-blue-700">Uploading...</p></>
@@ -423,7 +431,7 @@ export default function AddCapacityFormPage() {
                                   <>
                                     <CheckCircle className="mb-2 h-8 w-8 text-green-500" />
                                     <p className="text-sm font-medium text-green-700">File Attached</p>
-                                    <Button type="button" variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleRemoveSelectedFile(); }} className="mt-3 h-8 text-xs text-red-600 hover:bg-red-50 hover:text-red-700">Remove File</Button>
+                                    <Button type="button" variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleRemoveSelectedFile(); }} className="mt-3 h-8 text-xs text-red-600 hover:bg-red-50 hover:text-red-700">Remove / Change File</Button>
                                   </>
                                 ) : (
                                   <>
@@ -439,6 +447,8 @@ export default function AddCapacityFormPage() {
                         )}
                       </div>
                     </div>
+
+                    <Separator />
 
                     {/* Review Date */}
                     <div className="space-y-4">
@@ -456,7 +466,7 @@ export default function AddCapacityFormPage() {
                                     <Checkbox
                                       id={period}
                                       checked={field.value === period}
-                                      onCheckedChange={(checked) => { if (checked) field.onChange(period); }}
+                                      onCheckedChange={(checked) => { if (checked) handlePeriodChange(period); }}
                                     />
                                   )}
                                 />
@@ -495,14 +505,13 @@ export default function AddCapacityFormPage() {
 
                     <div className="flex justify-end pt-4">
                       <Button type="submit" disabled={isSubmitting} className="min-w-[140px]">
-                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} Finish Form
+                        {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />} Update Form
                       </Button>
                     </div>
                   </form>
                 ) : (
-                  <div className="flex h-[400px] flex-col items-center justify-center text-muted-foreground">
-                    <div className="mb-4 rounded-full bg-gray-100 p-4"><Check className="h-8 w-8 text-gray-400" /></div>
-                    <p>Select a statement type from the sidebar to begin.</p>
+                  <div className="flex h-full flex-col items-center justify-center text-muted-foreground">
+                    <p>Select a consent type from the sidebar to view or edit details.</p>
                   </div>
                 )}
               </CardContent>

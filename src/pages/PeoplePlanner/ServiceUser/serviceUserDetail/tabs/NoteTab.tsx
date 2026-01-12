@@ -79,17 +79,15 @@ const NoteTab: React.FC<NoteTabProps> = ({
             <h3 className="text-lg font-semibold text-gray-900">
               Note #{index + 1}
             </h3>
-          
-              <Button
-                type="button"
-                variant="default"
-                size="icon"
-                onClick={() => removeNote(index)}
-                className="hover:bg-red-500 text-red-500 hover:text-white"
-              >
-                <Trash className='h-4 w-4  '/>
-              </Button>
-          
+
+            <Button
+              type="button"
+              variant="destructive"
+              size="icon"
+              onClick={() => removeNote(index)}
+            >
+              <Trash className="h-4 w-4  " />
+            </Button>
           </div>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">

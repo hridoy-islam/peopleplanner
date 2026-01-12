@@ -109,36 +109,34 @@ const ServiceUserDashboardPage = () => {
     const fetchDashboardData = async () => {
       setLoading(true);
       try {
-        const [ upcomingRes, schedulesRes] =
-          await Promise.all([
-          
-            // Changed 'employee' to 'serviceUser'
-            axiosInstance.get(
-              `/schedules/upcoming?serviceUser=${user._id}&date=${moment().format('YYYY-MM-DD')}&limit=all`
-            ),
-            // Changed 'employee' to 'serviceUser'
-            axiosInstance.get(`/schedules`, {
-              params: {
-                serviceUser: user._id,
-                date: moment().format('YYYY-MM-DD')
-              }
-            }),
-            axiosInstance.get(`/hr/request-document`, {
-              params: { userId: user._id, limit: 3 }
-            }),
-            axiosInstance.get('/hr/notice', {
-              params: {
-                status: 'active',
-                limit: 3,
-                userId: user._id,
-                sort: '-createdAt'
-              }
-            })
-          ]);
+        const [upcomingRes, schedulesRes] = await Promise.all([
+          // Changed 'employee' to 'serviceUser'
+          axiosInstance.get(
+            `/schedules/upcoming?serviceUser=${user._id}&date=${moment().format('YYYY-MM-DD')}&limit=all`
+          ),
+          // Changed 'employee' to 'serviceUser'
+          axiosInstance.get(`/schedules`, {
+            params: {
+              serviceUser: user._id,
+              date: moment().format('YYYY-MM-DD')
+            }
+          }),
+          axiosInstance.get(`/hr/request-document`, {
+            params: { userId: user._id, limit: 3 }
+          }),
+          axiosInstance.get('/hr/notice', {
+            params: {
+              status: 'active',
+              limit: 3,
+              userId: user._id,
+              sort: '-createdAt'
+            }
+          })
+        ]);
 
         setShifts(upcomingRes.data?.data?.result || []);
         setScheduleData(schedulesRes.data?.data?.result || []);
-        
+
         setTotalShifts(upcomingRes.data?.data?.meta?.total | 0);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
@@ -162,8 +160,6 @@ const ServiceUserDashboardPage = () => {
 
   const getShiftTime = (start: string, end: string) => `${start} - ${end}`;
 
-
- 
   if (loading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-slate-50">
@@ -173,14 +169,23 @@ const ServiceUserDashboardPage = () => {
       </div>
     );
   }
-
+  const isServiceUser = user?.role === 'serviceUser';
   return (
-    <div className="space-y-8 bg-slate-50/50 duration-500 animate-in fade-in ">
+    <div className="space-y-8 bg-gray-100 duration-500 animate-in fade-in ">
       {/* --- Header Section --- */}
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
-            Welcome back, {user?.name?.split(' ')[0]} 👋
+          <h1 className="flex items-center gap-3 text-3xl font-bold tracking-tight text-slate-900">
+            Welcome back, {user?.name} 👋
+            {/* Subtle Badge for Role Identification */}
+            {isServiceUser && (
+              <Badge
+                variant="secondary"
+                className="bg-indigo-100 text-indigo-700 hover:bg-indigo-100"
+              >
+                Service User
+              </Badge>
+            )}
           </h1>
           <p className="mt-1 flex items-center gap-2 text-slate-500">
             <Calendar className="h-4 w-4 text-supperagent" />
@@ -207,12 +212,11 @@ const ServiceUserDashboardPage = () => {
             color: 'text-blue-600',
             bg: 'bg-blue-50/50',
             link: 'upcoming-schedule'
-          },
-        
+          }
         ].map((stat, idx) => (
           <Card
             key={idx}
-            onClick={()=> navigate(stat.link)}
+            onClick={() => navigate(stat.link)}
             className="group cursor-pointer border-none bg-white shadow-sm transition-all duration-200 hover:shadow-md"
           >
             <CardContent className="flex items-center justify-between p-6">
@@ -261,7 +265,7 @@ const ServiceUserDashboardPage = () => {
                   <div className="mb-3 rounded-full bg-supperagent/10 p-3">
                     <CheckCircle2 className="h-6 w-6 text-supperagent" />
                   </div>
-                  
+
                   <p className="text-sm text-slate-500">No tasks scheduled.</p>
                 </div>
               ) : (
@@ -338,7 +342,7 @@ const ServiceUserDashboardPage = () => {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={()=> navigate('upcoming-schedule')}
+                  onClick={() => navigate('upcoming-schedule')}
                   className="text-supperagent hover:bg-supperagent/10 hover:text-supperagent"
                 >
                   View All <ArrowRight className="ml-1 h-4 w-4" />
@@ -358,8 +362,8 @@ const ServiceUserDashboardPage = () => {
                   {shifts.map((shift, i) => (
                     <div
                       key={i}
-                      onClick={()=> navigate('upcoming-schedule')}
-                      className="group flex flex-col gap-5 p-5 transition-colors cursor-pointer hover:bg-slate-50/50 sm:flex-row"
+                      onClick={() => navigate('upcoming-schedule')}
+                      className="group flex cursor-pointer flex-col gap-5 p-5 transition-colors hover:bg-slate-50/50 sm:flex-row"
                     >
                       {/* Date Visual */}
                       <div className="flex h-16 w-full flex-shrink-0 items-center justify-center gap-2 rounded-xl border border-slate-200/60 bg-slate-100/50 transition-colors group-hover:border-supperagent/30 sm:h-20 sm:w-20 sm:flex-col sm:gap-0">
@@ -411,10 +415,7 @@ const ServiceUserDashboardPage = () => {
               )}
             </CardContent>
           </Card>
-
         </div>
-
-        
       </div>
     </div>
   );

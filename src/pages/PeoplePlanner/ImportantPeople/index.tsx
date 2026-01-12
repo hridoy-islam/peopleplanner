@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   Table,
   TableBody,
@@ -9,7 +9,7 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Pen, Plus, Trash } from 'lucide-react';
+import { ArrowLeft, Pen, Plus, Trash } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -33,7 +33,8 @@ import axiosInstance from '@/lib/axios';
 import { BlinkingDots } from '@/components/shared/blinking-dots';
 import PersonalForm from './components/personalForm';
 import ProfessionalForm from './components/professionalForm';
-
+import { DynamicPagination } from '@/components/shared/DynamicPagination';
+import { useSelector } from 'react-redux';
 
 type ViewState = 'list' | 'personal' | 'professional';
 
@@ -44,21 +45,41 @@ export default function ImportantPeoplePage() {
   const [selectedContactId, setSelectedContactId] = useState<string | null>(
     null
   );
+  const user = useSelector((state: any) => state.auth?.user) || null;
 
   // Dialog states for List View
   const [openAddDialog, setOpenAddDialog] = useState(false);
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
   const [personToDelete, setPersonToDelete] = useState<string | null>(null);
-
+  const navigate = useNavigate();
   const { id: userId } = useParams();
   const { toast } = useToast();
 
-  const fetchPeople = async () => {
+  // Pagination & Search
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [entriesPerPage, setEntriesPerPage] = useState(100);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [userData, setUserData] = useState<any>(null);
+  const fetchPeople = async (
+    page: number,
+    entriesPerPage: number,
+    searchTerm = ''
+  ) => {
     try {
       setLoading(true);
       const response = await axiosInstance.get('/important-people', {
-        params: { userId }
+        params: {
+          userId,
+          page,
+          limit: entriesPerPage,
+          ...(searchTerm ? { searchTerm } : {})
+        }
       });
+
+      const res = await axiosInstance.get(`/users/${userId}`);
+      setUserData(res.data?.data || res.data);
+      setTotalPages(response.data?.data?.meta?.totalPage || 1);
       setImportantPeople(response.data?.data?.result || response.data || []);
     } catch (error) {
       console.error(error);
@@ -74,9 +95,9 @@ export default function ImportantPeoplePage() {
 
   useEffect(() => {
     if (userId && view === 'list') {
-      fetchPeople();
+      fetchPeople(currentPage, entriesPerPage, searchTerm);
     }
-  }, [userId, view]);
+  }, [userId, view, currentPage, entriesPerPage]);
 
   const handleDelete = async () => {
     if (!personToDelete) return;
@@ -115,7 +136,7 @@ export default function ImportantPeoplePage() {
 
   const handleFormSuccess = () => {
     setView('list');
-    fetchPeople(); // Refresh list
+    fetchPeople(currentPage, entriesPerPage); // Refresh list
   };
 
   const handleFormCancel = () => {
@@ -150,48 +171,55 @@ export default function ImportantPeoplePage() {
   // Default List View
   return (
     <div className="space-y-4">
+      {user?.role === 'admin' && (
+        <h1 className="text-xl font-medium">
+          {userData?.title} {userData?.firstName} {userData?.lastName}
+        </h1>
+      )}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Important People</h1>
 
-        {/* Add Contact Type Selection Dialog */}
-        <Dialog open={openAddDialog} onOpenChange={setOpenAddDialog}>
-          <DialogTrigger asChild>
-            <Button
-              className="bg-supperagent text-white hover:bg-supperagent/90"
-              size={'sm'}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Add Contact
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Select Contact Type</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <Button
-                className="w-full py-6 text-lg"
-                onClick={() => handleCreate('personal')}
-              >
-                Personal
+        <div className="flex flex-row items-center gap-4">
+          <Button className="border-gray-300" onClick={() => navigate(-1)}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+          <Dialog open={openAddDialog} onOpenChange={setOpenAddDialog}>
+            <DialogTrigger asChild>
+              <Button className="bg-supperagent text-white hover:bg-supperagent/90">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Contact
               </Button>
-              <Button
-                className="w-full py-6 text-lg"
-                onClick={() => handleCreate('professional')}
-              >
-                Professional
-              </Button>
-            </div>
-            <DialogClose asChild>
-              <Button variant="outline" className="mt-2">
-                Cancel
-              </Button>
-            </DialogClose>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Select Contact Type</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <Button
+                  className="w-full py-6 text-lg"
+                  onClick={() => handleCreate('personal')}
+                >
+                  Personal
+                </Button>
+                <Button
+                  className="w-full py-6 text-lg"
+                  onClick={() => handleCreate('professional')}
+                >
+                  Professional
+                </Button>
+              </div>
+              <DialogClose asChild>
+                <Button variant="outline" className="mt-2">
+                  Cancel
+                </Button>
+              </DialogClose>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
-      <div className="min-h-[200px] rounded-md bg-white p-2 shadow-lg">
+      <div className=" rounded-md bg-white p-2 shadow-md">
         {loading ? (
           <div className="flex h-40 items-center justify-center">
             <BlinkingDots size="large" color="bg-supperagent" />
@@ -201,70 +229,80 @@ export default function ImportantPeoplePage() {
             No contacts found.
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Contact Status</TableHead>
-                <TableHead>Role/Relation</TableHead>
-                <TableHead className="text-right">Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {importantPeople.map((person) => (
-                <TableRow key={person._id}>
-                  <TableCell className="font-medium">
-                    {person.firstName} {person.lastName}
-                  </TableCell>
-                  <TableCell>
-                    <span className="inline-block rounded-full bg-blue-100 px-2 py-1 text-xs capitalize text-blue-800">
-                      {person.type}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <span
-                      className={`inline-block rounded-full px-2 py-1 text-xs ${
-                        person.contactStatus === 'Priority'
-                          ? 'bg-green-100 text-green-800'
-                          : person.contactStatus === 'Do not contact'
-                            ? 'bg-red-100 text-red-800'
-                            : 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
-                      {person.contactStatus || 'N/A'}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    {person.type === 'personal'
-                      ? person.relationshipRole
-                      : person.role}
-                  </TableCell>
-                  <TableCell className="space-x-2 text-right">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-primary"
-                      onClick={() => handleEdit(person)}
-                    >
-                      <Pen className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive/90"
-                      onClick={() => {
-                        setPersonToDelete(person._id);
-                        setOpenDeleteDialog(true);
-                      }}
-                    >
-                      <Trash className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
+          <>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Contact Status</TableHead>
+                  <TableHead>Role/Relation</TableHead>
+                  <TableHead className="text-right">Action</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {importantPeople.map((person) => (
+                  <TableRow key={person._id}>
+                    <TableCell className="font-medium">
+                      {person.firstName} {person.lastName}
+                    </TableCell>
+                    <TableCell>
+                      <span className="inline-block rounded-full bg-blue-100 px-2 py-1 text-xs capitalize text-blue-800">
+                        {person.type}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span
+                        className={`inline-block rounded-full px-2 py-1 text-xs ${
+                          person.contactStatus === 'Priority'
+                            ? 'bg-green-100 text-green-800'
+                            : person.contactStatus === 'Do not contact'
+                              ? 'bg-red-100 text-red-800'
+                              : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        {person.contactStatus || 'N/A'}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      {person.type === 'personal'
+                        ? person.relationshipRole
+                        : person.role}
+                    </TableCell>
+                    <TableCell className="space-x-2 text-right">
+                      <Button
+                        size="icon"
+                        className="h-8 w-8 text-primary"
+                        onClick={() => handleEdit(person)}
+                      >
+                        <Pen className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        className="h-8 w-8 bg-destructive text-white hover:bg-destructive/90"
+                        onClick={() => {
+                          setPersonToDelete(person._id);
+                          setOpenDeleteDialog(true);
+                        }}
+                      >
+                        <Trash className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+
+            {importantPeople.length > 30 && (
+              <DynamicPagination
+                pageSize={entriesPerPage}
+                setPageSize={setEntriesPerPage}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            )}
+          </>
         )}
       </div>
 

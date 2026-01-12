@@ -61,7 +61,7 @@ const PrimaryBranchTab: React.FC<PrimaryBranchProps> = ({
   };
 
   const missingFields = getMissingFields('primaryBranch', formData);
-  
+
   const isFieldMissing = (index: number, field: keyof PrimaryBranchItem) => {
     return missingFields.includes(`${field}[${index}]`);
   };
@@ -69,7 +69,7 @@ const PrimaryBranchTab: React.FC<PrimaryBranchProps> = ({
   return (
     <div className="space-y-2">
       <h1 className="text-xl font-semibold text-gray-900">Primary Branch</h1>
-      
+
       {primaryBranch.map((item, index) => (
         <div
           key={index}
@@ -80,17 +80,15 @@ const PrimaryBranchTab: React.FC<PrimaryBranchProps> = ({
             <h3 className="text-lg font-semibold text-gray-900">
               Primary Branch #{index + 1}
             </h3>
-       
-              <Button
-                type="button"
-                variant="default"
-                size="icon"
-                onClick={() => removeBranch(index)}
-                className="hover:bg-red-500 text-red-500 hover:text-white"
-              >
-                <Trash className="h-4 w-4" />
-              </Button>
-            
+
+            <Button
+              type="button"
+              variant="destructive"
+              size="icon"
+              onClick={() => removeBranch(index)}
+            >
+              <Trash className="h-4 w-4" />
+            </Button>
           </div>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">

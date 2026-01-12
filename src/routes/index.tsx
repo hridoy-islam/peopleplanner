@@ -102,6 +102,8 @@ import DocumentReportPage from '@/pages/PeoplePlanner/RequestDocument';
 import AdminRequestDocumentPage from '@/pages/PeoplePlanner/Request-Documents';
 import UpcomingSchedulePage from '@/pages/PeoplePlanner/upcomingSchedule';
 import ServiceUserModulePage from '@/pages/PeoplePlanner/ServiceUser/serviceUserModules';
+import EditCapacityFormPage from '@/pages/PeoplePlanner/Consent/components/edit-capacity-form';
+import EditConsentFormPage from '@/pages/PeoplePlanner/Consent/components/edit-consent-form';
 
 const SignInPage = lazy(() => import('@/pages/auth/signin'));
 
@@ -216,19 +218,16 @@ export default function AppRouter() {
               element: <ImportantPeoplePage />
             },
             {
-              path: 'important-people/personal-form',
-              element: <PersonalForm />
+              path: 'general-information/:id',
+              element: <ServiceuserDetailPage />
             },
+          
             {
-              path: 'important-people/professional-form',
-              element: <ProfessionalForm />
-            },
-            {
-              path: 'about-me',
+              path: 'about-me/:id',
               element: <AboutMe />
             },
             {
-              path: 'contingency-plan',
+              path: 'contingency-plan/:id',
               element: <ContingencyPlan />
             },
             {
@@ -414,7 +413,7 @@ export default function AppRouter() {
               element: <RiskAssessmentScorePage />
             },
             {
-              path: 'documents',
+              path: 'documents/:id',
               element: <DocumentPage />
             },
             {
@@ -462,16 +461,24 @@ export default function AppRouter() {
               element: <StockDetailPage />
             },
             {
-              path: 'consents',
+              path: 'consents/:id',
               element: <ConsentPage />
             },
             {
-              path: 'consents/add-capacity-form',
+              path: 'consents/:id/add-capacity-form',
               element: <AddCapacityFormPage />
             },
             {
-              path: 'consents/add-consent-form',
+              path: 'consents/:id/capacity-form/:capacityId',
+              element: <EditCapacityFormPage />
+            },
+            {
+              path: 'consents/:id/add-consent-form',
               element: <AddConsentFormPage />
+            },
+             {
+              path: 'consents/:id/consent-form/:consentId',
+              element: <EditConsentFormPage />
             },
             {
               path: 'holiday',

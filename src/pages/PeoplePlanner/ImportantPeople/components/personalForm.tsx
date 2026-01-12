@@ -2,10 +2,17 @@ import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { ArrowLeft } from 'lucide-react';
+import { 
+  ArrowLeft, 
+  User, 
+  Phone, 
+  ShieldCheck, 
+  Save
+} from 'lucide-react';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -22,16 +29,15 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import axiosInstance from '@/lib/axios';
+import { Separator } from '@/components/ui/separator';
 
-// Validation Schema
+// --- Validation Schema ---
 const personalSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
   relationshipRole: z.string().min(1, 'Relationship role is required'),
-  // Boolean fields explicitly required (cannot be undefined on submit)
   nextOfKin: z.boolean({ required_error: 'Please select Yes or No' }),
   lastingPowerOfAttorney: z.array(z.string()).default([]),
   observation: z.string().optional(),
@@ -39,7 +45,6 @@ const personalSchema = z.object({
   telephone1: z.string().optional(),
   telephone2: z.string().optional(),
   email: z.string().email().optional().or(z.literal('')),
-  // Select field explicitly required
   contactStatus: z.enum(['Priority', 'Secondary', 'Do not contact'], {
     required_error: 'Contact status is required'
   }),
@@ -69,17 +74,17 @@ export default function PersonalForm({
     defaultValues: {
       firstName: '',
       lastName: '',
-      relationshipRole: undefined, // Explicitly undefined to show placeholder
-      nextOfKin: undefined, // Explicitly undefined so neither checkbox is checked
+      relationshipRole: undefined,
+      nextOfKin: undefined,
       lastingPowerOfAttorney: [],
       observation: '',
       postcode: '',
       telephone1: '',
       telephone2: '',
       email: '',
-      contactStatus: undefined, // Explicitly undefined to show placeholder
+      contactStatus: undefined,
       contactableTimes: '',
-      access: undefined, // Explicitly undefined
+      access: undefined,
       justification: ''
     }
   });
@@ -90,12 +95,9 @@ export default function PersonalForm({
         try {
           const res = await axiosInstance.get(`/important-people/${contactId}`);
           const data = res.data?.data || res.data;
-
-          // Populate form
           form.reset({
             ...data,
             lastingPowerOfAttorney: data.lastingPowerOfAttorney || [],
-            // Ensure booleans are actually booleans
             nextOfKin: data.nextOfKin,
             access: data.access
           });
@@ -114,24 +116,13 @@ export default function PersonalForm({
   const onSubmit = async (values: z.infer<typeof personalSchema>) => {
     setLoading(true);
     try {
-      const payload = {
-        ...values,
-        userId,
-        type: 'personal'
-      };
-
+      const payload = { ...values, userId, type: 'personal' };
       if (contactId) {
         await axiosInstance.patch(`/important-people/${contactId}`, payload);
-        toast({
-          title: 'Success',
-          description: 'Contact updated successfully'
-        });
+        toast({ title: 'Success', description: 'Contact updated successfully' });
       } else {
         await axiosInstance.post('/important-people', payload);
-        toast({
-          title: 'Success',
-          description: 'Contact created successfully'
-        });
+        toast({ title: 'Success', description: 'Contact created successfully' });
       }
       onSuccess();
     } catch (error: any) {
@@ -146,364 +137,360 @@ export default function PersonalForm({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between gap-2">
-        <h1 className="text-xl font-semibold">
-          {contactId ? 'Edit' : 'Add'} Personal Contact
-        </h1>
-        <Button
-          variant="default"
-          className="bg-supperagent text-white hover:bg-supperagent/90"
-          onClick={onCancel}
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back
-        </Button>
+    <div className="mx-auto  pb-10">
+      {/* Header */}
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {contactId ? 'Edit Personal Contact' : 'Add Personal Contact'}
+          </h1>
+         
+        </div>
+        <div className="flex gap-3">
+          <Button  className="border-gray-300" onClick={onCancel}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+          <Button 
+             className="bg-supperagent hover:bg-supperagent/90 text-white min-w-[140px]" 
+             onClick={form.handleSubmit(onSubmit)}
+             disabled={loading}
+          >
+            {loading ? 'Saving...' : (
+              <>
+                <Save className="mr-2 h-4 w-4" />
+                Save Contact
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          {/* General Information */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">General Information</CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="firstName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      First Name <span className="text-red-500">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input placeholder="First name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="lastName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Last Name <span className="text-red-500">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input placeholder="Last name" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="relationshipRole"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Relationship / Role{' '}
-                      <span className="text-red-500">*</span>
-                    </FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
+      {/* Single Main Form Container */}
+      <div className="rounded-xl border border-gray-300 bg-white shadow-sm">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="p-6 md:p-8">
+            
+            {/* --- Section 1: General Information --- */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 mb-4">
+                <User className="h-5 w-5 text-gray-500" />
+                <h3 className="text-lg font-semibold text-gray-900">General Information</h3>
+              </div>
+
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="firstName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>First Name <span className="text-red-500">*</span></FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select" />
-                        </SelectTrigger>
+                        <Input placeholder="First Name" {...field} className="border-gray-300 focus:border-supperagent" />
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Family Member">
-                          Family Member
-                        </SelectItem>
-                        <SelectItem value="Friend">Friend</SelectItem>
-                        <SelectItem value="Guardian">Guardian</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="lastName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Last Name <span className="text-red-500">*</span></FormLabel>
+                      <FormControl>
+                        <Input placeholder="Last Name" {...field} className="border-gray-300 focus:border-supperagent" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              {/* YES/NO Checkbox for Next of Kin */}
-              <FormField
-                control={form.control}
-                name="nextOfKin"
-                render={({ field }) => (
-                  <FormItem className="space-y-3">
-                    <FormLabel>
-                      Next of Kin <span className="text-red-500">*</span>
-                    </FormLabel>
-                    <div className="flex gap-6">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="nok-yes"
-                          checked={field.value === true}
-                          onCheckedChange={(checked) => {
-                            if (checked) field.onChange(true);
-                          }}
-                        />
-                        <label
-                          htmlFor="nok-yes"
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          Yes
-                        </label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="nok-no"
-                          checked={field.value === false}
-                          onCheckedChange={(checked) => {
-                            if (checked) field.onChange(false);
-                          }}
-                        />
-                        <label
-                          htmlFor="nok-no"
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          No
-                        </label>
-                      </div>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="relationshipRole"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Relationship / Role <span className="text-red-500">*</span></FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="border-gray-300 focus:ring-supperagent/20">
+                            <SelectValue placeholder="Select relationship" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Family Member">Family Member</SelectItem>
+                          <SelectItem value="Friend">Friend</SelectItem>
+                          <SelectItem value="Guardian">Guardian</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="lastingPowerOfAttorney"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Lasting Power of Attorney</FormLabel>
-                    <div className="space-y-2">
-                      {['Health and wellbeing', 'Financial'].map((item) => (
-                        <FormItem
-                          key={item}
-                          className="flex items-center space-x-2"
-                        >
-                          <FormControl>
+                {/* Yes/No Toggle */}
+                <FormField
+                  control={form.control}
+                  name="nextOfKin"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Next of Kin <span className="text-red-500">*</span></FormLabel>
+                      <div className="flex h-10 w-full items-center gap-6 rounded-md border border-gray-300 px-4">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="nok-yes"
+                            className="border-gray-400 data-[state=checked]:bg-supperagent data-[state=checked]:border-supperagent"
+                            checked={field.value === true}
+                            onCheckedChange={(c) => c && field.onChange(true)}
+                          />
+                          <label htmlFor="nok-yes" className="text-sm font-medium cursor-pointer text-gray-700">Yes</label>
+                        </div>
+                        <div className="h-4 w-px bg-gray-300" />
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="nok-no"
+                            className="border-gray-400 data-[state=checked]:bg-supperagent data-[state=checked]:border-supperagent"
+                            checked={field.value === false}
+                            onCheckedChange={(c) => c && field.onChange(false)}
+                          />
+                          <label htmlFor="nok-no" className="text-sm font-medium cursor-pointer text-gray-700">No</label>
+                        </div>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Full Width Fields */}
+                <div className="md:col-span-2">
+                   <FormField
+                    control={form.control}
+                    name="lastingPowerOfAttorney"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="mb-2 block">Lasting Power of Attorney</FormLabel>
+                        <div className="flex flex-wrap gap-4 rounded-lg border border-gray-300 bg-gray-50/50 p-4">
+                          {['Health and wellbeing', 'Financial'].map((item) => (
+                            <FormItem key={item} className="flex items-center space-x-3 space-y-0">
+                              <FormControl>
+                                <Checkbox
+                                  className="border-gray-400 data-[state=checked]:bg-supperagent"
+                                  checked={field.value?.includes(item)}
+                                  onCheckedChange={(checked) => {
+                                    return checked
+                                      ? field.onChange([...field.value, item])
+                                      : field.onChange(field.value?.filter((val) => val !== item));
+                                  }}
+                                />
+                              </FormControl>
+                              <FormLabel className="font-normal cursor-pointer text-gray-700">{item}</FormLabel>
+                            </FormItem>
+                          ))}
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <FormField
+                    control={form.control}
+                    name="observation"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Observation / Notes</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="Add specific observations..." 
+                            className="min-h-[100px] resize-none border-gray-300 focus:border-supperagent" 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <Separator className="my-8 bg-gray-200" />
+
+            {/* --- Section 2: Contact Details --- */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Phone className="h-5 w-5 text-gray-500" />
+                <h3 className="text-lg font-semibold text-gray-900">Contact Details</h3>
+              </div>
+
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                <FormField
+                  control={form.control}
+                  name="telephone1"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Telephone 1</FormLabel>
+                      <FormControl>
+                        <Input placeholder="+123..." {...field} className="border-gray-300 focus:border-supperagent" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="telephone2"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Telephone 2</FormLabel>
+                      <FormControl>
+                        <Input placeholder="+123..." {...field} className="border-gray-300 focus:border-supperagent" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder="example@email.com" {...field} className="border-gray-300 focus:border-supperagent" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="postcode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Postcode</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Postcode" {...field} className="border-gray-300 focus:border-supperagent" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="contactStatus"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Contact Status <span className="text-red-500">*</span></FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="border-gray-300 focus:ring-supperagent/20">
+                            <SelectValue placeholder="Select Status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Priority">Priority</SelectItem>
+                          <SelectItem value="Secondary">Secondary</SelectItem>
+                          <SelectItem value="Do not contact">Do not contact</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="contactableTimes"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Contactable Times</FormLabel>
+                      <FormControl>
+                        <Input placeholder="e.g. 9am - 5pm" {...field} className="border-gray-300 focus:border-supperagent" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            <Separator className="my-8 bg-gray-200" />
+
+            {/* --- Section 3: Family Portal --- */}
+            <div className="space-y-6">
+              <div className="flex items-center gap-2 mb-4">
+                <ShieldCheck className="h-5 w-5 text-gray-500" />
+                <h3 className="text-lg font-semibold text-gray-900">Family Portal Status</h3>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="md:col-span-1">
+                  <FormField
+                    control={form.control}
+                    name="access"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Portal Access <span className="text-red-500">*</span></FormLabel>
+                        <div className="flex h-10 items-center gap-6 rounded-md border border-gray-300 px-4 mt-2">
+                          <div className="flex items-center space-x-2">
                             <Checkbox
-                              checked={field.value?.includes(item)}
-                              onCheckedChange={(checked) => {
-                                return checked
-                                  ? field.onChange([...field.value, item])
-                                  : field.onChange(
-                                      field.value?.filter(
-                                        (value) => value !== item
-                                      )
-                                    );
-                              }}
+                              id="access-yes"
+                              className="border-gray-400 data-[state=checked]:bg-supperagent"
+                              checked={field.value === true}
+                              onCheckedChange={(c) => c && field.onChange(true)}
                             />
-                          </FormControl>
-                          <FormLabel className="font-normal">{item}</FormLabel>
-                        </FormItem>
-                      ))}
-                    </div>
-                  </FormItem>
-                )}
-              />
+                            <label htmlFor="access-yes" className="text-sm font-medium cursor-pointer text-gray-700">Yes</label>
+                          </div>
+                          <div className="h-4 w-px bg-gray-300" />
+                          <div className="flex items-center space-x-2">
+                            <Checkbox
+                              id="access-no"
+                              className="border-gray-400 data-[state=checked]:bg-supperagent"
+                              checked={field.value === false}
+                              onCheckedChange={(c) => c && field.onChange(false)}
+                            />
+                            <label htmlFor="access-no" className="text-sm font-medium cursor-pointer text-gray-700">No</label>
+                          </div>
+                        </div>
+                        <FormDescription className="text-xs mt-1 text-gray-500">
+                           Allow access to the online portal?
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-              <FormField
-                control={form.control}
-                name="observation"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Observation</FormLabel>
-                    <FormControl>
-                      <Textarea className="min-h-[100px]" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
+                <div className="md:col-span-2">
+                   <FormField
+                    control={form.control}
+                    name="justification"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Justification of Decision</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            className="min-h-[100px] resize-none border-gray-300 focus:border-supperagent" 
+                            placeholder="Reason for decision..." 
+                            {...field} 
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+            </div>
 
-          {/* Contact Details */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Contact Details</CardTitle>
-            </CardHeader>
-            <CardContent className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <FormField
-                control={form.control}
-                name="postcode"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Postcode</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="telephone1"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Telephone 1</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="telephone2"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Telephone 2</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                      <Input type="email" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="contactStatus"
-                render={({ field }) => (
-                  <FormItem className="space-y-3">
-                    <FormLabel>
-                      Contact Status <span className="text-red-500">*</span>
-                    </FormLabel>
-                    <Select onValueChange={field.onChange} value={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select Status" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Priority">Priority</SelectItem>
-                        <SelectItem value="Secondary">Secondary</SelectItem>
-                        <SelectItem value="Do not contact">
-                          Do not contact
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="contactableTimes"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contactable Times</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          {/* Family Portal Status */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Family Portal Status</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* YES/NO Checkbox for Access */}
-              <FormField
-                control={form.control}
-                name="access"
-                render={({ field }) => (
-                  <FormItem className="space-y-3">
-                    <FormLabel>
-                      Access <span className="text-red-500">*</span>
-                    </FormLabel>
-                    <div className="flex gap-6">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="access-yes"
-                          checked={field.value === true}
-                          onCheckedChange={(checked) => {
-                            if (checked) field.onChange(true);
-                          }}
-                        />
-                        <label
-                          htmlFor="access-yes"
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          Yes
-                        </label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id="access-no"
-                          checked={field.value === false}
-                          onCheckedChange={(checked) => {
-                            if (checked) field.onChange(false);
-                          }}
-                        />
-                        <label
-                          htmlFor="access-no"
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          No
-                        </label>
-                      </div>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="justification"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Justification of Decision</FormLabel>
-                    <FormControl>
-                      <Textarea className="min-h-[100px]" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" type="button" onClick={onCancel}>
-              Cancel
-            </Button>
-            <Button
-              className="bg-supperagent text-white hover:bg-supperagent/90"
-              type="submit"
-              disabled={loading}
-            >
-              {loading ? 'Saving...' : 'Save Contact'}
-            </Button>
-          </div>
-        </form>
-      </Form>
+          </form>
+        </Form>
+      </div>
     </div>
   );
 }

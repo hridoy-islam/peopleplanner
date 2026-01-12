@@ -394,7 +394,7 @@ export function PeoplePlannerSideNav() {
       {
         icon: UserCircleIcon,
         label: 'General Information',
-        href: 'profile',
+        href: `general-information/${user?._id}`,
         roles: ['serviceUser']
       },
       {
@@ -412,13 +412,13 @@ export function PeoplePlannerSideNav() {
       {
         icon: BookUser,
         label: 'About Me',
-        href: 'about-me',
+        href: `about-me/${user?._id}`,
         roles: ['serviceUser']
       },
       {
         icon: NotebookTabs,
         label: 'Contingency Plans',
-        href: 'contingency-plan',
+        href: `contingency-plan/${user?._id}`,
         roles: ['serviceUser']
       }
     ]
@@ -451,7 +451,7 @@ export function PeoplePlannerSideNav() {
   {
     icon: File,
     label: 'Documents',
-    href: 'documents',
+    href: `documents/${user?._id}`,
     roles: ['serviceUser']
   },
 
@@ -502,7 +502,7 @@ export function PeoplePlannerSideNav() {
   {
     icon: FileArchive,
     label: 'Consents',
-    href: 'consents',
+    href: `consents/${user?._id}`,
     roles: ['serviceUser']
   },
 

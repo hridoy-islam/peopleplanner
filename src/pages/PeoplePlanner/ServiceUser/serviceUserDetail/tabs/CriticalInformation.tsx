@@ -77,10 +77,9 @@ const CriticalInfoTab: React.FC<CriticalInfoTabProps> = ({
 
             <Button
               type="button"
-              variant="default"
+              variant="destructive"
               size="icon"
               onClick={() => removeCriticalInfo(index)}
-              className="text-red-500 hover:bg-red-500 hover:text-white"
             >
               <Trash className="h-4 w-4" />
             </Button>

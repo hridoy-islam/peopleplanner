@@ -1,172 +1,302 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Pencil, Check, X } from 'lucide-react';
+import { Pencil, Check, X, Loader2, ArrowLeft } from 'lucide-react';
+import { useToast } from '@/components/ui/use-toast';
+import axiosInstance from '@/lib/axios';
+import { useNavigate, useParams } from 'react-router-dom';
+import { BlinkingDots } from '@/components/shared/blinking-dots';
 
-interface Question {
-  id: string;
-  title: string;
+// --- Types ---
+interface SectionData {
   description: string;
-  supportedBy?: string;
-  emoji?: string;
+  supportedBy: string;
 }
 
+interface ProfileData {
+  _id?: string; // Optional because a new profile won't have an ID yet
+  userId: string;
+  importantToMe: SectionData;
+  importantPeople: SectionData;
+  dailyRoutine: SectionData;
+  communication: SectionData;
+}
+
+// --- Configuration ---
+const SECTION_CONFIG = [
+  {
+    key: 'importantToMe' as keyof ProfileData,
+    title: 'What is important to me',
+    emoji: '😊'
+  },
+  {
+    key: 'importantPeople' as keyof ProfileData,
+    title: 'People who are important to me',
+    emoji: '👨‍👩‍👧‍👦'
+  },
+  {
+    key: 'dailyRoutine' as keyof ProfileData,
+    title: 'My daily routine',
+    emoji: '⏰'
+  },
+  {
+    key: 'communication' as keyof ProfileData,
+    title: 'How I communicate best',
+    emoji: '💬'
+  }
+];
+
+// --- Default Empty State (Prevents "Edit" button from failing if no data exists) ---
+const DEFAULT_PROFILE: ProfileData = {
+  userId: '',
+  importantToMe: { description: '', supportedBy: '' },
+  importantPeople: { description: '', supportedBy: '' },
+  dailyRoutine: { description: '', supportedBy: '' },
+  communication: { description: '', supportedBy: '' }
+};
+
 export default function AboutMe() {
-  const userName = "Ainna Begum Khan Zadran";
-  const reviewerInfo = "Reviewed: 27-06-2025 - Kishour Zadd";
+  const { toast } = useToast();
+  const { id } = useParams();
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const navigate = useNavigate();
+  const [profileData, setProfileData] = useState<ProfileData>(DEFAULT_PROFILE);
+  const [userData, setUserData] = useState<any>(null);
+  const [editingKey, setEditingKey] = useState<keyof ProfileData | null>(null);
+  const [tempValues, setTempValues] = useState<SectionData>({
+    description: '',
+    supportedBy: ''
+  });
 
-  const initialQuestions: Question[] = [
-    {
-      id: 'important-to-me',
-      title: 'What is important to me',
-      description: 'It is important to me that I feel safe, respected, and understood. I value my family\'s involvement in my care and appreciate when people take the time to build trust with me. I enjoy going for short walks, visiting coffee shops, and participating in light shopping, as this helps me stay connected and reduce feelings of isolation. I also need my daily routine to be consistent, calm, and structured, especially because I struggle with anxiety, confusion, and sleep issues. I value the close relationship I have with my family, particularly my daughters, sons and husband, who play a central role in my care and wellbeing. Building trust and maintaining a calm, familiar routine are key to helping me feel secure, especially during times when my mental health symptoms are heightened.',
-      supportedBy: 'My son Shaquile Noor who knows me well and understands my care needs and the staff from Everycare Romford.',
-      emoji: '😊'
-    },
-    {
-      id: 'important-people',
-      title: 'People who are important to me',
-      description: 'My family is very important to me, especially my daughter Hanifa, who lives with me and provides daily support, and my son Shaquile Noor, who is actively involved in my care. My husband also plays a few roles in my care for our life, contributing to both emotional and practical support.',
-            supportedBy: 'My son Shaquile Noor who knows me well and understands my care needs and the staff from Everycare Romford.',
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await axiosInstance.get(`/about-me-logs`, {
+          params: { userId: id }
+        });
 
-      emoji: '😊'
-    },
-    {
-      id: 'daily-routine',
-      title: 'My daily routine',
-      description: 'I prefer waking up at 8am and having breakfast with my family. I enjoy light activities in the morning and need an afternoon rest. Evenings are for family time and relaxation.',
-      emoji: '⏰',
-            supportedBy: 'My son Shaquile Noor who knows me well and understands my care needs and the staff from Everycare Romford.',
+        const userRes = await axiosInstance.get(`/users/${id}`);
 
-    },
-    {
-      id: 'communication',
-      title: 'How I communicate best',
-      description: 'I communicate best when people speak clearly and give me time to respond. I sometimes struggle to find words, so patience is appreciated.',
-      emoji: '💬',
-            supportedBy: 'My son Shaquile Noor who knows me well and understands my care needs and the staff from Everycare Romford.',
+        const fetchedData = res.data?.data?.result?.[0];
+        setUserData(userRes.data?.data);
 
-    }
-  ];
-
-  const [questions, setQuestions] = useState<Question[]>(initialQuestions);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [tempValues, setTempValues] = useState<Record<string, {description: string, supportedBy?: string}>>({});
-
-  const handleEdit = (question: Question) => {
-    setTempValues({
-      ...tempValues,
-      [question.id]: {
-        description: question.description,
-        supportedBy: question.supportedBy
+        if (fetchedData) {
+          setProfileData(fetchedData);
+        } else {
+          // If no data, keep the default empty structure but set the userId
+          setProfileData((prev) => ({ ...prev, userId: id || '' }));
+        }
+      } catch (error) {
+        console.error('Failed to fetch profile:', error);
+      } finally {
+        setIsLoading(false);
       }
-    });
-    setEditingId(question.id);
-  };
+    };
 
-  const handleSave = (id: string) => {
-    setQuestions(questions.map(q => 
-      q.id === id ? { 
-        ...q, 
-        description: tempValues[id].description,
-        supportedBy: tempValues[id].supportedBy
-      } : q
-    ));
-    setEditingId(null);
+    if (id) fetchData();
+  }, [id]);
+
+  const handleEdit = (key: keyof ProfileData) => {
+    const section = profileData[key] as SectionData;
+
+    // 2. Load into temp state for editing
+    setTempValues({
+      description: section?.description || '',
+      supportedBy: section?.supportedBy || ''
+    });
+
+    setEditingKey(key);
   };
 
   const handleCancel = () => {
-    setEditingId(null);
+    setEditingKey(null);
+    setTempValues({ description: '', supportedBy: '' });
   };
 
-  const handleChange = (id: string, field: 'description' | 'supportedBy', value: string) => {
-    setTempValues({
-      ...tempValues,
-      [id]: {
-        ...tempValues[id],
-        [field]: value
+  const handleSave = async (key: keyof ProfileData) => {
+    setIsSaving(true);
+    try {
+      const payload = {
+        [key]: {
+          description: tempValues.description,
+          supportedBy: tempValues.supportedBy
+        }
+      };
+
+      let res;
+      if (profileData._id) {
+        // Update existing
+        res = await axiosInstance.patch(
+          `/about-me-logs/${profileData._id}`,
+          payload
+        );
+      } else {
+        // Create new if it doesn't exist yet (Optional logic depending on your backend)
+        res = await axiosInstance.post(`/about-me-logs`, {
+          ...payload,
+          userId: id
+        });
       }
-    });
+
+      if (res.data?.success) {
+        // Update local state deeply
+        setProfileData((prev) => ({
+          ...prev,
+          _id: res.data.data._id || prev._id, // Capture ID if created new
+          [key]: {
+            description: tempValues.description,
+            supportedBy: tempValues.supportedBy
+          }
+        }));
+
+        toast({
+          title: 'Success',
+          description: 'Section updated successfully.'
+        });
+        setEditingKey(null);
+      }
+    } catch (error) {
+      console.error('Save failed:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to save changes.',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  // Helper to handle input changes
+  const handleTempChange = (field: keyof SectionData, value: string) => {
+    setTempValues((prev) => ({ ...prev, [field]: value }));
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex h-40 items-center justify-center">
+        <BlinkingDots size="large" color="bg-supperagent" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold">About {userName}</h1>
-        <div className="text-sm text-gray-500">{reviewerInfo}</div>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">
+          About{' '}
+          {`${userData?.title} ${userData?.firstName} ${userData?.lastName}`}
+        </h1>
+        <Button className="border-gray-300" onClick={() => navigate(-1)}>
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back
+        </Button>
       </div>
 
       <div className="space-y-6">
-        {questions.map((question) => (
-          <Card key={question.id}>
-            <CardHeader className="pb-3">
-              <div className="flex justify-between items-center">
-                <CardTitle className="text-lg flex items-center">
-                  {question.title} {question.emoji && <span className="ml-2">{question.emoji}</span>}
-                </CardTitle>
-                {editingId !== question.id ? (
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={() => handleEdit(question)}
-                    className="shrink-0"
-                  >
-                    <Pencil className="h-4 w-4 mr-2" />
-                    Edit
-                  </Button>
-                ) : (
-                  <div className="space-x-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={handleCancel}
-                    >
-                      <X className="h-4 w-4 mr-2" />
-                      Cancel
-                    </Button>
-                    <Button 
-                      size="sm" 
-                      onClick={() => handleSave(question.id)}
-                    >
-                      <Check className="h-4 w-4 mr-2" />
-                      Save
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <h3 className="font-medium mb-2">Description</h3>
-                {editingId === question.id ? (
-                  <Textarea
-                    value={tempValues[question.id]?.description || ''}
-                    onChange={(e) => handleChange(question.id, 'description', e.target.value)}
-                    className="min-h-[150px]"
-                  />
-                ) : (
-                  <p className="whitespace-pre-line text-gray-700">{question.description}</p>
-                )}
-              </div>
+        {SECTION_CONFIG.map((config) => {
+          // Safely access the section data
+          // (profileData is guaranteed to be an object now)
+          const sectionData = profileData[config.key] as SectionData;
+          const isEditing = editingKey === config.key;
 
-              {question.supportedBy && (
-                <div>
-                  <h3 className="font-medium mb-2">Supported to write this by</h3>
-                  {editingId === question.id ? (
-                    <Input
-                      value={tempValues[question.id]?.supportedBy || ''}
-                      onChange={(e) => handleChange(question.id, 'supportedBy', e.target.value)}
-                    />
+          return (
+            <Card key={config.key}>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center text-lg">
+                    {config.title} <span className="ml-2">{config.emoji}</span>
+                  </CardTitle>
+
+                  {/* Toggle Buttons */}
+                  {!isEditing ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEdit(config.key)}
+                      className="shrink-0"
+                      disabled={isSaving}
+                    >
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Edit
+                    </Button>
                   ) : (
-                    <p className="text-gray-700">{question.supportedBy}</p>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleCancel}
+                        disabled={isSaving}
+                      >
+                        <X className="mr-2 h-4 w-4" />
+                        Cancel
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => handleSave(config.key)}
+                        disabled={isSaving}
+                      >
+                        {isSaving ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Check className="mr-2 h-4 w-4" />
+                        )}
+                        Save
+                      </Button>
+                    </div>
                   )}
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
+              </CardHeader>
+
+              <CardContent className="space-y-4">
+                {/* 1. Description Area */}
+                <div>
+                  <h3 className="mb-2 text-sm font-medium text-gray-900">
+                    Description
+                  </h3>
+                  {isEditing ? (
+                    <Textarea
+                      value={tempValues.description}
+                      onChange={(e) =>
+                        handleTempChange('description', e.target.value)
+                      }
+                      className="min-h-[150px] resize-y border-gray-300 bg-white"
+                      placeholder={`Enter details about ${config.title.toLowerCase()}...`}
+                    />
+                  ) : (
+                    <p className="whitespace-pre-line text-sm leading-relaxed text-gray-600">
+                      {sectionData?.description || 'No description provided.'}
+                    </p>
+                  )}
+                </div>
+
+                {/* 2. Supported By Area */}
+                <div>
+                  <h3 className="mb-2 text-sm font-medium text-gray-900">
+                    Supported to write this by
+                  </h3>
+                  {isEditing ? (
+                    <Textarea
+                      value={tempValues.supportedBy}
+                      onChange={(e) =>
+                        handleTempChange('supportedBy', e.target.value)
+                      }
+                      placeholder="e.g. My son Shaquile..."
+                      className="border-gray-300 bg-white"
+                    />
+                  ) : (
+                    <p className="text-sm italic text-gray-500">
+                      {sectionData?.supportedBy || 'N/A'}
+                    </p>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
     </div>
   );

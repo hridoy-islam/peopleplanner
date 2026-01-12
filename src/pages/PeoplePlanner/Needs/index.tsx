@@ -1,5 +1,19 @@
 import { useEffect, useState } from 'react';
-import { Pen, Plus, Trash, Search } from 'lucide-react';
+import {
+  Pen,
+  Plus,
+  Trash,
+  Search,
+  Stethoscope,
+  HeartHandshake,
+  Users,
+  Apple,
+  Brain,
+  Home,
+  Car,
+  HelpCircle,
+  ArrowLeft
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   AlertDialog,
@@ -14,8 +28,10 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
-  DialogTitle
+  DialogTitle,
+  DialogFooter
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -38,7 +54,7 @@ import { DynamicPagination } from '@/components/shared/DynamicPagination';
 import moment from 'moment';
 import { Input } from '@/components/ui/input';
 import { BlinkingDots } from '@/components/shared/blinking-dots';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import axiosInstance from '@/lib/axios';
 
 // Form & Validation Imports
@@ -53,18 +69,27 @@ import {
   FormLabel,
   FormMessage
 } from '@/components/ui/form';
+import axios from 'axios';
+import { useSelector } from 'react-redux';
 
-// Predefined list of need titles
-const needTitles = [
-  'Medical',
-  'Therapy',
-  'Companion',
-  'Nutrition',
-  'Counseling',
-  'Housekeeping',
-  'Transportation',
-  'Other'
+// --- CONFIG: Icon Mapping ---
+const needOptions = [
+  { value: 'Medical', icon: Stethoscope },
+  { value: 'Therapy', icon: HeartHandshake },
+  { value: 'Companion', icon: Users },
+  { value: 'Nutrition', icon: Apple },
+  { value: 'Counseling', icon: Brain },
+  { value: 'Housekeeping', icon: Home },
+  { value: 'Transportation', icon: Car },
+  { value: 'Other', icon: HelpCircle }
 ];
+
+// Helper to get icon component
+const getIcon = (value: string) => {
+  const option = needOptions.find((o) => o.value === value);
+  const Icon = option ? option.icon : HelpCircle;
+  return <Icon className="h-4 w-4 text-muted-foreground" />;
+};
 
 // Zod Schema
 const formSchema = z.object({
@@ -79,19 +104,22 @@ export default function NeedPage() {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
   const { id } = useParams();
-
+  const navigate = useNavigate();
+  const user = useSelector((state: any) => state.auth?.user) || null;
   // Pagination & Search
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [entriesPerPage, setEntriesPerPage] = useState(10);
+  const [entriesPerPage, setEntriesPerPage] = useState(100);
   const [searchTerm, setSearchTerm] = useState('');
-
+  const [userData, setUserData] = useState<any>(null);
   // Dialog States
-  const [openDialog, setOpenDialog] = useState(false); // Used for both Add and Edit
+  const [openDialog, setOpenDialog] = useState(false); // Add/Edit
+  const [openViewDialog, setOpenViewDialog] = useState(false); // View Details
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
 
-  // State to track which item is being edited (null = creating new)
-  const [selectedNeed, setSelectedNeed] = useState<any | null>(null);
+  // Selection States
+  const [selectedNeed, setSelectedNeed] = useState<any | null>(null); // For Edit
+  const [viewNeed, setViewNeed] = useState<any | null>(null); // For View
   const [needToDelete, setNeedToDelete] = useState<string | null>(null);
 
   // Setup React Hook Form
@@ -111,20 +139,17 @@ export default function NeedPage() {
         params: {
           userId: id,
           page,
-          limit,
-          searchTerm: search // Pass search term to backend
+          limit: entriesPerPage,
+          searchTerm: search
         }
       });
 
-      // Adjust these based on your actual API response structure
-      // Example: { data: { result: [], meta: { totalPage: 5 } } }
       const data = response.data?.data?.result || response.data?.data || [];
       const meta = response.data?.data?.meta || {};
-
+      const res = await axiosInstance.get(`/users/${id}`);
+      setUserData(res.data?.data || res.data);
       setNeeds(data);
-      if (meta.totalPage) {
-        setTotalPages(meta.totalPage);
-      }
+      if (meta.totalPage) setTotalPages(meta.totalPage);
     } catch (error: any) {
       console.error('Error fetching needs:', error);
       toast({
@@ -137,25 +162,18 @@ export default function NeedPage() {
   };
 
   useEffect(() => {
-    if (id) {
-      fetchNeeds(currentPage, entriesPerPage, searchTerm);
-    }
+    if (id) fetchNeeds(currentPage, entriesPerPage, searchTerm);
   }, [currentPage, entriesPerPage]);
 
   // --- Handlers ---
-
-  // Trigger search on button click
   const handleSearchClick = () => {
-    setCurrentPage(1); // Reset to page 1 on new search
+    setCurrentPage(1);
     fetchNeeds(1, entriesPerPage, searchTerm);
   };
 
   const handleOpenAdd = () => {
     setSelectedNeed(null);
-    form.reset({
-      title: '',
-      description: ''
-    });
+    form.reset({ title: '', description: '' });
     setOpenDialog(true);
   };
 
@@ -168,17 +186,13 @@ export default function NeedPage() {
     setOpenDialog(true);
   };
 
-  // Handle Create (POST) or Update (PATCH)
-  const onSubmit = async (values: NeedFormValues) => {
-    if (!id) {
-      toast({
-        title: 'Error',
-        description: 'User ID missing',
-        variant: 'destructive'
-      });
-      return;
-    }
+  const handleOpenView = (need: any) => {
+    setViewNeed(need);
+    setOpenViewDialog(true);
+  };
 
+  const onSubmit = async (values: NeedFormValues) => {
+    if (!id) return;
     try {
       const payload = {
         userId: id,
@@ -187,32 +201,24 @@ export default function NeedPage() {
       };
 
       if (selectedNeed) {
-        // --- PATCH (Update) ---
         const response = await axiosInstance.patch(
           `/needs/${selectedNeed._id}`,
           payload
         );
         const updatedNeed = response.data?.data || response.data;
-
-        // Update local state
         setNeeds((prev) =>
           prev.map((n) => (n._id === selectedNeed._id ? updatedNeed : n))
         );
         toast({ title: 'Success', description: 'Need updated successfully.' });
       } else {
-        // --- POST (Create) ---
         const response = await axiosInstance.post('/needs', payload);
         const newNeed = response.data?.data || response.data;
-
-        // Add to local state (or refetch)
         setNeeds((prev) => [newNeed, ...prev]);
         toast({ title: 'Success', description: 'Need added successfully.' });
       }
-
       setOpenDialog(false);
       form.reset();
     } catch (error: any) {
-      console.error('Error saving need:', error);
       toast({
         title: 'Error',
         description: error?.response?.data?.message || 'Failed to save need.',
@@ -221,16 +227,13 @@ export default function NeedPage() {
     }
   };
 
-  // Handle Delete
   const handleDelete = async () => {
     if (!needToDelete) return;
-
     try {
       await axiosInstance.delete(`/needs/${needToDelete}`);
       setNeeds((prev) => prev.filter((n) => n._id !== needToDelete));
       toast({ title: 'Deleted', description: 'Need removed successfully.' });
     } catch (error: any) {
-      console.error('Error deleting need:', error);
       toast({
         title: 'Error',
         description: 'Failed to delete need.',
@@ -244,37 +247,48 @@ export default function NeedPage() {
 
   return (
     <div className="space-y-3">
-      {/* Header */}
+      {user?.role === 'admin' && (
+        <h1 className="text-xl font-medium">
+          {userData?.title} {userData?.firstName} {userData?.lastName}
+        </h1>
+      )}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">All Needs</h1>
-        <Button
-          className="bg-supperagent text-white hover:bg-supperagent/90"
-          size="sm"
-          onClick={handleOpenAdd}
-        >
-          <Plus className="mr-2 h-4 w-4" />
-          New Need
-        </Button>
-      </div>
-
-      {/* Search Bar */}
-      <div className="flex items-center gap-2">
-        <Input
-          type="text"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSearchClick()}
-          placeholder="Search by title"
-          className="h-9 max-w-[400px]"
-        />
-        <Button
-          size="sm"
-          onClick={handleSearchClick}
-          className="h-9"
-        >
-          <Search className="mr-2 h-4 w-4" />
-          Search
-        </Button>
+        <div className='flex items-center gap-4'>
+          <h1 className="text-2xl font-semibold">All Needs</h1>
+          {/* Search Bar */}
+          <div className="flex items-center gap-2">
+            <Input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSearchClick()}
+              placeholder="Search by title"
+              className="h-9 min-w-[300px]"
+            />
+            <Button size="sm" onClick={handleSearchClick} className="h-9">
+              <Search className="mr-2 h-4 w-4" />
+              Search
+            </Button>
+          </div>
+        </div>
+        <div className="flex flex-row items-center gap-4">
+          <Button
+            className="bg-supperagent text-white hover:bg-supperagent/90"
+            size="sm"
+            onClick={() => navigate(-1)}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+          <Button
+            className="bg-supperagent text-white hover:bg-supperagent/90"
+            size="sm"
+            onClick={handleOpenAdd}
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            New Need
+          </Button>
+        </div>
       </div>
 
       {/* Table Container */}
@@ -300,8 +314,17 @@ export default function NeedPage() {
               </TableHeader>
               <TableBody>
                 {needs.map((need) => (
-                  <TableRow key={need._id}>
-                    <TableCell className="font-medium">{need.title}</TableCell>
+                  <TableRow
+                    key={need._id}
+                    className="cursor-pointer hover:bg-gray-50"
+                    onClick={() => handleOpenView(need)} // Opens Details Dialog on row click
+                  >
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        {getIcon(need.title)}
+                        {need.title}
+                      </div>
+                    </TableCell>
                     <TableCell>
                       {need.createdAt
                         ? moment(need.createdAt).format('DD MMM, YYYY')
@@ -314,16 +337,22 @@ export default function NeedPage() {
                       {need.description || 'N/A'}
                     </TableCell>
                     <TableCell className="space-x-2 text-right">
+                      {/* Edit Button */}
                       <Button
-                        className="h-8 w-8 text-white p-0"
-                        onClick={() => handleOpenEdit(need)}
+                        className="h-8 w-8 p-0 text-white"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent row click
+                          handleOpenEdit(need);
+                        }}
                       >
                         <Pen className="h-4 w-4" />
                       </Button>
+                      {/* Delete Button */}
                       <Button
-                        variant="ghost"
-                        className="h-8 w-8 bg-red-600 p-0 text-white hover:bg-red-600/90"
-                        onClick={() => {
+                        size="icon"
+                        className=" h-8 w-8 bg-destructive text-white hover:bg-destructive/90"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent row click
                           setNeedToDelete(need._id);
                           setOpenDeleteDialog(true);
                         }}
@@ -335,21 +364,22 @@ export default function NeedPage() {
                 ))}
               </TableBody>
             </Table>
-
-            <DynamicPagination
-              pageSize={entriesPerPage}
-              setPageSize={setEntriesPerPage}
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
+            {needs.length > 30 && (
+              <DynamicPagination
+                pageSize={entriesPerPage}
+                setPageSize={setEntriesPerPage}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            )}
           </>
         )}
       </div>
 
-      {/* Add / Edit Dialog */}
+      {/* Add / Edit Dialog (Larger) */}
       <Dialog open={openDialog} onOpenChange={setOpenDialog}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[60vw]">
           <DialogHeader>
             <DialogTitle>
               {selectedNeed ? 'Edit Need' : 'Add New Need'}
@@ -361,7 +391,6 @@ export default function NeedPage() {
               onSubmit={form.handleSubmit(onSubmit)}
               className="space-y-4 py-4"
             >
-              {/* Need Title Field */}
               <FormField
                 control={form.control}
                 name="title"
@@ -371,17 +400,24 @@ export default function NeedPage() {
                     <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
-                      value={field.value} // Controlled value needed for reset to work visually
+                      value={field.value}
                     >
                       <FormControl>
-                        <SelectTrigger>
+                        <SelectTrigger className="h-12">
                           <SelectValue placeholder="Select a need title" />
                         </SelectTrigger>
                       </FormControl>
-                      <SelectContent>
-                        {needTitles.map((title) => (
-                          <SelectItem key={title} value={title}>
-                            {title}
+                      <SelectContent className="border-gray-300">
+                        {needOptions.map((option) => (
+                          <SelectItem
+                            key={option.value}
+                            value={option.value}
+                            className=" cursor-pointer hover:bg-supperagent hover:text-white "
+                          >
+                            <div className="flex items-center gap-3 rounded p-2">
+                              <option.icon className="h-4 w-4 text-supperagent" />
+                              <span>{option.value}</span>
+                            </div>
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -400,8 +436,7 @@ export default function NeedPage() {
                     <FormControl>
                       <Textarea
                         placeholder="Add any relevant details..."
-                        className="resize-none"
-                        rows={4}
+                        className="min-h-[40vh] resize-none border-gray-300"
                         {...field}
                       />
                     </FormControl>
@@ -421,12 +456,62 @@ export default function NeedPage() {
                 >
                   Cancel
                 </Button>
-                <Button type="submit" className="bg-supperagent text-white hover:bg-supperagent/90">
+                <Button
+                  type="submit"
+                  className="bg-supperagent text-white hover:bg-supperagent/90"
+                >
                   {selectedNeed ? 'Save Changes' : 'Add Need'}
                 </Button>
               </div>
             </form>
           </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Details Dialog */}
+      <Dialog open={openViewDialog} onOpenChange={setOpenViewDialog}>
+        <DialogContent className="sm:max-w-[60vw]">
+          <DialogHeader>
+            <DialogTitle>Need Details</DialogTitle>
+          </DialogHeader>
+
+          {viewNeed && (
+            <div className="space-y-6 py-4 ">
+              {/* Title & Icon Section */}
+              <div className="flex items-center gap-4 rounded-lg border border-gray-300 bg-gray-50 p-4">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full border border-gray-300 bg-white text-supperagent shadow-sm">
+                  {(() => {
+                    const Icon =
+                      needOptions.find((o) => o.value === viewNeed.title)
+                        ?.icon || HelpCircle;
+                    return <Icon className="h-6 w-6" />;
+                  })()}
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">
+                    {viewNeed.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Created: {moment(viewNeed.createdAt).format('DD MMM, YYYY')}
+                  </p>
+                </div>
+              </div>
+
+              {/* Description Section */}
+              <div>
+                <h4 className="mb-2 text-sm font-medium uppercase tracking-wide text-gray-500">
+                  Description
+                </h4>
+                <div className="min-h-[40vh] whitespace-pre-wrap rounded-lg border  border-gray-300 bg-white p-4 text-gray-700">
+                  {viewNeed.description || 'No description provided.'}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button onClick={() => setOpenViewDialog(false)}>Close</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

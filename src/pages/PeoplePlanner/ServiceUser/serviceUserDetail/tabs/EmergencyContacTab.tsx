@@ -100,9 +100,7 @@ const EmergencyContactTab: React.FC<EmergencyContactTabProps> = ({
 
   return (
     <div className="space-y-2">
-      <h1 className="text-xl font-semibold text-gray-900">
-        Emergency Contact
-      </h1>
+      <h1 className="text-xl font-semibold text-gray-900">Emergency Contact</h1>
 
       {contacts.map((contact, index) => (
         <div
@@ -114,17 +112,15 @@ const EmergencyContactTab: React.FC<EmergencyContactTabProps> = ({
             <h3 className="text-lg font-semibold text-gray-900">
               Emergency Contact #{index + 1}
             </h3>
-            
-              <Button
-                type="button"
-                variant="default"
-                size="icon"
-                onClick={() => removeContact(index)}
-                className="hover:bg-red-500 text-red-500 hover:text-white"
-              >
-                <Trash className="h-4 w-4" />
-              </Button>
-        
+
+            <Button
+              type="button"
+              variant="destructive"
+              size="icon"
+              onClick={() => removeContact(index)}
+            >
+              <Trash className="h-4 w-4" />
+            </Button>
           </div>
 
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
