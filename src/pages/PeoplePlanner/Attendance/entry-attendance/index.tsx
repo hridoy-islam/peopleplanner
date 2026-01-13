@@ -392,7 +392,7 @@ export default function EntryAttendance() {
 
           {/* Show Assigned Shifts only if employee is selected and has shifts */}
           {attendanceData.userId && shifts.length > 0 && (
-            <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 shadow-sm">
+            <div className="rounded-xl border border-gray-200  p-3 shadow-sm">
               <h2 className="mb-4 text-lg font-semibold text-gray-700">
                 Assigned Shifts
               </h2>

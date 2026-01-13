@@ -58,7 +58,20 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useEffect, useState } from 'react';
 import { logout } from '@/redux/features/authSlice';
 
-
+// === Helper: Get Theme Classes Based on Role ===
+const getRoleTheme = (role) => {
+  switch (role) {
+    case 'admin':
+      // Light Slate/Gray for Admin
+      return 'bg-gray-200 border-r border-gray-300';
+    case 'staff':
+      return 'bg-sky-50 border-r border-sky-200';
+    case 'serviceUser':
+      return 'bg-emerald-50 border-r border-emerald-200';
+    default:
+      return 'bg-white border-r border-gray-200';
+  }
+};
 
 // === Recursive Filter Function Based on User Role ===
 const filterNavItemsByRole = (items, userRole) => {
@@ -84,7 +97,7 @@ const filterNavItemsByRole = (items, userRole) => {
   );
 };
 
-// === NavItem Component (Unchanged, but supports filtered items) ===
+// === NavItem Component ===
 const NavItem = ({ item, expandedItems, toggleExpanded, depth = 0 }) => {
   const location = useLocation();
 
@@ -124,7 +137,8 @@ const NavItem = ({ item, expandedItems, toggleExpanded, depth = 0 }) => {
             isExpanded ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'
           )}
         >
-          <div className="ml-4 space-y-1 border-l-2 border-gray-300">
+          {/* Added a slightly darker border for hierarchy visualization */}
+          <div className="ml-4 space-y-1 border-l-2 border-gray-300/50">
             {item.subItems.map((subItem) => (
               <NavItem
                 key={subItem.label}
@@ -145,7 +159,8 @@ const NavItem = ({ item, expandedItems, toggleExpanded, depth = 0 }) => {
       to={item.href}
       className={cn(
         'group flex w-full items-center space-x-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 hover:bg-supperagent hover:text-white',
-        isActiveLeaf && 'bg-blue-50 text-supperagent shadow-sm',
+        // Changed active state to bg-white to stand out against the colored background
+        isActiveLeaf && 'bg-white text-supperagent shadow-sm ring-1 ring-black/5',
         depth > 0 && 'pl-6'
       )}
     >
@@ -166,375 +181,377 @@ export function PeoplePlannerSideNav() {
   const [expandedItems, setExpandedItems] = useState({});
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // Get the background class based on the role
+  const sidebarThemeClass = getRoleTheme(userRole);
 
   const navItems = [
-  {
-    icon: LayoutDashboard,
-    label: 'Dashboard',
-    href: '/admin/people-planner',
-    roles: ['admin', 'serviceUser', 'staff']
-  },
-  {
-    icon: UserCircleIcon,
-    label: 'Profile',
-    href: 'profile',
-    roles: ['staff']
-  },
-  {
-    icon: Calendar,
-    label: 'Planner',
-    href: 'planner',
-    roles: ['admin']
-  },
-  {
-    icon: Newspaper,
-    label: 'Notice',
-    href: 'notice',
-    roles: ['admin', 'staff']
-  },
-  {
-    icon: Clock,
-    label: 'Schedule',
-    href: 'schedule',
-    roles: ['staff']
-  },
-   {
-    icon: Clock1,
-    label: 'Upcoming Schedule',
-    href: 'upcoming-schedule',
-    roles: ['staff', 'serviceUser']
-  },
-  {
-    icon: FileBadge,
-    label: 'Payslip',
-    href: 'payslip',
-    roles: ['admin', 'staff']
-  },
-  {
-    icon: Wallet,
-    label: 'Invoice',
-    href: 'invoice',
-    roles: ['admin']
-  },
-  {
-    icon: UsersIcon,
-    label: 'HR',
-    roles: ['admin'],
-    subItems: [
-       {
-        icon: User2,
-        label: 'HR Dashboard',
-        href: 'hr-dashboard',
-        roles: ['admin']
-      },
-      {
-        icon: User2,
-        label: 'My Staff',
-        href: 'my-staff',
-        roles: ['admin']
-      },
-      {
-        icon: UserCircle,
-        label: 'Pending Hiring',
-        href: 'pending-employee',
-        roles: ['admin']
-      },
-      {
-        icon: UsersIcon,
-        label: 'Employee',
-        roles: ['admin'],
-        subItems: [
-          {
-            icon: Users,
-            label: 'Employee List',
-            href: 'employee',
-            roles: ['admin']
-          },
-          {
-            icon: LayoutPanelTop,
-            label: 'Department',
-            href: 'departments',
-            roles: ['admin']
-          },
-          {
-            icon: ArrowBigUp,
-            label: 'Shift',
-            href: 'shifts',
-            roles: ['admin']
-          },
-          {
-            icon: Award,
-            label: 'Designation',
-            href: 'designations',
-            roles: ['admin']
-          },
-          {
-            icon: BookText,
-            label: 'Training',
-            href: 'training',
-            roles: ['admin']
-          }
-        ]
-      },
-      {
-        icon: FileCheck2,
-        label: 'Attendance',
-        roles: ['admin'],
-        subItems: [
-          {
-            icon: FileCheck2,
-            label: 'Attendance List',
-            href: 'attendance',
-            roles: ['admin']
-          },
-          {
-            icon: CircleCheckBig,
-            label: 'Attendance Approve',
-            href: 'attendance-approve',
-            roles: ['admin']
-          },
-          {
-            icon: BetweenVerticalStart,
-            label: 'Attendance Entry',
-            href: 'attendance/attendance-entry',
-            roles: ['admin']
-          },
-          {
-            icon: Calendar,
-            label: 'Attendance Report',
-            href: 'attendance-report',
-            roles: ['admin']
-          }
-        ]
-      },
-      {
-        icon: LucideUserPlus,
-        label: 'Document Requests',
-        href: 'request-documents',
-        roles: ['admin']
-      },
-      {
-        icon: Smartphone,
-        label: 'Devices',
-        href: 'devices',
-        roles: ['admin']
-      }
-    ]
-  },
-  {
-    icon: UserCog2,
-    label: 'Service User',
-    roles: ['admin'],
-    subItems: [
-      {
-        icon: LucideUserPlus,
-        label: 'New User',
-        href: 'service-user/new',
-        roles: ['admin']
-      },
-      {
-        icon: UserSquare2Icon,
-        label: 'Service user List',
-        href: 'service-user',
-        roles: ['admin']
-      }
-    ]
-  },
-  {
-    icon: Clock4,
-    label: 'Attendance',
-    href: 'staff-attendance',
-    roles: ['staff']
-  },
-  {
-    icon: NotebookTabs,
-    label: 'Holiday',
-    href: 'holiday',
-    roles: ['staff']
-  },
-  {
-    icon: FileSearch,
-    label: 'Document Requests',
-    href: 'request/document',
-    roles: ['staff']
-  },
- 
-  {
-    icon: File,
-    label: 'Report',
-    href: 'report',
-    roles: ['admin']
-  },
-
-  {
-    icon: LucideUserSquare2,
-    label: 'Service Funder',
-    roles: ['admin'],
-    subItems: [
-      {
-        icon: LucideUserPlus,
-        label: 'New Funder',
-        href: 'service-funder/new',
-        roles: ['admin']
-      },
-      {
-        icon: UserSquare2Icon,
-        label: 'Service Funder List',
-        href: 'service-funder',
-        roles: ['admin']
-      }
-    ]
-  },
-  {
-    icon: User,
-    label: 'Profile',
-    href: 'profile',
-    roles: ['serviceUser'],
-    subItems: [
-      {
-        icon: UserCircleIcon,
-        label: 'General Information',
-        href: `general-information/${user?._id}`,
-        roles: ['serviceUser']
-      },
-      {
-        icon: AlarmClock,
-        label: 'Needs',
-        href: `needs/${user?._id}`,
-        roles: ['serviceUser']
-      },
-      {
-        icon: SquareUserRound,
-        label: 'Important People',
-        href: `important-people/${user?._id}`,
-        roles: ['serviceUser']
-      },
-      {
-        icon: BookUser,
-        label: 'About Me',
-        href: `about-me/${user?._id}`,
-        roles: ['serviceUser']
-      },
-      {
-        icon: NotebookTabs,
-        label: 'Contingency Plans',
-        href: `contingency-plan/${user?._id}`,
-        roles: ['serviceUser']
-      }
-    ]
-  },
-  {
-    icon: Clock,
-    label: 'Daily Logs',
-    href: 'daily-logs',
-    roles: ['serviceUser']
-  },
-  {
-    icon: AlignEndHorizontal,
-    label: 'Charts',
-    roles: ['serviceUser'],
-    subItems: [
-      {
-        icon: SquareKanban,
-        label: 'General Charts',
-        href: 'charts/general-charts',
-        roles: ['serviceUser']
-      },
-      {
-        icon: ShieldAlert,
-        label: 'Risk Assessment Score',
-        href: 'charts/risk-assessment-scores',
-        roles: ['serviceUser']
-      }
-    ]
-  },
-  {
-    icon: File,
-    label: 'Documents',
-    href: `documents/${user?._id}`,
-    roles: ['serviceUser']
-  },
-
-  {
-    icon: FileText,
-    label: 'Care Planning',
-    roles: ['serviceUser'],
-    subItems: [
-      {
-        icon: UserCircleIcon,
-        label: 'Support Plans',
-        href: 'support-plans',
-        roles: ['serviceUser']
-      },
-      {
-        icon: FileBox,
-        label: 'Initial Assessments',
-        href: 'initial-assessment',
-        roles: ['serviceUser']
-      },
-      {
-        icon: SquareAsterisk,
-        label: 'Risk Assessments',
-        href: 'risk-assessments',
-        roles: ['serviceUser']
-      }
-    ]
-  },
-  {
-    icon: User,
-    label: 'Medication',
-    roles: ['serviceUser'],
-    subItems: [
-      {
-        icon: FileMinus,
-        label: 'MAR Chart',
-        href: 'mar-chart',
-        roles: ['serviceUser']
-      },
-      {
-        icon: AlignCenterHorizontal,
-        label: 'Stock',
-        href: 'stock',
-        roles: ['serviceUser']
-      }
-    ]
-  },
-  {
-    icon: FileArchive,
-    label: 'Consents',
-    href: `consents/${user?._id}`,
-    roles: ['serviceUser']
-  },
-
-  {
-    icon: Settings,
-    label: 'Settings',
-    href: 'settings',
-    roles: ['admin', 'serviceUser'],
-    subItems: [
-      {
-        icon: ReceiptText,
-        label: 'Company Details',
-        href: 'company-details',
-        roles: ['admin']
-      },
-      {
-        icon: Mails,
-        label: 'Email Setup',
-        href: 'email-setup',
-        roles: ['admin']
-      },
+    {
+      icon: LayoutDashboard,
+      label: 'Dashboard',
+      href: '/admin/people-planner',
+      roles: ['admin', 'serviceUser', 'staff']
+    },
+    {
+      icon: UserCircleIcon,
+      label: 'Profile',
+      href: 'profile',
+      roles: ['staff']
+    },
+    {
+      icon: Calendar,
+      label: 'Planner',
+      href: 'planner',
+      roles: ['admin']
+    },
+    {
+      icon: Newspaper,
+      label: 'Notice',
+      href: 'notice',
+      roles: ['admin', 'staff']
+    },
+    {
+      icon: Clock,
+      label: 'Schedule',
+      href: 'schedule',
+      roles: ['staff','serviceUser']
+    },
+    {
+      icon: Clock1,
+      label: 'Today Schedule',
+      href: 'today-schedule',
+      roles: ['staff', 'serviceUser']
+    },
+    {
+      icon: FileBadge,
+      label: 'Payslip',
+      href: 'payslip',
+      roles: ['admin', 'staff']
+    },
+    {
+      icon: Wallet,
+      label: 'Invoice',
+      href: 'invoice',
+      roles: ['admin']
+    },
+    {
+      icon: UsersIcon,
+      label: 'HR',
+      roles: ['admin'],
+      subItems: [
         {
-        icon: Calendar,
-        label: 'Bank Holiday',
-        href: 'bank-holiday',
-        roles: ['admin']
-      }
-    ]
-  }
-];
+          icon: User2,
+          label: 'HR Dashboard',
+          href: 'hr-dashboard',
+          roles: ['admin']
+        },
+        {
+          icon: User2,
+          label: 'My Staff',
+          href: 'my-staff',
+          roles: ['admin']
+        },
+        {
+          icon: UserCircle,
+          label: 'Pending Hiring',
+          href: 'pending-employee',
+          roles: ['admin']
+        },
+        {
+          icon: UsersIcon,
+          label: 'Employee',
+          roles: ['admin'],
+          subItems: [
+            {
+              icon: Users,
+              label: 'Employee List',
+              href: 'employee',
+              roles: ['admin']
+            },
+            {
+              icon: LayoutPanelTop,
+              label: 'Department',
+              href: 'departments',
+              roles: ['admin']
+            },
+            {
+              icon: ArrowBigUp,
+              label: 'Shift',
+              href: 'shifts',
+              roles: ['admin']
+            },
+            {
+              icon: Award,
+              label: 'Designation',
+              href: 'designations',
+              roles: ['admin']
+            },
+            {
+              icon: BookText,
+              label: 'Training',
+              href: 'training',
+              roles: ['admin']
+            }
+          ]
+        },
+        {
+          icon: FileCheck2,
+          label: 'Attendance',
+          roles: ['admin'],
+          subItems: [
+            {
+              icon: FileCheck2,
+              label: 'Attendance List',
+              href: 'attendance',
+              roles: ['admin']
+            },
+            {
+              icon: CircleCheckBig,
+              label: 'Attendance Approve',
+              href: 'attendance-approve',
+              roles: ['admin']
+            },
+            {
+              icon: BetweenVerticalStart,
+              label: 'Attendance Entry',
+              href: 'attendance/attendance-entry',
+              roles: ['admin']
+            },
+            {
+              icon: Calendar,
+              label: 'Attendance Report',
+              href: 'attendance-report',
+              roles: ['admin']
+            }
+          ]
+        },
+        {
+          icon: LucideUserPlus,
+          label: 'Document Requests',
+          href: 'request-documents',
+          roles: ['admin']
+        },
+        {
+          icon: Smartphone,
+          label: 'Devices',
+          href: 'devices',
+          roles: ['admin']
+        }
+      ]
+    },
+    {
+      icon: UserCog2,
+      label: 'Service User',
+      roles: ['admin'],
+      subItems: [
+        {
+          icon: LucideUserPlus,
+          label: 'New User',
+          href: 'service-user/new',
+          roles: ['admin']
+        },
+        {
+          icon: UserSquare2Icon,
+          label: 'Service user List',
+          href: 'service-user',
+          roles: ['admin']
+        }
+      ]
+    },
+    {
+      icon: Clock4,
+      label: 'Attendance',
+      href: 'staff-attendance',
+      roles: ['staff']
+    },
+    {
+      icon: NotebookTabs,
+      label: 'Holiday',
+      href: 'holiday',
+      roles: ['staff']
+    },
+    {
+      icon: FileSearch,
+      label: 'Document Requests',
+      href: 'request/document',
+      roles: ['staff']
+    },
 
-  
+    {
+      icon: File,
+      label: 'Report',
+      href: 'report',
+      roles: ['admin']
+    },
+
+    {
+      icon: LucideUserSquare2,
+      label: 'Service Funder',
+      roles: ['admin'],
+      subItems: [
+        {
+          icon: LucideUserPlus,
+          label: 'New Funder',
+          href: 'service-funder/new',
+          roles: ['admin']
+        },
+        {
+          icon: UserSquare2Icon,
+          label: 'Service Funder List',
+          href: 'service-funder',
+          roles: ['admin']
+        }
+      ]
+    },
+    {
+      icon: User,
+      label: 'Profile',
+      href: 'profile',
+      roles: ['serviceUser'],
+      subItems: [
+        {
+          icon: UserCircleIcon,
+          label: 'General Information',
+          href: `general-information/${user?._id}`,
+          roles: ['serviceUser']
+        },
+        {
+          icon: AlarmClock,
+          label: 'Needs',
+          href: `needs/${user?._id}`,
+          roles: ['serviceUser']
+        },
+        {
+          icon: SquareUserRound,
+          label: 'Important People',
+          href: `important-people/${user?._id}`,
+          roles: ['serviceUser']
+        },
+        {
+          icon: BookUser,
+          label: 'About Me',
+          href: `about-me/${user?._id}`,
+          roles: ['serviceUser']
+        },
+        {
+          icon: NotebookTabs,
+          label: 'Contingency Plans',
+          href: `contingency-plan/${user?._id}`,
+          roles: ['serviceUser']
+        }
+      ]
+    },
+    {
+      icon: Clock,
+      label: 'Daily Logs',
+      href: 'daily-logs',
+      roles: ['serviceUser']
+    },
+    {
+      icon: AlignEndHorizontal,
+      label: 'Charts',
+      roles: ['serviceUser'],
+      subItems: [
+        {
+          icon: SquareKanban,
+          label: 'General Charts',
+          href: 'charts/general-charts',
+          roles: ['serviceUser']
+        },
+        {
+          icon: ShieldAlert,
+          label: 'Risk Assessment Score',
+          href: 'charts/risk-assessment-scores',
+          roles: ['serviceUser']
+        }
+      ]
+    },
+    {
+      icon: File,
+      label: 'Documents',
+      href: `documents/${user?._id}`,
+      roles: ['serviceUser']
+    },
+
+    {
+      icon: FileText,
+      label: 'Care Planning',
+      roles: ['serviceUser'],
+      subItems: [
+        {
+          icon: UserCircleIcon,
+          label: 'Support Plans',
+          href: 'support-plans',
+          roles: ['serviceUser']
+        },
+        {
+          icon: FileBox,
+          label: 'Initial Assessments',
+          href: 'initial-assessment',
+          roles: ['serviceUser']
+        },
+        {
+          icon: SquareAsterisk,
+          label: 'Risk Assessments',
+          href: 'risk-assessments',
+          roles: ['serviceUser']
+        }
+      ]
+    },
+    {
+      icon: User,
+      label: 'Medication',
+      roles: ['serviceUser'],
+      subItems: [
+        {
+          icon: FileMinus,
+          label: 'MAR Chart',
+          href: 'mar-chart',
+          roles: ['serviceUser']
+        },
+        {
+          icon: AlignCenterHorizontal,
+          label: 'Stock',
+          href: 'stock',
+          roles: ['serviceUser']
+        }
+      ]
+    },
+    {
+      icon: FileArchive,
+      label: 'Consents',
+      href: `consents/${user?._id}`,
+      roles: ['serviceUser']
+    },
+
+    {
+      icon: Settings,
+      label: 'Settings',
+      href: 'settings',
+      roles: ['admin', 'serviceUser'],
+      subItems: [
+        {
+          icon: ReceiptText,
+          label: 'Company Details',
+          href: 'company-details',
+          roles: ['admin']
+        },
+        {
+          icon: Mails,
+          label: 'Email Setup',
+          href: 'email-setup',
+          roles: ['admin']
+        },
+        {
+          icon: Calendar,
+          label: 'Bank Holiday',
+          href: 'bank-holiday',
+          roles: ['admin']
+        }
+      ]
+    }
+  ];
+
+
   // Logout handler
   const handleLogout = async () => {
     await dispatch(logout());
@@ -653,7 +670,8 @@ export function PeoplePlannerSideNav() {
       {/* Sidebar (Mobile & Desktop) */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-sm transition-transform duration-300 lg:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 w-64 shadow-sm transition-transform duration-300 lg:translate-x-0',
+          sidebarThemeClass, // Applied Dynamic Class Here
           isMobileMenuOpen
             ? 'translate-x-0'
             : '-translate-x-full lg:translate-x-0'
@@ -662,8 +680,13 @@ export function PeoplePlannerSideNav() {
         {sidebarContent}
       </aside>
 
-      {/* Desktop Sidebar (visible only on large screens) */}
-      <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:block lg:w-64 lg:bg-white lg:shadow-sm">
+      {/* Desktop Sidebar Placeholder (visible only on large screens to push content) */}
+      <aside
+        className={cn(
+          'hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-50 lg:block lg:w-64 lg:shadow-sm',
+          sidebarThemeClass // Applied Dynamic Class Here
+        )}
+      >
         {sidebarContent}
       </aside>
     </>

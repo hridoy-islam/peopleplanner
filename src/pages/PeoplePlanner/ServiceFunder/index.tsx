@@ -22,21 +22,25 @@ export default function ServiceUserFunder() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [entriesPerPage, setEntriesPerPage] = useState(10);
+  const [entriesPerPage, setEntriesPerPage] = useState(100);
   const [totalPages, setTotalPages] = useState(1);
 
   const navigate = useNavigate();
 
-  const fetchFunders = async (page: number, entriesPerPage: number, searchTerm = '') => {
+  const fetchFunders = async (
+    page: number,
+    entriesPerPage: number,
+    searchTerm = ''
+  ) => {
     try {
       setLoading(true);
       const res = await axiosInstance.get(`/service-funder`, {
-  params: {
-    page,
-    limit: entriesPerPage,
+        params: {
+          page,
+          limit: entriesPerPage,
           ...(searchTerm ? { searchTerm } : {})
-  },
-});
+        }
+      });
 
       setFundUsers(res.data.data.result || []);
       setTotalPages(res.data.data.meta?.totalPage || 1);
@@ -48,7 +52,6 @@ export default function ServiceUserFunder() {
       setLoading(false);
     }
   };
-
 
   useEffect(() => {
     fetchFunders(currentPage, entriesPerPage);
@@ -73,19 +76,19 @@ export default function ServiceUserFunder() {
         {/* Heading + Search */}
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
-             <Input
-    type="text"
-    className="min-w-[300px] rounded border px-3 py-1"
-    placeholder="Search by Name, Email or Phone"
-    value={searchTerm}
-    onChange={(e) => setSearchTerm(e.target.value)}
-  />
-  <Button
-    className="bg-supperagent text-white hover:bg-supperagent/90"
-   onClick={()=>  fetchFunders(1, entriesPerPage, searchTerm)}
-  >
-    <Search className="mr-1 h-4 w-4" /> Search
-  </Button>
+            <Input
+              type="text"
+              className="min-w-[300px] rounded border px-3 py-1"
+              placeholder="Search by Name, Email or Phone"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <Button
+              className="bg-supperagent text-white hover:bg-supperagent/90"
+              onClick={() => fetchFunders(1, entriesPerPage, searchTerm)}
+            >
+              <Search className="mr-1 h-4 w-4" /> Search
+            </Button>
           </div>
         </div>
 
@@ -124,7 +127,7 @@ export default function ServiceUserFunder() {
           </TableHeader>
 
           <TableBody>
-            {loading? (
+            {loading ? (
               <TableRow>
                 <TableCell colSpan={5} className="py-4 text-center">
                   <BlinkingDots size="large" color="bg-supperagent" />
@@ -145,7 +148,12 @@ export default function ServiceUserFunder() {
                   <TableCell>
                     {user.organizationName
                       ? user.organizationName
-                      : [user.title, user.firstName,user?.initial, user.lastName]
+                      : [
+                          user.title,
+                          user.firstName,
+                          user?.initial,
+                          user.lastName
+                        ]
                           .filter(Boolean)
                           .join(' ')}
                   </TableCell>
@@ -161,7 +169,7 @@ export default function ServiceUserFunder() {
                       variant="ghost"
                       size="icon"
                       onClick={() => handleView(user._id || user.id)}
-                      className="bg-supperagent hover:bg-supperagent/90 text-white"
+                      className="bg-supperagent text-white hover:bg-supperagent/90"
                       aria-label="View funder details"
                     >
                       <Eye className="h-4 w-4" />
@@ -173,15 +181,17 @@ export default function ServiceUserFunder() {
           </TableBody>
         </Table>
       </div>
-
-
-      <DynamicPagination
-        pageSize={entriesPerPage}
-        setPageSize={setEntriesPerPage}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-      />
+      {fundUsers.length > 40 && (
+        <>
+          <DynamicPagination
+            pageSize={entriesPerPage}
+            setPageSize={setEntriesPerPage}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        </>
+      )}
     </div>
   );
 }

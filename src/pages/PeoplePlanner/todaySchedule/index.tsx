@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import moment from 'moment';
 import {
   Calendar,
@@ -93,7 +93,7 @@ const UserCell = ({
 
 // --- Main Page Component ---
 
-export default function UpcomingSchedulePage() {
+export default function TodaysSchedulePage() {
   const [schedules, setSchedules] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<any[]>([]);
@@ -106,61 +106,64 @@ export default function UpcomingSchedulePage() {
   const user = useSelector((state: any) => state.auth.user);
   const navigate = useNavigate();
 
- useEffect(() => {
-  const fetchSchedules = async () => {
-    if (!user?._id) return;
+  // Fetch Logic
+  useEffect(() => {
+    const fetchSchedules = async () => {
+      if (!user?._id) return;
 
-    setLoading(true);
-    try {
-      // Base params
-      const params: any = {
-        date: moment().format('YYYY-MM-DD'),
-        page: currentPage,
-        limit: entriesPerPage
-      };
+      setLoading(true);
+      try {
+        // Base params - We request today's date from API as well for efficiency
+        const params: any = {
+          today: true,
+          page: currentPage,
+          limit: entriesPerPage
+        };
 
-      // Role-based params
-      if (user.role === 'serviceUser') {
-        params.serviceUser = user._id;
-      } else {
-        params.employee = user._id;
+        // Role-based params
+        if (user.role === 'serviceUser') {
+          params.serviceUser = user._id;
+        } else {
+          params.employee = user._id;
+        }
+
+        const response = await axiosInstance.get('/schedules', {
+          params
+        });
+
+        const result = response.data?.data?.result || [];
+        const meta = response.data?.data?.meta;
+
+        setSchedules(result);
+        if (meta) {
+          setTotalPages(meta.totalPage);
+        }
+      } catch (error) {
+        console.error('Error fetching schedules:', error);
+      } finally {
+        setLoading(false);
       }
+    };
 
-      const response = await axiosInstance.get('/schedules/upcoming', {
-        params
-      });
+    fetchSchedules();
+  }, [user?._id, user?.role, currentPage, entriesPerPage]);
 
-      const result = response.data?.data?.result || [];
-      const meta = response.data?.data?.meta;
 
-      setSchedules(result);
-      if (meta) {
-        setTotalPages(meta.totalPage);
-      }
-    } catch (error) {
-      console.error('Error fetching upcoming schedules:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  fetchSchedules();
-}, [user?._id, user?.role, currentPage, entriesPerPage]);
 
   return (
-    <div className="space-y-6  ">
+    <div className="space-y-6">
       <Card className="overflow-hidden border-slate-200 bg-white shadow-sm">
-        <CardHeader className=" flex  bg-white pb-4">
-          <CardTitle className="flex flex-row  justify-between items-center gap-2 text-lg font-bold text-slate-800">
+        <CardHeader className="flex bg-white pb-4">
+          <CardTitle className="flex flex-row justify-between items-center gap-2 text-lg font-bold text-slate-800">
             <div className="flex flex-row items-center gap-2">
               <Calendar className="h-5 w-5 text-supperagent" />
-              Schedule List
+              Today's Schedule
             </div>
             <Button
               onClick={() => navigate(-1)}
               className="bg-supperagent text-white hover:bg-supperagent/90"
             >
-              <ArrowLeft className="mr h-4 w-4" /> Back
+              <ArrowLeft className="mr-2 h-4 w-4" /> Back
             </Button>
           </CardTitle>
         </CardHeader>
@@ -168,7 +171,7 @@ export default function UpcomingSchedulePage() {
         <CardContent className="p-5">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20">
-             <BlinkingDots size='large' color='bg-supperagent'/>
+              <BlinkingDots size='large' color='bg-supperagent'/>
             </div>
           ) : schedules.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 text-center">
@@ -176,9 +179,8 @@ export default function UpcomingSchedulePage() {
                 <Calendar className="h-8 w-8 text-slate-400" />
               </div>
               
-              <p className="mt-1 max-w-md text-slate-500">
-                There are no visits or services scheduled.
-                
+              <p className="mt-1  text-slate-500">
+                There are no visits or services scheduled for today ({moment().format('DD MMM')}).
               </p>
             </div>
           ) : (
@@ -207,6 +209,7 @@ export default function UpcomingSchedulePage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
+                  {/* Using the filtered todaysSchedules instead of raw schedules */}
                   {schedules.map((service) => {
                     const employee =
                       typeof service.employee === 'object'
@@ -228,9 +231,9 @@ export default function UpcomingSchedulePage() {
                       <TableRow
                         key={service._id}
                         className="cursor-pointer border-b border-slate-50 transition-colors hover:bg-slate-50/50"
-                        onClick={() =>
-                          navigate('/admin/people-planner/planner')
-                        }
+                        // onClick={() =>
+                        //   navigate('/admin/people-planner/planner')
+                        // }
                       >
                         <TableCell>{moment(service.date).format("DD MMM YYYY")}</TableCell>
                         <TableCell className="py-4 pl-6 align-top">
@@ -293,18 +296,17 @@ export default function UpcomingSchedulePage() {
                 </TableBody>
               </Table>
 
-              { totalPages > 1 && (
-
-                  <div className="p-4 ">
-                <DynamicPagination
-                  pageSize={entriesPerPage}
-                  setPageSize={setEntriesPerPage}
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={setCurrentPage}
+              {totalPages > 1 && (
+                <div className="pt-4">
+                  <DynamicPagination
+                    pageSize={entriesPerPage}
+                    setPageSize={setEntriesPerPage}
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
                   />
-              </div>)
-                }
+                </div>
+              )}
             </>
           )}
         </CardContent>

@@ -304,7 +304,7 @@ const RightToWorkExpiryPage = () => {
   const currentData = filteredRecords.slice(startIndex, startIndex + entriesPerPage);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -357,7 +357,7 @@ const RightToWorkExpiryPage = () => {
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-gray-50">
+                    <TableRow className="">
                       <TableHead>Employee</TableHead>
                       <TableHead>Right to Work Expiry (dd/mm/yyyy)</TableHead>
                       <TableHead>Status</TableHead>

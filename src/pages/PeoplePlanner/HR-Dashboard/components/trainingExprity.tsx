@@ -120,7 +120,7 @@ const getExpiringTrainings = (employee: Employee) =>
   const currentData = filteredEmployees.slice((currentPage - 1) * entriesPerPage, currentPage * entriesPerPage);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="">
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -161,7 +161,7 @@ const getExpiringTrainings = (employee: Employee) =>
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-gray-50">
+                    <TableRow className="">
                       <TableHead>Employee</TableHead>
                       <TableHead>Department</TableHead>
                       <TableHead>Position</TableHead>

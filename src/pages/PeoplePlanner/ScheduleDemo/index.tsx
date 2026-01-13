@@ -6,7 +6,7 @@ import { TaskLogging } from "./components/task-logging"
 import { TeamCommunication } from "./components/team-communication"
 import { ShiftRequests } from "./components/shift-request"
 
-export default function SchedulePage() {
+export default function DemoSchedulePage() {
   return (
     <div className="min-h-screen">
       

@@ -26,8 +26,6 @@ import JobPage from '@/pages/PeoplePlanner/Jobs';
 import ServiceUserFunder from '@/pages/PeoplePlanner/ServiceUser/funder';
 import CreateServiceUserFunderPage from '@/pages/PeoplePlanner/ServiceUser/funder/create-funder';
 import { ReportPage } from '@/pages/PeoplePlanner/reports';
-import ProfilePage from '@/pages/PeoplePlanner/profilePage';
-import SchedulePage from '@/pages/PeoplePlanner/Schedule';
 import InvoicePage from '@/pages/PeoplePlanner/Invoice';
 import ServiceUserPlannerPage from '@/pages/PeoplePlanner/ServiceUser/planner';
 import ServiceUserTask from '@/pages/PeoplePlanner/ServiceUser/task';
@@ -100,10 +98,18 @@ import PendingHiring from '@/pages/PeoplePlanner/Pending-Hiring';
 import RequestDocumentPage from '@/pages/PeoplePlanner/RequestDocument';
 import DocumentReportPage from '@/pages/PeoplePlanner/RequestDocument';
 import AdminRequestDocumentPage from '@/pages/PeoplePlanner/Request-Documents';
-import UpcomingSchedulePage from '@/pages/PeoplePlanner/upcomingSchedule';
+import UpcomingSchedulePage from '@/pages/PeoplePlanner/todaySchedule';
 import ServiceUserModulePage from '@/pages/PeoplePlanner/ServiceUser/serviceUserModules';
 import EditCapacityFormPage from '@/pages/PeoplePlanner/Consent/components/edit-capacity-form';
 import EditConsentFormPage from '@/pages/PeoplePlanner/Consent/components/edit-consent-form';
+import TodaysSchedulePage from '@/pages/PeoplePlanner/todaySchedule';
+import SchedulePage from '@/pages/PeoplePlanner/schedulePage';
+import PassportExpiryPage from '@/pages/PeoplePlanner/HR-Dashboard/components/passportExpiray';
+import TrainingExpiryPage from '@/pages/PeoplePlanner/HR-Dashboard/components/trainingExprity';
+import RightToWorkExpiryPage from '@/pages/PeoplePlanner/HR-Dashboard/components/rightToWork';
+import RightToWorkStatusPage from '@/pages/PeoplePlanner/HR-Dashboard/components/rightToWorkStatus';
+import ProfilePage from '@/pages/PeoplePlanner/profilePage';
+import ServiceUserProfilePage from '@/pages/PeoplePlanner/profilePage/ServiceUserProfile';
 
 const SignInPage = lazy(() => import('@/pages/auth/signin'));
 
@@ -148,6 +154,22 @@ export default function AppRouter() {
             {
               path: 'hr-dashboard',
               element: <HRDashboardPage />
+            },
+            {
+              path: 'expiry/passport',
+              element: <PassportExpiryPage />
+            },
+            {
+              path: 'expiry/training',
+              element: <TrainingExpiryPage />
+            },
+            {
+              path: 'expiry/rightToWork',
+              element: <RightToWorkExpiryPage />
+            },
+            {
+              path: 'expiry/rightToWorkStatus',
+              element: <RightToWorkStatusPage />
             },
             {
               path: 'service-user/new',
@@ -219,7 +241,7 @@ export default function AppRouter() {
             },
             {
               path: 'general-information/:id',
-              element: <ServiceuserDetailPage />
+              element: <ServiceUserProfilePage />
             },
           
             {
@@ -254,9 +276,13 @@ export default function AppRouter() {
               path: 'schedule',
               element: <SchedulePage />
             },
+            // {
+            //   path: 'upcoming-schedule',
+            //   element: <UpcomingSchedulePage />
+            // },
             {
-              path: 'upcoming-schedule',
-              element: <UpcomingSchedulePage />
+              path: 'today-schedule',
+              element: <TodaysSchedulePage />
             },
             {
               path: 'payslip',

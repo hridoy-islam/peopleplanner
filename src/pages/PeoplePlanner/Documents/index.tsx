@@ -3,17 +3,14 @@ import { useParams } from 'react-router-dom';
 import axiosInstance from '@/lib/axios'; 
 import { 
   Trash2, 
-  Eye, 
   Plus, 
   Upload, 
   FileText, 
   Loader2, 
   CheckCircle, 
   AlertCircle,
-  Download,
   Pencil,
   ExternalLink,
-  Link2,
   Calendar
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -44,6 +41,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from "@/components/ui/badge";
+import moment from 'moment';
 
 // --- Types based on your Mongoose Model ---
 type DocumentCategory = 'General' | 'Legal' | 'Finance' | 'HR' | 'Technical';
@@ -241,7 +239,6 @@ export default function DocumentPage() {
       <div className="flex flex-row items-center justify-between">
         <div>
            <h3 className="scroll-m-20 text-2xl font-semibold tracking-tight">Documents</h3>
-           <p className="text-sm text-muted-foreground mt-1">Manage important files for this user.</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -253,7 +250,8 @@ export default function DocumentPage() {
               <Plus className="mr-2 h-4 w-4" /> Upload Document
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-lg">
+          {/* Create/Edit Dialog */}
+          <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingDoc ? "Edit Document" : "Upload New Document"}</DialogTitle>
               <DialogDescription>
@@ -410,17 +408,17 @@ export default function DocumentPage() {
                         </div>
                     </TableCell>
                     <TableCell>
-                        <Badge variant="secondary" className="font-normal">{doc.category}</Badge>
+                        <Badge className="font-normal">{doc.category}</Badge>
                     </TableCell>
                     <TableCell className="text-muted-foreground text-xs">
-                         {new Date(doc.createdAt || Date.now()).toLocaleDateString()}
+                       {moment(doc.createdAt).format('DD MMM, YYYY')}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                     
+                      
                         <Button
                           size="icon"
-                          onClick={() => handleOpenEdit(doc)}
+                          onClick={(e) => { e.stopPropagation(); handleOpenEdit(doc); }}
                           className="h-8 w-8"
                           title="Edit Document"
                         >
@@ -430,7 +428,7 @@ export default function DocumentPage() {
                         <Button
                           variant="destructive"
                           size="icon"
-                          onClick={() => handleDelete(doc._id)}
+                          onClick={(e) => { e.stopPropagation(); handleDelete(doc._id); }}
                           className="h-8 w-8"
                           title="Delete"
                         >
@@ -446,86 +444,66 @@ export default function DocumentPage() {
         )}
       </div>
 
-      {/* --- View Detail Modal --- */}
+      {/* --- View Detail Modal (UPDATED UI) --- */}
       {viewingDoc && (
         <Dialog open={!!viewingDoc} onOpenChange={() => setViewingDoc(null)}>
-  <DialogContent className="sm:max-w-md gap-0 p-0 overflow-hidden border-0 shadow-2xl">
-    
-    {/* 1. Hero / Header Section */}
-    <div className="bg-slate-50 p-6 flex flex-col items-center justify-center border-b">
-      <div className="h-16 w-16 bg-white rounded-xl shadow-sm border flex items-center justify-center mb-4">
-        <FileText className="h-8 w-8 text-supperagent" />
-      </div>
-      <DialogHeader className="mb-1">
-        <DialogTitle className="text-center text-xl font-semibold text-slate-900">
-          {viewingDoc.documentTitle}
-        </DialogTitle>
-      </DialogHeader>
-      <Badge variant="secondary" className="px-3 py-1 font-medium bg-white border shadow-sm">
-        {viewingDoc.category}
-      </Badge>
-    </div>
-
-    {/* 2. Details Section */}
-    <div className="p-6 space-y-6">
-      <div className="space-y-4">
-        {/* Date Row */}
-        <div className="flex items-center justify-between p-3 rounded-lg border bg-slate-50/50">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-white rounded-md border shadow-sm text-slate-500">
-              <Calendar className="h-4 w-4" />
+          <DialogContent className="sm:max-w-3xl gap-0 p-0 overflow-hidden border-0 shadow-2xl outline-none">
+            
+            {/* 1. Hero / Header Section */}
+            <div className="bg-slate-50/80 p-10 flex flex-col items-center justify-center border-b">
+              <div className="h-20 w-20 bg-white rounded-2xl shadow-sm border flex items-center justify-center mb-6">
+                <FileText className="h-10 w-10 text-supperagent" />
+              </div>
+              <DialogHeader className="mb-2">
+                <DialogTitle className="text-center text-3xl font-bold text-slate-900 tracking-tight">
+                  {viewingDoc.documentTitle}
+                </DialogTitle>
+              </DialogHeader>
+              <Badge className="px-4 py-1.5 text-sm font-medium rounded-full">
+                {viewingDoc.category}
+              </Badge>
             </div>
-            <div className="flex flex-col">
-              <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Uploaded On</span>
-              <span className="text-sm font-semibold text-slate-900">
-                {new Date(viewingDoc.createdAt).toLocaleDateString(undefined, { 
-                  weekday: 'long', 
-                  year: 'numeric', 
-                  month: 'long', 
-                  day: 'numeric' 
-                })}
-              </span>
-            </div>
-          </div>
-        </div>
 
-        {/* URL / Link Row (Optional: useful to see the link structure or just visual filler) */}
-        <div className="flex items-center justify-between p-3 rounded-lg border bg-slate-50/50">
-          <div className="flex items-center gap-3 w-full overflow-hidden">
-            <div className="p-2 bg-white rounded-md border shadow-sm text-slate-500 shrink-0">
-              <Link2 className="h-4 w-4" />
-            </div>
-            <div className="flex flex-col w-full overflow-hidden">
-              <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">File Source</span>
-              <span className="text-sm font-medium text-slate-700 truncate">
-                {viewingDoc.document}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
+            {/* 2. Details Section */}
+            <div className="p-10 space-y-8 bg-white">
+              <div className="grid grid-cols-1 gap-4">
+                {/* Date Row */}
+                <div className="flex items-center p-4 rounded-xl border bg-slate-50">
+                  <div className="p-3 bg-white rounded-lg border shadow-sm text-slate-500 mr-4">
+                    <Calendar className="h-5 w-5" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-0.5">Uploaded On</span>
+                    <span className="text-base font-semibold text-slate-900">
+  {moment(viewingDoc.createdAt).format('DD MMM, YYYY')}
+</span>
+                  </div>
+                </div>
+              </div>
 
-      {/* 3. Footer / Actions */}
-      <div className="grid grid-cols-2 gap-3 pt-2">
-        <Button 
-          variant="outline" 
-          onClick={() => setViewingDoc(null)}
-          className="w-full"
-        >
-          Close
-        </Button>
-        <Button 
-          onClick={() => window.open(viewingDoc.document, '_blank')} 
-          className="w-full bg-supperagent hover:bg-supperagent/90 text-white"
-        >
-          <ExternalLink className="mr-2 h-4 w-4" />
-          Open File
-        </Button>
-      </div>
-    </div>
+              {/* 3. Footer / Actions */}
+              <div className="flex gap-4 pt-4">
+                <Button 
+                  variant="outline" 
+                  size="lg"
+                  onClick={() => setViewingDoc(null)}
+                  className="w-full text-base h-12"
+                >
+                  Close
+                </Button>
+                <Button 
+                  size="lg"
+                  onClick={() => window.open(viewingDoc.document, '_blank')} 
+                  className="w-full bg-supperagent hover:bg-supperagent/90 text-white text-base h-12"
+                >
+                  <ExternalLink className="mr-2 h-5 w-5" />
+                  View File
+                </Button>
+              </div>
+            </div>
 
-  </DialogContent>
-</Dialog>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );

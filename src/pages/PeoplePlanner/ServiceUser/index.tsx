@@ -8,7 +8,7 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
+  TableRow
 } from '@/components/ui/table';
 import { Eye, Search } from 'lucide-react';
 import { DynamicPagination } from '@/components/shared/DynamicPagination';
@@ -16,25 +16,26 @@ import { Input } from '@/components/ui/input';
 import { Link, useNavigate } from 'react-router-dom';
 import axiosInstance from '@/lib/axios';
 import { BlinkingDots } from '@/components/shared/blinking-dots';
+import { Badge } from '@/components/ui/badge';
 
 // React Select options
 const typeOptions = [
   { value: 'all', label: 'All Types' },
   { value: 'Inpatient', label: 'Inpatient' },
-  { value: 'Outpatient', label: 'Outpatient' },
+  { value: 'Outpatient', label: 'Outpatient' }
 ];
 
 const statusOptions = [
   { value: 'all', label: 'All Statuses' },
   { value: 'active', label: 'Active' },
-  { value: 'block', label: 'Blocked' },
+  { value: 'block', label: 'Blocked' }
 ];
 
 const areaOptions = [
   { value: 'all', label: 'All Areas' },
   { value: 'North Wing', label: 'North Wing' },
   { value: 'South Wing', label: 'South Wing' },
-  { value: 'East Wing', label: 'East Wing' },
+  { value: 'East Wing', label: 'East Wing' }
 ];
 
 export default function ServiceUserList() {
@@ -49,18 +50,25 @@ export default function ServiceUserList() {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
-  const [entriesPerPage, setEntriesPerPage] = useState(5);
+  const [entriesPerPage, setEntriesPerPage] = useState(100);
+  const [totalPages, setTotalPages] = useState(1);
 
   const navigate = useNavigate();
 
   // Fetch users from API
-  const fetchUsers = async () => {
+  const fetchUsers = async (page, entriesPerPage, searchTerm = '') => {
     setLoading(true);
     try {
       const res = await axiosInstance.get('/users', {
-        params: { role: 'serviceUser' },
+        params: {
+          role: 'serviceUser',
+          page,
+          limit: entriesPerPage,
+          ...(searchTerm ? { searchTerm } : {})
+        }
       });
       setUsers(res.data.data.result || []);
+      setTotalPages(res.data.data.meta.total);
     } catch (error) {
       console.error('Failed to fetch users', error);
     } finally {
@@ -69,18 +77,20 @@ export default function ServiceUserList() {
   };
 
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    fetchUsers(currentPage, entriesPerPage);
+  }, [currentPage, entriesPerPage]);
 
   // Handle status toggle
   const handleStatusChange = async (id: string, checked: boolean) => {
     try {
       await axiosInstance.patch(`/users/${id}`, {
-        status: checked ? 'active' : 'block',
+        status: checked ? 'active' : 'block'
       });
       setUsers((prev) =>
         prev.map((user) =>
-          user._id === id ? { ...user, status: checked ? 'active' : 'block' } : user
+          user._id === id
+            ? { ...user, status: checked ? 'active' : 'block' }
+            : user
         )
       );
     } catch (error) {
@@ -119,34 +129,22 @@ export default function ServiceUserList() {
     });
   }, [users, searchTerm, typeFilter, statusFilter, areaFilter]);
 
-  // Pagination calculations
-  const totalPages = Math.ceil(filteredUsers.length / entriesPerPage);
-  const paginatedUsers = useMemo(() => {
-    const startIndex = (currentPage - 1) * entriesPerPage;
-    return filteredUsers.slice(startIndex, startIndex + entriesPerPage);
-  }, [filteredUsers, currentPage, entriesPerPage]);
-
-  // Reset currentPage if filteredUsers shrink below current page
-  useEffect(() => {
-    if (currentPage > totalPages) setCurrentPage(1);
-  }, [totalPages, currentPage]);
-
   return (
-    <div className="p-6 bg-white rounded-md shadow-md space-y-6">
+    <div className="space-y-6 rounded-md bg-white p-6 shadow-md">
       <h1 className="text-2xl font-semibold">Service Users</h1>
 
       {/* Filters */}
-      <div className="flex flex-wrap gap-4 mb-4 items-center">
+      <div className="mb-4 flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
           <Input
             type="text"
-            className="border rounded px-3 py-1 min-w-[300px]"
+            className="min-w-[300px] rounded border px-3 py-1"
             placeholder="Search by Name or Phone"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <Button className="bg-supperagent hover:bg-supperagent/90 text-white">
-            <Search className="w-4 h-4" />
+          <Button className="bg-supperagent text-white hover:bg-supperagent/90">
+            <Search className="h-4 w-4" />
             Search
           </Button>
         </div>
@@ -184,6 +182,7 @@ export default function ServiceUserList() {
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
+            <TableHead>Email</TableHead>
             <TableHead>Address</TableHead>
             <TableHead>Phone</TableHead>
             <TableHead>Status</TableHead>
@@ -194,42 +193,50 @@ export default function ServiceUserList() {
         <TableBody>
           {loading ? (
             <TableRow>
-              <TableCell colSpan={5} className="text-center py-4">
-                 <BlinkingDots size="large" color="bg-supperagent" />
+              <TableCell colSpan={5} className="py-4 text-center">
+                <BlinkingDots size="large" color="bg-supperagent" />
               </TableCell>
             </TableRow>
-          ) : paginatedUsers.length === 0 ? (
+          ) : users.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={5} className="text-center text-gray-500 py-4">
+              <TableCell colSpan={5} className="py-4 text-center text-gray-500">
                 No matching records found.
               </TableCell>
             </TableRow>
           ) : (
-            paginatedUsers.map((user) => (
+            users.map((user) => (
               <TableRow key={user._id}>
                 <Link to={`${user._id}/modules`}>
-                <TableCell className='hover:underline hover:text-blue-600'>
-                  {[user.title, user.firstName, user.initial, user.lastName]
-                    .filter(Boolean)
-                    .join(' ')}
-                </TableCell>
-                    </Link>
+                  <TableCell className="hover:text-blue-600 hover:underline">
+                    {[user.title, user.firstName, user.initial, user.lastName]
+                      .filter(Boolean)
+                      .join(' ')}
+                  </TableCell>
+                </Link>
+                <TableCell>{user?.email}</TableCell>
                 <TableCell>
                   {[user.address, user.city].filter(Boolean).join(', ')}
                 </TableCell>
                 <TableCell>{user?.phone}</TableCell>
                 <TableCell>
-                  <Switch
-                    checked={user.status === 'active'}
-                    onCheckedChange={(checked) => handleStatusChange(user._id, checked)}
-                  />
+                  <div className="flex flex-row items-center gap-2">
+                    <Switch
+                      checked={user.status === 'active'}
+                      onCheckedChange={(checked) =>
+                        handleStatusChange(user._id, checked)
+                      }
+                    />
+                    <Badge variant="default">
+                      {user.status === 'active' ? 'Active' : 'Inactive'}
+                    </Badge>
+                  </div>
                 </TableCell>
                 <TableCell className="text-right">
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => handleView(user._id)}
-                    className="text-white hover:bg-supperagent/90 bg-supperagent"
+                    className="bg-supperagent text-white hover:bg-supperagent/90"
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
@@ -240,14 +247,17 @@ export default function ServiceUserList() {
         </TableBody>
       </Table>
 
-      {/* Pagination */}
-      <DynamicPagination
-        pageSize={entriesPerPage}
-        setPageSize={setEntriesPerPage}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-      />
+      {users.length > 40 && (
+        <>
+          <DynamicPagination
+            pageSize={entriesPerPage}
+            setPageSize={setEntriesPerPage}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        </>
+      )}
     </div>
   );
 }

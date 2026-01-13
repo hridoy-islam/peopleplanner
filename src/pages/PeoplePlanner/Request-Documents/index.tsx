@@ -296,7 +296,7 @@ const AdminRequestDocumentPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="">
       <div className="space-y-6">
         {/* Requests Table */}
         <div className="rounded-xl bg-white p-6 shadow-lg">

@@ -118,7 +118,7 @@ const ServiceUserDashboardPage = () => {
           axiosInstance.get(`/schedules`, {
             params: {
               serviceUser: user._id,
-              date: moment().format('YYYY-MM-DD')
+              today: true
             }
           }),
           axiosInstance.get(`/hr/request-document`, {
@@ -148,13 +148,7 @@ const ServiceUserDashboardPage = () => {
     fetchDashboardData();
   }, [user?._id]);
 
-  // --- Filter Today's Tasks ---
-  const todaysTasks = useMemo(() => {
-    if (!scheduleData.length) return [];
-    return scheduleData.filter((task) =>
-      moment(task.date).isSame(moment(), 'day')
-    );
-  }, [scheduleData]);
+ 
 
   // --- Helpers ---
 
@@ -162,30 +156,21 @@ const ServiceUserDashboardPage = () => {
 
   if (loading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-slate-50">
+      <div className="flex h-screen w-full items-center justify-center">
         <div className="flex flex-col items-center gap-2">
           <BlinkingDots size="large" color="bg-supperagent" />
         </div>
       </div>
     );
   }
-  const isServiceUser = user?.role === 'serviceUser';
   return (
-    <div className="space-y-8 bg-gray-100 duration-500 animate-in fade-in ">
+    <div className="space-y-8 duration-500 animate-in fade-in ">
       {/* --- Header Section --- */}
       <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
           <h1 className="flex items-center gap-3 text-3xl font-bold tracking-tight text-slate-900">
             Welcome back, {user?.name} 👋
-            {/* Subtle Badge for Role Identification */}
-            {isServiceUser && (
-              <Badge
-                variant="secondary"
-                className="bg-indigo-100 text-indigo-700 hover:bg-indigo-100"
-              >
-                Service User
-              </Badge>
-            )}
+           
           </h1>
           <p className="mt-1 flex items-center gap-2 text-slate-500">
             <Calendar className="h-4 w-4 text-supperagent" />
@@ -199,7 +184,7 @@ const ServiceUserDashboardPage = () => {
         {[
           {
             title: "Today's Tasks",
-            value: todaysTasks.length,
+            value: scheduleData.length,
             icon: CheckCircle2,
             color: 'text-supperagent',
             bg: 'bg-supperagent/10',
@@ -260,7 +245,7 @@ const ServiceUserDashboardPage = () => {
               </div>
             </CardHeader>
             <CardContent className="p-0">
-              {todaysTasks.length === 0 ? (
+              {scheduleData.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-10 text-center text-slate-500">
                   <div className="mb-3 rounded-full bg-supperagent/10 p-3">
                     <CheckCircle2 className="h-6 w-6 text-supperagent" />
@@ -270,7 +255,7 @@ const ServiceUserDashboardPage = () => {
                 </div>
               ) : (
                 <div className="divide-y divide-supperagent/10">
-                  {todaysTasks.map((task, i) => (
+                  {scheduleData.map((task, i) => (
                     <div
                       key={i}
                       className="group flex cursor-pointer flex-col gap-4 p-5 transition-colors hover:bg-slate-50/50 md:flex-row md:items-center"

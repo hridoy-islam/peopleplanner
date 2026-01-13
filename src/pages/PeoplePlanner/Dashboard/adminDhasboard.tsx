@@ -98,7 +98,7 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/50 ">
+    <div className=" ">
       <div className="mx-auto max-w-[1600px] space-y-8">
         
         {/* --- Header Section --- */}

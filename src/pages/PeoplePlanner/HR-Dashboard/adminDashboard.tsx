@@ -119,7 +119,7 @@ const HRDashboardPage = () => {
         const [empRes, rtwRes] = await Promise.all([
           axiosInstance.get('/users', {
             params: {
-              role: 'employee',
+              role: 'staff',
               limit: 'all',
               fields: 'firstName lastName email passportExpiry departmentId training'
             }
@@ -226,11 +226,11 @@ const HRDashboardPage = () => {
 
   // Handle card click navigation
   const handleCardClick = (type: string) => {
-    navigate(`/admin/hr/expiry/${type}`);
+    navigate(`/admin/people-planner/expiry/${type}`);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen ">
       <div className="space-y-4">
         {/* Dashboard Cards */}
         <div className="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
