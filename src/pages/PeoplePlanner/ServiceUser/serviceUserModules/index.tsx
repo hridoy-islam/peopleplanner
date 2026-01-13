@@ -28,7 +28,7 @@ const ServiceUserModulePage = () => {
     {
       id: 1,
       title: 'Profile',
-      link: `/admin/people-planner/service-user/${id}`,
+      link: `/admin/people-planner/general-information/${id}`,
       icon: User,
       description: 'Personal details and demographics'
     },
@@ -93,7 +93,7 @@ const ServiceUserModulePage = () => {
 
   if (loading) {
     return (
-      <div className="flex h-screen w-full items-center justify-center bg-gray-50">
+      <div className="flex  w-full items-center justify-center ">
         <BlinkingDots size="large" color="text-supperagent" />
       </div>
     );
@@ -101,7 +101,7 @@ const ServiceUserModulePage = () => {
 
   if (!user) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center gap-4 bg-gray-50">
+      <div className="flex  flex-col items-center justify-center gap-4 ">
         <h2 className="text-xl font-semibold text-gray-700">User not found</h2>
         <Button
           variant="outline"

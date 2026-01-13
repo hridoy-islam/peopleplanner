@@ -3,11 +3,11 @@ import { MoveLeft } from 'lucide-react';
 import { Tabs } from './components/Tabs';
 import PersonalInfoTab from './tabs/PersonalInfoTab';
 import ContactTab from './tabs/ContactTab';
-import MiscellaneousTab from './tabs/MiscellaneousTab';
+import MiscellaneousTab from './tabs/DisabilityTab';
 import EqualityTab from './tabs/EqualityTab';
 import { useEditApplicant } from './hooks/useEditApplicant';
 import { Button } from '@/components/ui/button';
-import EmergencyContactTab from './tabs/EmergencyContacTab';
+import EmergencyContactTab from './tabs/BeneficiaryTab';
 import CriticalInfoTab from './tabs/CriticalInformation';
 import EquipmentTab from './tabs/EquipmentTab';
 import NoteTab from './tabs/NoteTab';
@@ -15,12 +15,16 @@ import PrimaryBranchTab from './tabs/PrimaryBranchTab';
 import { useNavigate, useParams } from 'react-router-dom';
 import { BlinkingDots } from '@/components/shared/blinking-dots';
 import { useSelector } from 'react-redux';
+import IdentificationTab from './tabs/IdentificationTab';
+import DisabilityTab from './tabs/DisabilityTab';
+import BeneficiaryTab from './tabs/BeneficiaryTab';
+import PayrollTab from './tabs/PayrollTab';
 
-const ServiceUserProfilePage = () => {
+const StaffProfilePage = () => {
   const user = useSelector((state:any) => state.auth?.user) || null;
   const {id} = useParams();
   const navigate = useNavigate()
-  
+  // Calculate effective ID
   const effectiveUserId = user?.role === 'admin' && id ? id : user?._id;
 
   const {
@@ -72,6 +76,22 @@ const ServiceUserProfilePage = () => {
           onSelectChange={handleSelectChange}
           isFieldSaving={isFieldSaving}
           getMissingFields={getMissingFields}
+          onSave={handleBulkUpdate}
+        />
+      )
+    },
+    {
+      id: 'identification',
+      label: 'Identification',
+      component: (
+        <IdentificationTab
+          formData={formData || {}}
+          onUpdate={handleFieldUpdate}
+          onDateChange={handleDateChange}
+          onSelectChange={handleSelectChange}
+          isFieldSaving={isFieldSaving}
+          getMissingFields={getMissingFields}
+          onSave={handleBulkUpdate}
         />
       )
     },
@@ -86,28 +106,45 @@ const ServiceUserProfilePage = () => {
           onSelectChange={handleSelectChange}
           isFieldSaving={isFieldSaving}
           getMissingFields={getMissingFields}
+          onSave={handleBulkUpdate}
         />
       )
     },
     {
-      id: 'other',
-      label: 'Other',
+      id: 'disability',
+      label: 'Disability',
       component: (
-        <MiscellaneousTab
+        <DisabilityTab
           formData={formData || {}}
           onUpdate={handleFieldUpdate}
           onDateChange={handleDateChange}
           onSelectChange={handleSelectChange}
           isFieldSaving={isFieldSaving}
           getMissingFields={getMissingFields}
+          onSave={handleBulkUpdate}
         />
       )
     },
     {
-        id: 'emergency',
-        label: 'Emergency Contact',
+        id: 'beneficiary',
+        label: 'Beneficiary',
         component: (
-          <EmergencyContactTab
+          <BeneficiaryTab
+            formData={formData || {}}
+            onUpdate={handleFieldUpdate}
+            onDateChange={handleDateChange}
+            onSelectChange={handleSelectChange}
+            isFieldSaving={isFieldSaving}
+            getMissingFields={getMissingFields}
+            onSave={handleBulkUpdate}
+          />
+        )
+    },
+    {
+        id: 'payroll',
+        label: 'Payroll',
+        component: (
+          <PayrollTab
             formData={formData || {}}
             onUpdate={handleFieldUpdate}
             onDateChange={handleDateChange}
@@ -159,4 +196,4 @@ const ServiceUserProfilePage = () => {
   );
 };
 
-export default ServiceUserProfilePage;
+export default StaffProfilePage;
