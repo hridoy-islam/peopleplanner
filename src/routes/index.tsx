@@ -110,7 +110,7 @@ import RightToWorkExpiryPage from '@/pages/PeoplePlanner/HR-Dashboard/components
 import RightToWorkStatusPage from '@/pages/PeoplePlanner/HR-Dashboard/components/rightToWorkStatus';
 import ProfilePage from '@/pages/PeoplePlanner/profilePage';
 import ServiceUserProfilePage from '@/pages/PeoplePlanner/profilePage/ServiceUserProfile';
-import ServicePlannerPage from '@/pages/PeoplePlanner/ServiceUser/Planner';
+import ServicePlannerPage from '@/pages/PeoplePlanner/ServiceUser/planner';
 
 const SignInPage = lazy(() => import('@/pages/auth/signin'));
 

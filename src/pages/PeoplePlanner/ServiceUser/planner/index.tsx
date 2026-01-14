@@ -1,20 +1,22 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { RightSidebar } from './components/RightSidebar';
-import { TopControls } from './components/TopControls';
-import { Timeline } from './components/Timeline';
+
 import type { SidebarState } from '@/types/planner';
 import moment from 'moment';
-import { ScheduleDetailComponent } from './components/ScheduleDetail';
 import axiosInstance from '@/lib/axios';
 import { toast } from '@/components/ui/use-toast';
 import { BlinkingDots } from '@/components/shared/blinking-dots';
-import { ExtraCallComponent } from './components/ExtraCall';
+
 
 // --- DnD Imports ---
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useParams } from 'react-router-dom';
+import { TopControls } from './components/TopControls';
+import { Timeline } from './components/Timeline';
+import { RightSidebar } from './components/RightSidebar';
+import { ScheduleDetailComponent } from './components/ScheduleDetail';
+import { ExtraCallComponent } from './components/ExtraCall';
 
 // 👇 Interfaces
 interface User {
