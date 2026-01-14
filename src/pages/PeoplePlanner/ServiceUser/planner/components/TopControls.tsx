@@ -1,7 +1,8 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Minus, Plus } from 'lucide-react';
+import { Minus, MoveLeft, Plus } from 'lucide-react';
 import Select, { StylesConfig } from 'react-select';
+import { useNavigate } from 'react-router-dom';
 
 interface TopControlsProps {
   zoomLevel: number;
@@ -82,6 +83,8 @@ export function TopControls({
     { value: 'unallocated', label: 'Unallocated' }
   ];
 
+  const navigate = useNavigate()
+
   // --- Helpers ---
   const getValueObj = (options: OptionType[], value: string) =>
     options.find((opt) => opt.value === value) || options[0];
@@ -160,7 +163,16 @@ export function TopControls({
               Add Schedule
             </Button>
           </div>
+
         </div>
+          <Button
+            variant="outline"
+            className="bg-supperagent text-white hover:bg-supperagent/90"
+            onClick={() => navigate(-1)} // Better than window.history.back()
+          >
+            <MoveLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
       </div>
     </div>
   );

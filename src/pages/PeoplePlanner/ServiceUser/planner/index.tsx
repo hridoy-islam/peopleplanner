@@ -247,7 +247,7 @@ export default function ServicePlannerPage() {
 
   return (
     <DndProvider backend={HTML5Backend}>
-      <div className=" rounded-lg bg-white shadow-sm">
+      <div className=" rounded-lg bg-white shadow-sm pt-4">
         {/* <div className="p-2">
             <h1 className="text-3xl font-semibold">
                 {currentUser ? `${currentUser.firstName} ${currentUser.lastName}` : 'Planner'}
