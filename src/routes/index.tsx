@@ -27,7 +27,7 @@ import ServiceUserFunder from '@/pages/PeoplePlanner/ServiceUser/funder';
 import CreateServiceUserFunderPage from '@/pages/PeoplePlanner/ServiceUser/funder/create-funder';
 import { ReportPage } from '@/pages/PeoplePlanner/reports';
 import InvoicePage from '@/pages/PeoplePlanner/Invoice';
-import ServiceUserPlannerPage from '@/pages/PeoplePlanner/ServiceUser/planner';
+import ServiceUserPlannerPage from '@/pages/PeoplePlanner/ServiceUser/plannerdemo';
 import ServiceUserTask from '@/pages/PeoplePlanner/ServiceUser/task';
 import ViewTaskPage from '@/pages/PeoplePlanner/ServiceUser/task/view-task';
 import PayslipPage from '@/pages/PeoplePlanner/payslips';
@@ -110,6 +110,7 @@ import RightToWorkExpiryPage from '@/pages/PeoplePlanner/HR-Dashboard/components
 import RightToWorkStatusPage from '@/pages/PeoplePlanner/HR-Dashboard/components/rightToWorkStatus';
 import ProfilePage from '@/pages/PeoplePlanner/profilePage';
 import ServiceUserProfilePage from '@/pages/PeoplePlanner/profilePage/ServiceUserProfile';
+import ServicePlannerPage from '@/pages/PeoplePlanner/ServiceUser/Planner';
 
 const SignInPage = lazy(() => import('@/pages/auth/signin'));
 
@@ -181,7 +182,7 @@ export default function AppRouter() {
             },
             {
               path: 'service-user/:id/planner',
-              element: <ServiceUserPlannerPage />
+              element: <ServicePlannerPage />
             },
             {
               path: 'service-user/:id/schedule',

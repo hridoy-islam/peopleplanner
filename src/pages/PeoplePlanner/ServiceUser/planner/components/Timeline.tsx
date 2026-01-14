@@ -1,656 +1,483 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import * as TooltipPrimitive from '@radix-ui/react-tooltip';
+import { useDrag, useDrop } from 'react-dnd'; 
 import {
   ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuSub,
-  ContextMenuSubContent,
-  ContextMenuSubTrigger,
   ContextMenuTrigger
 } from '@/components/ui/context-menu';
 import {
   Tooltip,
   TooltipContent,
-  TooltipTrigger
+  TooltipTrigger,
+  TooltipProvider
 } from '@/components/ui/tooltip';
-import { Button } from '@/components/ui/button';
-import {
-  AlertCircle,
-  ArrowLeft,
-  Calendar,
-  CheckCircle2,
-  ClipboardList,
-  Clock,
-  User,
-  X
-} from 'lucide-react';
-import { employees } from '@/data/plannerData';
-import moment from 'moment';
 import { Badge } from '@/components/ui/badge';
+import {
+  Calendar,
+  Clock,
+  User as UserIcon,
+  Briefcase,
+  MapPin,
+} from 'lucide-react';
+import moment from 'moment';
+import { cn } from '@/lib/utils'; 
 
-// Mock Service User
-export const serviceUser = {
-  id: '1',
-  name: 'Avis, Louise',
-  initials: 'LA',
-  type: 'Individual',
-  care: 'Everycare Romford, Care',
-  address: '123 Care Lane, Romford, RM1 4AB',
-  contact: '01234 567890',
-  carePlan: 'Standard care package with daily visits'
+// --- Constants ---
+const HEADER_HEIGHT_CLASS = "h-12"; 
+const ROW_HEIGHT_CLASS = "h-16";
+const ITEM_TYPE = 'SCHEDULE'; 
+
+// --- Types ---
+interface TimelineProps {
+  schedules: any[];
+  zoomLevel: number;
+  selectedDate: string;
+  contentRef: React.RefObject<HTMLDivElement>;
+  onScheduleClick: (schedule: any) => void;
+  onScheduleUpdate: (id: string, newStart: string, newEnd: string, newResourceId: string) => void;
+}
+
+interface DragItem {
+  id: string;
+  originalStartTime: string;
+  originalEndTime: string;
+  durationMinutes: number;
+  type: string;
+  resourceId: string; // Used here to track DateString
+}
+
+// --- Helper: Time Calculation ---
+const minutesToTime = (totalMinutes: number) => {
+  const hours = Math.floor(totalMinutes / 60);
+  const mins = Math.floor(totalMinutes % 60);
+  const roundedMins = Math.round(mins / 5) * 5;
+  const h = hours.toString().padStart(2, '0');
+  const m = roundedMins.toString().padStart(2, '0');
+  return `${h}:${m}`;
 };
 
-// Mock Tasks for the past and coming 7 days
-export const tasks = [
-  {
-    id: '1',
-    title: 'Morning Care',
-    startTime: '08:00',
-    endTime: '09:00',
-    type: 'service-user',
-    assigneeId: '1',
-    serviceType: 'Personal Care',
-    status: 'allocated',
-    color: 'bg-blue-400',
-    date: moment().format('YYYY-MM-DD'),
-    notes: 'Assist with morning routine and medication'
-  },
-  {
-    id: '2',
-    title: 'Care-Lunch',
-    startTime: '12:00',
-    endTime: '13:30',
-    type: 'service-user',
-    assigneeId: '1',
-    serviceType: 'Meal Assistance',
-    status: 'allocated',
-    color: 'bg-green-400',
-    date: moment().format('YYYY-MM-DD'),
-    notes: 'Prepare lunch and ensure hydration'
-  },
-  {
-    id: '3',
-    title: 'Evening Care',
-    startTime: '18:00',
-    endTime: '19:30',
-    type: 'service-user',
-    assigneeId: '1',
-    serviceType: 'Personal Care',
-    status: 'unallocated',
-    color: 'bg-red-400',
-    date: moment().format('YYYY-MM-DD'),
-    notes: 'Assist with evening routine and bedtime preparation'
-  },
-  {
-    id: '4',
-    title: 'Medication Check',
-    startTime: '10:00',
-    endTime: '10:30',
-    type: 'service-user',
-    assigneeId: '1',
-    serviceType: 'Medication',
-    status: 'allocated',
-    color: 'bg-purple-400',
-    date: moment().subtract(1, 'day').format('YYYY-MM-DD'),
-    notes: 'Morning medication administration'
-  },
-  {
-    id: '5',
-    title: 'Shopping Assistance',
-    startTime: '14:00',
-    endTime: '16:00',
-    type: 'service-user',
-    assigneeId: '1',
-    serviceType: 'Shopping',
-    status: 'allocated',
-    color: 'bg-yellow-400',
-    date: moment().subtract(2, 'days').format('YYYY-MM-DD'),
-    notes: 'Weekly grocery shopping'
-  },
-  {
-    id: '6',
-    title: 'Doctor Appointment',
-    startTime: '09:30',
-    endTime: '11:30',
-    type: 'service-user',
-    assigneeId: '1',
-    serviceType: 'Transport',
-    status: 'allocated',
-    color: 'bg-indigo-400',
-    date: moment().subtract(3, 'days').format('YYYY-MM-DD'),
-    notes: 'Transport to GP clinic'
-  },
-  {
-    id: '7',
-    title: 'Social Visit',
-    startTime: '15:00',
-    endTime: '17:00',
-    type: 'service-user',
-    assigneeId: '1',
-    serviceType: 'Companionship',
-    status: 'unallocated',
-    color: 'bg-pink-400',
-    date: moment().subtract(4, 'days').format('YYYY-MM-DD'),
-    notes: 'Social interaction and activities'
-  },
-  {
-    id: '8',
-    title: 'Weekend Check-in',
-    startTime: '10:00',
-    endTime: '11:00',
-    type: 'service-user',
-    assigneeId: '1',
-    serviceType: 'Wellbeing Check',
-    status: 'allocated',
-    color: 'bg-teal-400',
-    date: moment().subtract(5, 'days').format('YYYY-MM-DD'),
-    notes: 'Weekend wellbeing assessment'
-  }
-];
-
-// Day Stats - summarize task counts over the last 7 days
-export const dayStats = Array.from({ length: 7 }, (_, i) => {
-  const date = moment().subtract(i, 'days');
-  const formattedDate = date.format('YYYY-MM-DD');
-  const dayTasks = tasks.filter((task) => task.date === formattedDate);
-
-  return {
-    date: date.format('DD/MM'),
-    day: date.format('ddd'),
-    allocated: dayTasks.filter((t) => t.status === 'allocated').length,
-    unallocated: dayTasks.filter((t) => t.status === 'unallocated').length,
-    total: dayTasks.length
-  };
-}).reverse(); // optional: keep order from oldest to newest
-
 export function Timeline({
-  selectedUser,
-  tasks,
+  schedules,
   zoomLevel,
   contentRef,
-  selectedDate
-}) {
-  const SLOT_WIDTH = zoomLevel * 2;
+  selectedDate,
+  onScheduleClick,
+  onScheduleUpdate,
+}: TimelineProps) {
+
+  const SLOT_WIDTH = zoomLevel * 2.5; 
+  
   const userListRef = useRef<HTMLDivElement>(null);
   const isUserScroll = useRef(false);
   const isContentScroll = useRef(false);
-  const [selectedTask, setSelectedTask] = useState(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Generate time slots (always 24 hours)
+  // --- Data Preparation ---
+  // Day Mode: 24 Hours
   const timeSlots = useMemo(() => {
-    return Array.from({ length: 24 }, (_, i) => {
-      const hour = i.toString().padStart(2, '0');
-      return `${hour}:00`;
-    });
+    return Array.from({ length: 24 }, (_, i) => ({ 
+      label: `${i.toString().padStart(2, '0')}:00`,
+      val: i 
+    }));
   }, []);
 
-  // Generate past 7 days for selected user view
-  const past7Days = useMemo(() => {
+  // Generate 7 Days Row Data
+  const rowDays = useMemo(() => {
     const days = [];
-    // Use selectedDate instead of today
-    const baseDate = selectedDate ? moment(selectedDate) : moment();
-
-    for (let i = 6; i >= 0; i--) {
-      const date = baseDate.clone().subtract(i, 'days');
-      days.push({
-        date: date.format('YYYY-MM-DD'),
-        displayDate: date.format('ddd DD/MM'),
-        fullDate: date.format('dddd DD/MM/YYYY'),
-        isToday: date.isSame(moment(), 'day') // Check if this day is actually today
-      });
-    }
-    return days;
+   const baseDate = selectedDate ? moment(selectedDate) : moment();
+      for (let i = 6; i >= 0; i--) {
+        const date = baseDate.clone().subtract(i, 'days');
+        days.push({
+          date: date.format('YYYY-MM-DD'),
+          displayDate: date.format('ddd, MMM DD'),
+          isToday: date.isSame(moment(), 'day')
+        });
+      }
+      return days;
   }, [selectedDate]);
 
-  // Get task position for daily view (hours)
-  const getTaskPosition = (startTime: string, endTime: string) => {
-    const [startHour, startMinute] = startTime.split(':').map(Number);
-    const [endHour, endMinute] = endTime.split(':').map(Number);
+   
 
-    const startTotalMinutes = startHour * 60 + startMinute;
-    const endTotalMinutes = endHour * 60 + endMinute;
+  // --- Scroll Sync Logic ---
+  useEffect(() => {
+    const userList = userListRef.current;
+    const content = contentRef.current;
+    if (!userList || !content) return;
 
-    const startPosition = (startTotalMinutes / 60) * SLOT_WIDTH;
-    const duration = ((endTotalMinutes - startTotalMinutes) / 60) * SLOT_WIDTH;
+    const handleUserListScroll = () => {
+      if (!isContentScroll.current) {
+        isUserScroll.current = true;
+        content.scrollTop = userList.scrollTop;
+        setTimeout(() => (isUserScroll.current = false), 50);
+      }
+    };
+    const handleContentScroll = () => {
+      if (!isUserScroll.current) {
+        isContentScroll.current = true;
+        userList.scrollTop = content.scrollTop;
+        setTimeout(() => (isContentScroll.current = false), 50);
+      }
+    };
 
-    return { left: `${startPosition}rem`, width: `${duration}rem` };
+    userList.addEventListener('scroll', handleUserListScroll);
+    content.addEventListener('scroll', handleContentScroll);
+
+    return () => {
+      userList.removeEventListener('scroll', handleUserListScroll);
+      content.removeEventListener('scroll', handleContentScroll);
+    };
+  }, [contentRef]);
+
+  // --- Logic Helpers ---
+  const getSchedulePosition = (schedule: any) => {
+    const { startTime, endTime } = schedule;
+    if (!startTime || !endTime) return { left: '0', width: '0' };
+    const [startH, startM] = startTime.split(':').map(Number);
+    const [endH, endM] = endTime.split(':').map(Number);
+    const startMins = startH * 60 + startM;
+    const endMins = endH * 60 + endM;
+    const startPos = (startMins / 60) * SLOT_WIDTH;
+    const duration = ((endMins - startMins) / 60) * SLOT_WIDTH;
+    return { left: `${startPos}rem`, width: `${duration}rem` };
   };
 
-  // Get filtered tasks for selected user in the past 7 days
-  const filteredTasks = useMemo(() => {
-    const sevenDaysAgo = moment().subtract(7, 'days').startOf('day');
-    return tasks.filter((task) => {
-      const taskDate = moment(
-        task.date || moment().format('YYYY-MM-DD'),
-        'YYYY-MM-DD'
-      );
-      return (
-        task.assigneeId === selectedUser?.id &&
-        taskDate.isSameOrAfter(sevenDaysAgo)
-      );
-    });
-  }, [tasks, selectedUser]);
-
-  // Helper to calculate duration in minutes from startTime and endTime strings like '08:00'
-  function getDurationMinutes(startTime: string, endTime: string) {
-    const start = moment(startTime, 'HH:mm');
-    const end = moment(endTime, 'HH:mm');
-    if (end.isBefore(start)) {
-      end.add(1, 'day');
-    }
-    return moment.duration(end.diff(start)).asMinutes();
-  }
-
-  const totalMinutes = useMemo(() => {
-    return filteredTasks.reduce((acc, task) => {
-      return acc + getDurationMinutes(task.startTime, task.endTime);
-    }, 0);
-  }, [filteredTasks]);
-
-  const allocatedMinutes = useMemo(() => {
-    return filteredTasks
-      .filter((task) => task.status === 'allocated')
-      .reduce((acc, task) => {
-        return acc + getDurationMinutes(task.startTime, task.endTime);
-      }, 0);
-  }, [filteredTasks]);
-
-  const unallocatedMinutes = totalMinutes - allocatedMinutes;
-
-  // Format minutes to 'HHhrs MMmin'
-  function formatDuration(minutes: number) {
-    const hrs = Math.floor(minutes / 60);
-    const mins = Math.round(minutes % 60);
-    return `${hrs.toString().padStart(2, '0')}hrs ${mins
-      .toString()
-      .padStart(2, '0')}min`;
-  }
+  const displayDate = selectedDate ? moment(selectedDate).format('MMMM Do, YYYY') : moment().format('MMMM Do, YYYY');
 
   return (
-    <div className="flex w-full flex-col overflow-hidden">
-      {/* Header Info */}
-      <div className="flex-shrink-0 border-b border-gray-200 bg-white p-2">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 text-xs font-medium text-gray-700">
-              <Calendar className="h-3 w-3" />
-              {selectedUser?.name} - Past 7 Days
-            </div>
+    <div className="flex h-full w-full flex-col overflow-hidden rounded-lg border border-slate-200 shadow-sm relative z-0">
+      
+      {/* 1. Header */}
+      <div className="flex flex-shrink-0 items-center justify-between border-b border-slate-200  px-4 py-3 z-30 relative shadow-[0_1px_2px_rgba(0,0,0,0.05)]">
+        <div className="flex items-center gap-3">
+          <div className="flex flex-col">
+            <span className="flex items-center gap-2 text-sm font-semibold text-slate-800">
+                <Calendar className="h-4 w-4 text-slate-500" />
+                {displayDate}
+            </span>
           </div>
-          <div className="text-xs text-gray-600">
-            Total: {formatDuration(totalMinutes)} | Unallocated:{' '}
-            {formatDuration(unallocatedMinutes)} | Allocated:{' '}
-            {formatDuration(allocatedMinutes)}
-          </div>
+        </div>
+        
+        <div className="flex items-center gap-4 text-xs">
+          <div className="flex items-center gap-1.5"><div className="h-2.5 w-2.5 rounded-full bg-emerald-500"></div><span className="text-slate-600">Allocated</span></div>
+          <div className="flex items-center gap-1.5"><div className="h-2.5 w-2.5 rounded-full bg-amber-400"></div><span className="text-slate-600">Unallocated</span></div>
         </div>
       </div>
 
-      {/* Timeline Container */}
-      <div className="flex flex-1 overflow-hidden">
-        {/* Fixed Date Column */}
-        <div className="flex w-20 flex-shrink-0 flex-col border-r border-gray-200 bg-white sm:w-48">
-          <div className="flex h-8 flex-shrink-0 items-center justify-center border-b border-gray-200 bg-gray-50">
-            <span className="text-xs font-medium text-gray-600">Days</span>
+      {/* 2. Body */}
+      <div className="flex flex-1 overflow-hidden relative isolate">
+        
+        {/* Left Sidebar: Dates */}
+        <div className="flex w-40 flex-shrink-0 flex-col border-r border-slate-200  z-20 shadow-[4px_0_24px_-12px_rgba(0,0,0,0.1)] relative">
+          <div className={cn("flex flex-shrink-0 items-center border-b border-slate-200 bg-slate-50 px-4", HEADER_HEIGHT_CLASS)}>
+            <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+              Date
+            </span>
           </div>
 
-          <div ref={userListRef} className="overflow-y-auto">
-            {past7Days.map((day, index) => {
-              const dayTasks = filteredTasks.filter(
-                (task) =>
-                  (task.date || moment().format('YYYY-MM-DD')) === day.date
-              );
-
-              return (
-                <div
-                  key={day.date}
-                  className={`flex h-10 items-center gap-2 p-1 sm:h-12 ${
-                    index % 2 === 0 ? 'bg-gray-50' : 'bg-white'
-                  } ${day.isToday ? 'bg-blue-50 ring-1 ring-blue-200' : ''} rounded-md`}
+          <div ref={userListRef} className="overflow-y-auto scrollbar-hide">
+              {rowDays.map((day) => (
+                <div 
+                    key={day.date} 
+                    className={cn(
+                        "flex items-center px-4 border-b border-slate-200",  
+                        ROW_HEIGHT_CLASS,
+                        day.isTarget ? "bg-blue-50/50" : ""
+                    )}
                 >
-                  {/* Date indicator */}
-                  <div className="flex-shrink-0">
-                    <div
-                      className={`flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium ${
-                        day.isToday
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'bg-gray-100 text-gray-700'
-                      }`}
-                    >
-                      {moment(day.date).format('DD')}
-                    </div>
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <p
-                      className={`truncate text-sm font-medium ${
-                        day.isToday ? 'text-blue-900' : 'text-gray-900'
-                      }`}
-                    >
-                      {day.displayDate}
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <p className="text-xs text-gray-500">
-                        {day.isToday ? 'Today' : moment(day.date).fromNow()}
-                      </p>
-                      {dayTasks.length > 0 && (
-                        <span className="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-800">
-                          {dayTasks.length}
-                        </span>
-                      )}
-                    </div>
+                  <div className="flex flex-col">
+                    <span className={cn("text-sm font-medium", day.isToday ? "text-supperagent" : "text-slate-700")}>
+                        {day.displayDate}
+                    </span>
+                    {day.isToday && <span className="text-[10px] text-supperagent font-medium">Today</span>}
                   </div>
                 </div>
-              );
-            })}
+              ))}
           </div>
         </div>
 
-        {/* Scrollable Timeline Content */}
-        <div
-          className="flex-1 overflow-auto"
-          ref={contentRef}
-          style={{ overflowY: 'auto' }}
-        >
-          {/* Time Header */}
-          <div
-            className="sticky top-0 z-50 border-b border-gray-200 bg-white"
+        {/* Right Content (Timeline Grid) */}
+        <div className="flex-1 overflow-auto bg-slate-50/50 z-0" ref={contentRef}>
+          
+          <div 
+            className={cn("sticky top-0 z-30 flex border-b border-slate-200 bg-white shadow-sm", HEADER_HEIGHT_CLASS)}
             style={{ width: `${timeSlots.length * SLOT_WIDTH}rem` }}
           >
-            <div
-              className="flex"
-              style={{ width: `${timeSlots.length * SLOT_WIDTH}rem` }}
-            >
-              {timeSlots.map((time, index) => (
-                <div
-                  key={index}
-                  className="flex-shrink-0 border-l border-gray-200 py-2 text-center text-xs text-gray-500"
-                  style={{ width: `${SLOT_WIDTH}rem` }}
-                >
-                  {time}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Rows with Tasks */}
-          <div
-            className="divide-y divide-gray-200"
-            style={{ width: `${timeSlots.length * SLOT_WIDTH}rem` }}
-          >
-            {past7Days.map((day, index) => (
-              <div
-                key={day.date}
-                className={`relative h-10 sm:h-12 ${
-                  index % 2 === 0 ? 'bg-gray-50' : 'bg-white'
-                } ${day.isToday ? 'bg-blue-50' : ''}`}
-              >
-                {/* Grid Lines */}
-                <div className="pointer-events-none absolute inset-0 flex">
-                  {timeSlots.map((time, timeIndex) => (
-                    <div
-                      key={timeIndex}
-                      className={`h-full border-l ${
-                        day.isToday ? 'border-blue-200' : 'border-gray-200'
-                      }`}
-                      style={{ width: `${SLOT_WIDTH}rem` }}
-                    />
-                  ))}
-                </div>
-
-                {/* Tasks for this day */}
-                {filteredTasks
-                  .filter(
-                    (task) =>
-                      (task.date || moment().format('YYYY-MM-DD')) === day.date
-                  )
-                  .map((task) => {
-                    const position = getTaskPosition(
-                      task.startTime,
-                      task.endTime
-                    );
-
-                    return (
-                      <ContextMenu key={task.id}>
-                        <ContextMenuTrigger asChild>
-                          <div
-                            onContextMenu={(e) => e.stopPropagation()} // optional safeguard
-                            className={`absolute top-1 h-6 shadow-lg sm:h-10 ${task.color} z-20 cursor-pointer truncate rounded p-1 text-xs text-white transition-all hover:opacity-80 hover:shadow-xl`}
-                            style={position}
-                            onClick={() => {
-                              setSelectedTask(task);
-                              setIsDialogOpen(true);
-                            }}
-                          >
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div>
-                                  <div className="truncate text-xs font-medium">
-                                    {task.startTime}-{task.endTime}
-                                  </div>
-                                  <div className="truncate text-xs">
-                                    {task.title}
-                                  </div>
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent className="z-50 shadow-lg">
-                                <div className="space-y-1 p-1">
-                                  <p className="text-xs font-medium">
-                                    {task.title}
-                                  </p>
-                                  <p className="text-xs">
-                                    {task.startTime} - {task.endTime}
-                                  </p>
-                                  <p className="text-xs">{task.serviceType}</p>
-                                  <p className="text-xs">
-                                    Status:{' '}
-                                    {task.status === 'allocated'
-                                      ? 'Allocated'
-                                      : 'Unallocated'}
-                                  </p>
-                                </div>
-                              </TooltipContent>
-                            </Tooltip>
-                          </div>
-                        </ContextMenuTrigger>
-
-                        <ContextMenuContent className="z-[9999] w-36 border-none bg-white text-black shadow-lg">
-                          <ContextMenuSub>
-                            <ContextMenuSubTrigger className="text-xs">
-                              Allocate
-                            </ContextMenuSubTrigger>
-                            <ContextMenuSubContent className="w-48 border-none bg-white text-black shadow-lg">
-                              {employees.map((employee) => (
-                                <ContextMenuSub key={employee.id}>
-                                  <ContextMenuSubTrigger className="text-xs">
-                                    {employee.name}
-                                  </ContextMenuSubTrigger>
-                                  <ContextMenuSubContent className="w-48 space-y-1 border-none bg-white text-black shadow-lg">
-                                    <ContextMenuItem className="text-xs">
-                                      Maintenance
-                                    </ContextMenuItem>
-
-                                    <ContextMenuSub>
-                                      <ContextMenuSubTrigger className="text-xs">
-                                        Show Routes
-                                      </ContextMenuSubTrigger>
-                                      <ContextMenuSubContent className="w-48 border-none bg-white text-black shadow-lg">
-                                        <ContextMenuItem className="text-xs">
-                                          Send Email
-                                        </ContextMenuItem>
-                                        <ContextMenuItem className="text-xs">
-                                          Send Message
-                                        </ContextMenuItem>
-                                      </ContextMenuSubContent>
-                                    </ContextMenuSub>
-
-                                    <ContextMenuSub>
-                                      <ContextMenuSubTrigger className="text-xs">
-                                        Allocate
-                                      </ContextMenuSubTrigger>
-                                      <ContextMenuSubContent className="w-48 border-none bg-white text-black shadow-lg">
-                                        <ContextMenuItem className="text-xs">
-                                          Single
-                                        </ContextMenuItem>
-                                        <ContextMenuItem className="text-xs">
-                                          Batch
-                                        </ContextMenuItem>
-                                      </ContextMenuSubContent>
-                                    </ContextMenuSub>
-                                  </ContextMenuSubContent>
-                                </ContextMenuSub>
-                              ))}
-                            </ContextMenuSubContent>
-                          </ContextMenuSub>
-
-                          <ContextMenuItem className="text-xs">
-                            Copy
-                          </ContextMenuItem>
-                          <ContextMenuItem className="text-xs">
-                            Cancel
-                          </ContextMenuItem>
-                          <ContextMenuItem className="text-xs">
-                            Delete
-                          </ContextMenuItem>
-                        </ContextMenuContent>
-                      </ContextMenu>
-                    );
-                  })}
+            {timeSlots.map((slot: any, index) => (
+              <div key={index} 
+                className="flex-shrink-0 flex items-center justify-center border-r border-slate-200 text-xs font-medium text-slate-500"
+                style={{ width: `${SLOT_WIDTH}rem` }}>
+                {slot.label}
               </div>
             ))}
           </div>
-        </div>
 
-        <TaskDetailDialog
-          task={selectedTask}
-          isOpen={isDialogOpen}
-          onClose={() => setIsDialogOpen(false)}
-        />
+          <div className="relative" style={{ width: `${timeSlots.length * SLOT_WIDTH}rem` }}>
+            <div className="absolute inset-0 flex pointer-events-none z-0">
+                {timeSlots.map((_, i) => (
+                  <div key={i} className="h-full border-r border-slate-200 border-dashed" style={{ width: `${SLOT_WIDTH}rem` }} />
+                ))}
+            </div>
+
+            <div className="relative z-0">
+              {rowDays.map((day) => {
+                const daySchedules = schedules.filter(s => moment(s.date).format('YYYY-MM-DD') === day.date);
+                
+                return (
+                  <DroppableRow 
+                    key={day.date}
+                    dateKey={day.date} // This acts as the resourceId for the row
+                    schedules={daySchedules}
+                    slotWidth={SLOT_WIDTH}
+                    onScheduleUpdate={onScheduleUpdate}
+                    onScheduleClick={onScheduleClick}
+                    getSchedulePosition={getSchedulePosition}
+                    isTarget={day.isTarget}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
-function TaskDetailDialog({
-  task,
-  isOpen,
-  onClose
-}: {
-  task: {
-    title: string;
-    startTime: string;
-    endTime: string;
-    type: 'service-user' | 'employee';
-    serviceType: string;
-    status: 'allocated' | string;
-    assigneeId: string;
-    date?: string;
-  };
-  isOpen: boolean;
-  onClose: () => void;
-}) {
-  if (!isOpen || !task) return null;
+// --- SUB-COMPONENT: Droppable Row ---
+const DroppableRow = ({ 
+  dateKey, 
+  schedules, 
+  slotWidth, 
+  onScheduleUpdate, 
+  onScheduleClick,
+  getSchedulePosition,
+  isTarget
+}: any) => {
+  const rowRef = useRef<HTMLDivElement>(null);
+  const canDrop = true;
+
+  const [{ isOver }, drop] = useDrop({
+    accept: ITEM_TYPE,
+    // Only allow drop if it's the same date (Preventing Date change via drag for now unless backend supports it)
+    canDrop: (item: DragItem) => item.resourceId === dateKey, 
+    drop: (item: DragItem, monitor) => {
+      const offset = monitor.getClientOffset();
+      const rowRect = rowRef.current?.getBoundingClientRect();
+      
+      if (rowRect && offset) {
+        const xPos = offset.x - rowRect.left; 
+        const PIXELS_PER_REM = 16;
+        const pixelsPerHour = (slotWidth * PIXELS_PER_REM);
+        
+        const delta = monitor.getDifferenceFromInitialOffset();
+        if(!delta) return;
+
+        const minutesDelta = (delta.x / pixelsPerHour) * 60;
+        const [startH, startM] = item.originalStartTime.split(':').map(Number);
+        const originalStartMins = startH * 60 + startM;
+        
+        let newStartMins = originalStartMins + minutesDelta;
+        let newEndMins = newStartMins + item.durationMinutes;
+
+        if(newStartMins < 0) { newStartMins = 0; newEndMins = item.durationMinutes; }
+        if(newEndMins > 1440) { newEndMins = 1440; newStartMins = 1440 - item.durationMinutes; }
+
+        const newStartStr = minutesToTime(newStartMins);
+        const newEndStr = minutesToTime(newEndMins);
+
+        onScheduleUpdate(item.id, newStartStr, newEndStr, dateKey);
+      }
+    },
+    collect: (monitor) => ({
+      isOver: !!monitor.isOver(),
+    }),
+  });
+
+  drop(rowRef);
 
   return (
-    <div
-      className="animate-fade-in fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
-      onClick={onClose}
+    <div 
+      ref={rowRef}
+      className={cn(
+        "relative border-b border-slate-200 transition-colors",
+        ROW_HEIGHT_CLASS,
+        isTarget ? "bg-blue-50/20" : "",
+        (isOver && canDrop) && "bg-blue-50/80 ring-2 ring-inset ring-blue-200"
+      )}
     >
-      <div
-        className="animate-scale-in w-full max-w-md rounded-lg bg-white p-6 shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex items-start justify-between">
-          <h3 className="text-xl font-semibold text-gray-900">{task.title}</h3>
-          <button
-            onClick={onClose}
-            className="text-gray-400 transition-colors hover:text-gray-500"
-            aria-label="Close"
-          >
-            <X size={20} />
-          </button>
-        </div>
+      {schedules.map((schedule: any) => {
+        const posStyle = getSchedulePosition(schedule);
+        if (posStyle.display === 'none') return null;
 
-        <div className="mt-6 space-y-4">
-          <div className="flex items-start">
-            <Clock className="mr-3 mt-0.5 h-5 w-5 flex-shrink-0 text-gray-500" />
-            <div>
-              <p className="text-sm text-gray-500">Time</p>
-              <p className="text-sm font-medium">
-                {task.startTime} - {task.endTime}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start">
-            <User className="mr-3 mt-0.5 h-5 w-5 flex-shrink-0 text-gray-500" />
-            <div>
-              <p className="text-sm text-gray-500">Type</p>
-              <p className="text-sm font-medium">
-                {task.type === 'service-user' ? 'Service User' : 'Employee'}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-start">
-            <ClipboardList className="mr-3 mt-0.5 h-5 w-5 flex-shrink-0 text-gray-500" />
-            <div>
-              <p className="text-sm text-gray-500">Service Type</p>
-              <p className="text-sm font-medium">{task.serviceType}</p>
-            </div>
-          </div>
-
-          <div className="flex items-start">
-            {task.status === 'allocated' ? (
-              <CheckCircle2 className="mr-3 mt-0.5 h-5 w-5 flex-shrink-0 text-green-500" />
-            ) : (
-              <AlertCircle className="mr-3 mt-0.5 h-5 w-5 flex-shrink-0 text-yellow-500" />
-            )}
-            <div>
-              <p className="text-sm text-gray-500">Status</p>
-              <Badge
-                variant={
-                  task.status === 'allocated' ? 'default' : 'destructive'
-                }
-                className="mt-1"
-              >
-                {task.status.charAt(0).toUpperCase() + task.status.slice(1)}
-              </Badge>
-            </div>
-          </div>
-
-          <div className="flex items-start">
-            <User className="mr-3 mt-0.5 h-5 w-5 flex-shrink-0 text-gray-500" />
-            <div>
-              <p className="text-sm text-gray-500">Assignee ID</p>
-              <p className="text-sm font-medium">{task.assigneeId}</p>
-            </div>
-          </div>
-
-          <div className="flex items-start">
-            <Calendar className="mr-3 mt-0.5 h-5 w-5 flex-shrink-0 text-gray-500" />
-            <div>
-              <p className="text-sm text-gray-500">Date</p>
-              <p className="text-sm font-medium">
-                {task.date || moment().format('YYYY-MM-DD')}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-8 flex justify-end gap-2">
-          <Button variant="outline" onClick={onClose} className="gap-2">
-            Close
-          </Button>
-          <Button
-            variant="default"
-            className="bg-supperagent text-white hover:bg-supperagent/90"
-          >
-            Edit Schedule
-          </Button>
-        </div>
-      </div>
+        return (
+          <DraggableScheduleBlock
+            key={schedule._id}
+            schedule={schedule}
+            position={posStyle}
+            onClick={onScheduleClick}
+            canDrag={canDrop}
+            resourceId={dateKey} // Passing Date as resourceId
+          />
+        );
+      })}
     </div>
   );
 }
+
+// --- SUB-COMPONENT: Draggable Schedule Block ---
+const DraggableScheduleBlock = ({ schedule, position, onClick, canDrag, resourceId }: any) => {
+  const startTime = moment(schedule.startTime, 'HH:mm');
+  const endTime = moment(schedule.endTime, 'HH:mm');
+  const duration = moment.duration(endTime.diff(startTime));
+  const durationString = `${Math.floor(duration.asHours())}h ${duration.minutes()}m`;
+  const formattedDate = moment(schedule.date).format('DD-MM-yyyy');
+  
+  const employeeName = schedule.employee ? `${schedule.employee.firstName} ${schedule.employee.lastName}` : 'Unallocated';
+  const clientName = schedule.serviceUser ? `${schedule.serviceUser.firstName} ${schedule.serviceUser.lastName}` : 'Unknown Client';
+  const title = employeeName; // Since we are on Client Page, showing Employee name on block is more useful
+  const isAllocated = !!schedule.employee;
+
+  let statusStyle = 'bg-amber-100 border-amber-300 text-amber-800 hover:bg-amber-200 shadow-sm';
+  if (schedule.cancellation) statusStyle = 'bg-slate-100 border-slate-300 text-slate-500 hover:bg-slate-200';
+  else if (schedule.employee) statusStyle = 'bg-emerald-100 border-emerald-300 text-emerald-800 hover:bg-emerald-200 shadow-sm';
+
+  const [{ isDragging }, drag] = useDrag(() => ({
+    type: ITEM_TYPE,
+    item: { 
+      id: schedule._id, 
+      originalStartTime: schedule.startTime,
+      originalEndTime: schedule.endTime,
+      durationMinutes: duration.asMinutes(),
+      type: ITEM_TYPE,
+      resourceId: resourceId 
+    },
+    canDrag: canDrag,
+    collect: (monitor) => ({
+      isDragging: !!monitor.isDragging(),
+    }),
+  }), [schedule._id, schedule.startTime, schedule.endTime, canDrag, resourceId]);
+
+  if (isDragging) {
+    return <div ref={drag} style={position} className="absolute top-3 h-10 opacity-50 bg-gray-300 rounded-md border-dashed border-2 border-gray-400" />;
+  }
+
+  return (
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <div 
+          ref={drag}
+          className={cn(
+            "absolute top-3 h-10 rounded-md border-l-4 text-xs font-medium transition-all hover:scale-[1.02] hover:shadow-md z-10 hover:z-20",
+            statusStyle,
+            canDrag ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
+          )}
+          style={position}
+        >
+          <TooltipProvider>
+            <Tooltip delayDuration={100}>
+              <TooltipTrigger asChild>
+                <div 
+                  className="w-full h-full px-2 py-1 flex flex-col justify-center overflow-hidden"
+                  onClick={(e) => {
+                    e.stopPropagation(); 
+                    onClick(schedule);
+                  }}
+                >
+                  <div className="flex items-center justify-between gap-1 w-full">
+                    <span className="truncate font-bold">{title}</span>
+                  </div>
+                  <div className="flex items-center gap-1 opacity-80 w-full">
+                      <Clock className="h-3 w-3 flex-shrink-0" />
+                      <span className="truncate text-[10px]">{schedule.startTime} - {schedule.endTime}</span>
+                  </div>
+                </div>
+              </TooltipTrigger>
+              
+              <TooltipPrimitive.Portal>
+                <TooltipContent 
+                  side="top" 
+                  align="center" 
+                  className="z-[99999] w-80 p-0 border-slate-200 shadow-xl rounded-xl overflow-hidden "
+                  avoidCollisions={true} 
+                  sideOffset={8}
+                >
+                  <div className="flex flex-col">
+                    <div className={cn("px-4 py-3 flex items-start justify-between border-b border-slate-100", 
+                      isAllocated ? "bg-emerald-50/50" : "bg-amber-50/50"
+                    )}>
+                      <div className="flex flex-col gap-1">
+                        <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                          {schedule.serviceType || 'General Visit'}
+                        </span>
+                        
+                        <div className="flex items-center gap-1.5 text-sm font-semibold text-slate-800">
+                            <Calendar className="h-3.5 w-3.5 text-slate-500" />
+                            <span>{formattedDate}</span>
+                        </div>
+
+                        <span className="text-xs text-slate-500 font-medium">
+                          {durationString} ({schedule.startTime} - {schedule.endTime})
+                        </span>
+                      </div>
+                      <Badge variant={isAllocated ? "default" : "secondary"} className={cn(
+                        "mt-1",
+                        isAllocated ? "bg-emerald-500 hover:bg-emerald-600 text-white" : "bg-amber-400 hover:bg-amber-500 text-amber-900"
+                      )}>
+                        {isAllocated ? 'Allocated' : 'Unallocated'}
+                      </Badge>
+                    </div>
+
+                    <div className="p-4 space-y-4">
+                      <div className="flex items-start gap-3">
+                        <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                          <UserIcon className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-slate-500">Service User</p>
+                          <p className="text-sm font-medium text-slate-900">{clientName}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start gap-3">
+                        <div className={cn("h-8 w-8 rounded-full flex items-center justify-center", 
+                          isAllocated ? "bg-purple-100 text-purple-600" : "bg-slate-100 text-slate-400"
+                        )}>
+                          <Briefcase className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-slate-500">Assigned Staff</p>
+                          <p className={cn("text-sm font-medium", isAllocated ? "text-slate-900" : "text-slate-400 italic")}>
+                            {employeeName}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="h-px w-full bg-slate-100"></div>
+
+                      <div className="flex items-start gap-3">
+                        <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600">
+                          <MapPin className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-slate-500">Location Details</p>
+                          <div className="flex flex-col">
+                             <span className="text-sm font-medium text-slate-900">
+                               {schedule.branch || 'No Branch'}
+                             </span>
+                             <span className="text-xs text-slate-500">
+                               {schedule.area || 'No Area'}
+                             </span>
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+                </TooltipContent>
+              </TooltipPrimitive.Portal>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      </ContextMenuTrigger>
+    </ContextMenu>
+  );
+};

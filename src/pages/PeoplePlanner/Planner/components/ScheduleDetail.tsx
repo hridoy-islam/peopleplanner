@@ -211,7 +211,7 @@ export function ScheduleDetailComponent({
 
       // 3. Close the Confirmation Dialog
       setIsDeleteDialogOpen(false);
-
+onScheduleUpdate({});
       // 4. Close the Main Schedule Detail Modal (refresh parent list)
       onClose();
     } catch (error: any) {

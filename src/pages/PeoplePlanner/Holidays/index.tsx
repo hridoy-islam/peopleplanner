@@ -386,7 +386,7 @@ useEffect(() => {
   const holidayYears = generateHolidayYears(20, 50);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="">
       <div className="">
         <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
           {/* My Holidays Section */}

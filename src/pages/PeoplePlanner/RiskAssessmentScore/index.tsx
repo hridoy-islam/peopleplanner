@@ -125,7 +125,7 @@ export default function RiskAssessmentScorePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="">
       {/* Header */}
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold">Risk Assessment Scores</h1>

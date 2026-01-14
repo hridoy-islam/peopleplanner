@@ -38,9 +38,25 @@ const Step1Schema = z.object({
   payRate: z.string().min(1, 'Pay rate is required'),
   invoiceRate: z.string().min(1, 'Invoice rate is required'),
   timeInMinutes: z
-    .union([z.string(), z.number()])
-    .transform((val) => Number(val)),
-  travelTime: z.union([z.string(), z.number()]).transform((val) => Number(val))
+  .union([z.string(), z.number()])
+  .refine((val) => val !== "" && val !== null && val !== undefined, {
+    message: "Time in minutes is required",
+  })
+  .transform((val) => Number(val))
+  .refine((val) => !isNaN(val), {
+    message: "Time in minutes must be a valid number",
+  }),
+
+travelTime: z
+  .union([z.string(), z.number()])
+  .refine((val) => val !== "" && val !== null && val !== undefined, {
+    message: "Travel time is required",
+  })
+  .transform((val) => Number(val))
+  .refine((val) => !isNaN(val), {
+    message: "Travel time must be a valid number",
+  }),
+
 });
 const Step2Schema = z.object({
   // UI Helper fields (converted to arrays on submit)
@@ -100,7 +116,13 @@ interface Option {
   label: string;
 }
 
-export function ScheduleForm({onClose, onScheduleCreated}: {onClose: () => void; onScheduleCreated: (newSchedule: any) => void}) {
+export function ScheduleForm({
+  onClose,
+  onScheduleCreated
+}: {
+  onClose: () => void;
+  onScheduleCreated: (newSchedule: any) => void;
+}) {
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [fetchingUsers, setFetchingUsers] = useState(false);
@@ -308,7 +330,6 @@ export function ScheduleForm({onClose, onScheduleCreated}: {onClose: () => void;
         idBadge: data.idBadge,
         purchaseOrder: data.purchaseOrder,
 
-
         notes: data.noteInput ? [{ note: data.noteInput }] : [],
 
         tags: data.tags || [],
@@ -322,7 +343,7 @@ export function ScheduleForm({onClose, onScheduleCreated}: {onClose: () => void;
       };
 
       // 2. Send Request
-      const res= await axiosInstance.post('/schedules', payload);
+      const res = await axiosInstance.post('/schedules', payload);
       toast({ title: 'Success', description: 'Schedule created successfully' });
       onScheduleCreated();
       form.reset();
@@ -438,7 +459,7 @@ export function ScheduleForm({onClose, onScheduleCreated}: {onClose: () => void;
                   name="startTime"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Start Time *</FormLabel>
+                      <FormLabel>Start Time *(04:00)</FormLabel>
                       <FormControl>
                         <Input
                           type="text"
@@ -462,7 +483,7 @@ export function ScheduleForm({onClose, onScheduleCreated}: {onClose: () => void;
                   name="endTime"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>End Time *</FormLabel>
+                      <FormLabel>End Time * (14:00)</FormLabel>
                       <FormControl>
                         <Input
                           type="text"
@@ -519,6 +540,13 @@ export function ScheduleForm({onClose, onScheduleCreated}: {onClose: () => void;
                           }
                           placeholder="Select employee"
                           isLoading={fetchingUsers}
+                          styles={{
+                            menuList: (base) => ({
+                              ...base,
+                              maxHeight: '150px',
+                              overflowY: 'auto'
+                            })
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -546,6 +574,13 @@ export function ScheduleForm({onClose, onScheduleCreated}: {onClose: () => void;
                           }
                           placeholder="Select service user"
                           isLoading={fetchingUsers}
+                          styles={{
+                            menuList: (base) => ({
+                              ...base,
+                              maxHeight: '150px',
+                              overflowY: 'auto'
+                            })
+                          }}
                         />
                       </FormControl>
                       <FormMessage />

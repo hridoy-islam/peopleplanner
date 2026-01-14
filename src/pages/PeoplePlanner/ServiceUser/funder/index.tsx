@@ -10,11 +10,12 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { Eye, Plus, Search } from 'lucide-react';
+import { Eye, MoveLeft, Plus, Search } from 'lucide-react';
 import { DynamicPagination } from '@/components/shared/DynamicPagination';
 import { Input } from '@/components/ui/input';
 import { useNavigate, useParams } from 'react-router-dom';
 import axiosInstance from '@/lib/axios'; // ✅ Import axiosInstance
+import { BlinkingDots } from '@/components/shared/blinking-dots';
 
 export default function ServiceUserFunder() {
   const [fundUsers, setFundUsers] = useState<any[]>([]); // ✅ Initialize as empty array
@@ -26,7 +27,7 @@ export default function ServiceUserFunder() {
   const { id } = useParams<{ id: string }>(); // ✅ Type safety
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [entriesPerPage, setEntriesPerPage] = useState(5);
+  const [entriesPerPage, setEntriesPerPage] = useState(100);
 
   const navigate = useNavigate();
 
@@ -44,7 +45,11 @@ export default function ServiceUserFunder() {
 
         // 2. Fetch Funders for this Service User
         const fundersRes = await axiosInstance.get(`/service-funder`, {
-          params: { serviceUser: id }
+          params: {
+            serviceUser: id,
+            limit: 'all',
+            fields: 'title firstName lastName middleInitial email phone type'
+          }
         });
         setFundUsers(fundersRes.data.data.result || []);
       } catch (error) {
@@ -113,8 +118,8 @@ export default function ServiceUserFunder() {
 
   if (loading && !serviceUser) {
     return (
-      <div className="flex h-64 items-center justify-center rounded-md bg-white p-6 shadow-md">
-        <div className="text-lg text-gray-500">Loading...</div>
+      <div className="flex justify-center py-6">
+        <BlinkingDots size="large" color="bg-supperagent" />
       </div>
     );
   }
@@ -138,13 +143,21 @@ export default function ServiceUserFunder() {
             </Button>
           </div>
         </div>
-
-        <Button
-          className="flex gap-2 bg-supperagent text-white hover:bg-supperagent/90"
-          onClick={() => navigate('create')}
-        >
-          <Plus className="h-4 w-4" /> Add Funder
-        </Button>
+        <div className="flex flex-row items-center gap-4">
+          <Button
+            className="bg-supperagent text-white hover:bg-supperagent/90"
+            onClick={() => navigate(-1)} // Better than window.history.back()
+          >
+            <MoveLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+          <Button
+            className="flex gap-2 bg-supperagent text-white hover:bg-supperagent/90"
+            onClick={() => navigate('create')}
+          >
+            <Plus className="h-4 w-4" /> Add Funder
+          </Button>
+        </div>
       </div>
 
       {/* Table */}
@@ -176,7 +189,13 @@ export default function ServiceUserFunder() {
                 </TableCell>
                 <TableCell>
                   {user.type
-                    ? user.type.charAt(0).toUpperCase() + user.type.slice(1)
+                    ? user.type
+                        // Add space between camelCase words
+                        .replace(/([a-z])([A-Z])/g, '$1 $2')
+                        // Replace underscores or hyphens with space
+                        .replace(/[_-]+/g, ' ')
+                        // Capitalize each word
+                        .replace(/\b\w/g, (char) => char.toUpperCase())
                     : '-'}
                 </TableCell>
                 <TableCell>{user.email || '-'}</TableCell>
@@ -197,14 +216,15 @@ export default function ServiceUserFunder() {
         </TableBody>
       </Table>
 
-      {/* Pagination */}
-      <DynamicPagination
-        pageSize={entriesPerPage}
-        setPageSize={setEntriesPerPage}
-        currentPage={currentPage}
-        totalPages={totalPages}
-        onPageChange={setCurrentPage}
-      />
+      {paginatedFundUsers.length > 40 && (
+        <DynamicPagination
+          pageSize={entriesPerPage}
+          setPageSize={setEntriesPerPage}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { useFormContext } from 'react-hook-form';
+import { Controller, useFormContext } from 'react-hook-form';
 import { ServiceUserFormData } from './validation';
 import { FormField } from './FromField';
 import Select from 'react-select';
@@ -8,6 +8,7 @@ export const EqualityStep: React.FC = () => {
   const {
     setValue,
     watch,
+    control,
     formState: { errors }
   } = useFormContext<ServiceUserFormData>();
 
@@ -92,31 +93,62 @@ export const EqualityStep: React.FC = () => {
     />
   </FormField>
 
-  {/* ✅ Ethnic Origin — Fixed */}
-  <FormField label="Ethnic Origin" error={errors.ethnicOrigin?.message}>
-    <Select
-      value={ethnicOriginOptions.find(option => option.value === watchedEthnicOrigin) || null}
-      onChange={(selectedOption) => setValue('ethnicOrigin', selectedOption?.value || '')}
-      options={ethnicOriginOptions}
-      placeholder="Select ethnic origin"
-      className="react-select-container"
-      classNamePrefix="react-select"
-      isClearable
-    />
-  </FormField>
+  {/* ✅ Ethnic Origin */}
+<FormField
+  label="Ethnic Origin"
+  error={errors.ethnicOrigin?.message}
+>
+  <Controller
+    name="ethnicOrigin"
+    control={control}
+    render={({ field }) => (
+      <Select
+        {...field}
+        options={ethnicOriginOptions}
+        placeholder="Select ethnic origin"
+       
+        isClearable
+        value={
+          ethnicOriginOptions.find(
+            (option) => option.value === field.value
+          ) || null
+        }
+        onChange={(selected) =>
+          field.onChange(selected?.value || '')
+        }
+      />
+    )}
+  />
+</FormField>
 
-  {/* ✅ Religion — Already Correct ✅ */}
-  <FormField label="Religion" error={errors.religion?.message}>
-    <Select
-      value={religionOptions.find(option => option.value === watchedReligion) || null}
-      onChange={(selectedOption) => setValue('religion', selectedOption?.value || '')}
-      options={religionOptions}
-      placeholder="Select religion"
-      className="react-select-container"
-      classNamePrefix="react-select"
-      isClearable
-    />
-  </FormField>
+{/* ✅ Religion */}
+<FormField
+  label="Religion"
+  error={errors.religion?.message}
+>
+  <Controller
+    name="religion"
+    control={control}
+    render={({ field }) => (
+      <Select
+        {...field}
+        options={religionOptions}
+        placeholder="Select religion"
+
+        isClearable
+        value={
+          religionOptions.find(
+            (option) => option.value === field.value
+          ) || null
+        }
+        onChange={(selected) =>
+          field.onChange(selected?.value || '')
+        }
+      />
+    )}
+  />
+</FormField>
+
 </div>
     </div>
   );

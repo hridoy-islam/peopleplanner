@@ -139,7 +139,7 @@ const CreateServiceUserPage = () => {
         return ['email'];
       case 4:
         return [
-          'serviceLocationExId',
+
           'timesheetSignature',
           'timesheetSignatureNote'
         ];
@@ -182,7 +182,7 @@ const onSubmit = async (data: ServiceUserFormData) => {
   const CurrentStepComponent = steps[currentStep - 1].component;
 
   return (
-    <div className="min-h-screen bg-gray-50 ">
+    <div className="h-screen ">
       <div className="">
         {/* Header */}
         <div className="mb-2 rounded-xl bg-white p-6 shadow-lg">

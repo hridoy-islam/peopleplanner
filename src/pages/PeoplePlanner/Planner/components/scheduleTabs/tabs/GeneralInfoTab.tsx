@@ -141,7 +141,7 @@ const GeneralInfoTab: React.FC<GeneralInfoTabProps> = ({
           />
           <EditableField
             id="startTime"
-            label="Start"
+            label="Start (04:00)"
             value={formData.startTime}
             type="time"
             onUpdate={(value) => onUpdate('startTime', value)}
@@ -152,7 +152,7 @@ const GeneralInfoTab: React.FC<GeneralInfoTabProps> = ({
           />
           <EditableField
             id="endTime"
-            label="End"
+            label="End (17:00)"
             value={formData.endTime}
             type="time"
             onUpdate={(value) => onUpdate('endTime', value)}

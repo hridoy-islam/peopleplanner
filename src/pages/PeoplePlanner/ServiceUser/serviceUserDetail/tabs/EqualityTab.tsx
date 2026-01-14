@@ -103,7 +103,7 @@ const EqualityTab: React.FC<EqualityTabProps> = ({
             options={maritalStatusOptions}
             onUpdate={(value) => onSelectChange('maritalStatus', value)}
             isSaving={isFieldSaving.maritalStatus}
-            required
+            
             isMissing={isFieldMissing('maritalStatus')}
           />
 
@@ -115,7 +115,7 @@ const EqualityTab: React.FC<EqualityTabProps> = ({
             options={ethnicOriginOptions}
             onUpdate={(value) => onSelectChange('ethnicOrigin', value)}
             isSaving={isFieldSaving.ethnicOrigin}
-            required
+            
             isMissing={isFieldMissing('maritalStatus')}
           />
 

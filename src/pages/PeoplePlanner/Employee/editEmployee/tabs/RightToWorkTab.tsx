@@ -275,7 +275,7 @@ function RightToWorkTab() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 ">
+    <div className=" ">
       <div className="space-y-6">
         {/* Combined Visa Info & Documents */}
         <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">

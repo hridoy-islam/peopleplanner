@@ -338,7 +338,7 @@ const StaffDashboardPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 ">
+    <div className=" ">
       <div className="">
         {/* Header */}
         <div className="mb-4">

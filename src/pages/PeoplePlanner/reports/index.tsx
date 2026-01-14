@@ -3,7 +3,7 @@ import { HoursTable } from "./components/HoursTable";
 
 export const ReportPage = () => {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="">
       
       <main className="">
         {/* Hours Overview Stats

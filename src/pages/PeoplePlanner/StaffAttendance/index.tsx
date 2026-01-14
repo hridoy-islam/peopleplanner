@@ -107,7 +107,7 @@ const StaffAttendancePage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="">
       <div className="">
         {/* Header */}
         <h1 className="mb-4 text-3xl font-bold text-gray-800">My Attendance</h1>

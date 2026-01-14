@@ -26,6 +26,7 @@ export const useEditApplicant = () => {
     lastName: '',
     startDate: '',
     lastDutyDate: '',
+    serviceUser:'',
     status: '',
     servicePriority: '',
     branch: '',
@@ -176,6 +177,7 @@ export const useEditApplicant = () => {
           mobile: data.mobile || '',
           otherPhone: data.otherPhone || '',
           travelType: data.travelType || '',
+          serviceUser:data.serviceUser||'',
           website: data.website || '',
           invoice: {
             phone: data.invoice?.phone || '',

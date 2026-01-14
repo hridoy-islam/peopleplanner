@@ -178,7 +178,7 @@ export const useEditApplicant = (serviceUserId: string) => {
       { field: 'lastName', label: 'Last Name' },
       { field: 'dateOfBirth', label: 'Date of Birth' },
       { field: 'startDate', label: 'Start Date' },
-      { field: 'lastDutyDate', label: 'Last Duty Date' },
+      // { field: 'lastDutyDate', label: 'Last Duty Date' },
       { field: 'status', label: 'Status' },
       { field: 'servicePriority', label: 'Service Priority' },
       { field: 'address', label: 'Full Address' },
@@ -194,12 +194,12 @@ export const useEditApplicant = (serviceUserId: string) => {
     equality: [
       { field: 'gender', label: 'Gender' },
 
-      { field: 'maritalStatus', label: 'Marital Status' },
-      { field: 'ethnicOrigin', label: 'Ethnic Origin' },
-      { field: 'religion', label: 'Religion' }
+      // { field: 'maritalStatus', label: 'Marital Status' },
+      // { field: 'ethnicOrigin', label: 'Ethnic Origin' },
+      // { field: 'religion', label: 'Religion' }
     ],
     other: [
-      { field: 'serviceLocationExId', label: 'Service Location Ex ID' },
+      // { field: 'serviceLocationExId', label: 'Service Location Ex ID' },
       { field: 'timesheetSignature', label: 'Timesheet Signature Required' },
       {
         field: 'timesheetSignatureNote',
@@ -217,9 +217,11 @@ export const useEditApplicant = (serviceUserId: string) => {
       { field: 'type', label: 'Type' },
       { field: 'details', label: 'Details' }
     ],
-    equipment: [  { field: 'glovesAprons', label: 'Gloves and Aprons' },
-      { field: 'uniform', label: 'Uniform' },
-      { field: 'idBadge', label: 'ID Badge' }],
+    equipment: [
+      // { field: 'glovesAprons', label: 'Gloves and Aprons' },
+      // { field: 'uniform', label: 'Uniform' },
+      // { field: 'idBadge', label: 'ID Badge' }
+    ],
     primaryBranch: [
       { field: 'fromDate', label: 'From Date' },
       { field: 'branch', label: 'Branch' },

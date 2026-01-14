@@ -67,7 +67,7 @@ export function RightSidebar({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {dayStats?.map((stat) => (
+                {dayStats.map((stat) => (
                   <TableRow
                     key={stat.date}
                     className={`${stat.date === '07/07' ? 'bg-yellow-50' : ''} h-6`}

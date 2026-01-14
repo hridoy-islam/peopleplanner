@@ -311,7 +311,7 @@ const LeaveTooltipContent = ({ request }: { request: LeaveRequest }) => {
   const navigate = useNavigate();
   return (
     <TooltipProvider>
-      <div className="min-h-screen bg-gray-50">
+      <div className="">
         <Card className="shadow-sm">
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2 text-2xl" >

@@ -119,7 +119,7 @@ export const PersonalInformationStep: React.FC = () => {
         </FormField>
 
         <FormField label="Middle Initial" error={errors.middleInitial?.message}>
-          <Input {...register('middleInitial')} placeholder="M" maxLength={1} />
+          <Input {...register('middleInitial')} placeholder="M"  />
         </FormField>
 
         <FormField label="Last Name" required error={errors.lastName?.message}>

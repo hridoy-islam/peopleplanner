@@ -57,6 +57,7 @@ const ContactTab: React.FC<ContactTabProps> = ({
             label="Email"
             value={formData.email}
             type="email"
+            disable
             onUpdate={(value) => onUpdate('email', value)}
             isSaving={isFieldSaving.email}
             placeholder="Enter the email Contact"

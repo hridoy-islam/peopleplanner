@@ -177,7 +177,7 @@ const IndividualInvoiceForm: React.FC<IndividualInvoiceFormProps> = ({
   const isGenerateEnabled = selectedUserId && startDate && endDate;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="">
       {/* Header */}
       <div className="sticky  ">
         <div className=" ">

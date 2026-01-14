@@ -37,9 +37,9 @@ const ServiceUserFunderDetailPage = () => {
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <BlinkingDots size="large" color="bg-supperagent" />
-        </div>
+       <div className="flex justify-center py-6">
+                 <BlinkingDots size="large" color="bg-supperagent" />
+               </div>
       </div>
     );
   }
@@ -167,7 +167,7 @@ const ServiceUserFunderDetailPage = () => {
   ).length;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="">
       <div className="mx-auto  py-8 ">
         <div className="-mt-8 mb-4 flex items-center justify-between">
           <div>

@@ -44,7 +44,7 @@ const MiscellaneousTab: React.FC<MiscellaneousTabProps> = ({
             type="text"
             onUpdate={(value) => onUpdate('serviceLocationExId', value)}
             isSaving={isFieldSaving.serviceLocationExId}
-            required
+            
             isMissing={isFieldMissing('serviceLocationExId')}
           />
 

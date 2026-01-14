@@ -78,7 +78,7 @@ const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({
             onUpdate={(value) => onUpdate('initial', value)}
             isSaving={isFieldSaving.initial}
             placeholder="Enter middle initial"
-            maxLength={1}
+            
           />
 
           <EditableField

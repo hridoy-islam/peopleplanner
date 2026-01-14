@@ -219,7 +219,7 @@ const CreateServiceFunderPage = () => {
       };
 
       // 👇 Use axiosInstance to POST
-      const response = await axiosInstance.post('/hr/service-funder', payload);
+      const response = await axiosInstance.post('/service-funder', payload);
       toast({
         title: 'Service user has been created successfully.',
         className: 'bg-supperagent border-none text-white'
@@ -241,7 +241,7 @@ const CreateServiceFunderPage = () => {
   const CurrentStepComponent = steps[currentStep - 1].component;
 
   return (
-    <div className="min-h-screen bg-gray-50 ">
+    <div className=" ">
       <div className="">
         {/* Header */}
         <div className="mb-2 rounded-xl bg-white p-6 shadow-lg">

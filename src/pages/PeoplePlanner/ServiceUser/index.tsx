@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { Eye, Search } from 'lucide-react';
+import { Eye, Plus, Search } from 'lucide-react';
 import { DynamicPagination } from '@/components/shared/DynamicPagination';
 import { Input } from '@/components/ui/input';
 import { Link, useNavigate } from 'react-router-dom';
@@ -134,47 +134,57 @@ export default function ServiceUserList() {
       <h1 className="text-2xl font-semibold">Service Users</h1>
 
       {/* Filters */}
-      <div className="mb-4 flex flex-wrap items-center gap-4">
-        <div className="flex items-center gap-2">
-          <Input
-            type="text"
-            className="min-w-[300px] rounded border px-3 py-1"
-            placeholder="Search by Name or Phone"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          <Button className="bg-supperagent text-white hover:bg-supperagent/90">
-            <Search className="h-4 w-4" />
-            Search
-          </Button>
-        </div>
+      <div className="mb-4 flex flex-wrap items-center justify-between">
+        <div className="items-cente flex flex-row gap-4">
+          <div className="flex items-center gap-2">
+            <Input
+              type="text"
+              className="min-w-[300px] rounded border px-3 py-1"
+              placeholder="Search by Name or Phone"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+            <Button className="bg-supperagent text-white hover:bg-supperagent/90">
+              <Search className="h-4 w-4" />
+              Search
+            </Button>
+          </div>
 
-        <div className="w-48">
-          <Select
-            options={typeOptions}
-            value={typeFilter}
-            onChange={(option) => option && setTypeFilter(option)}
-            isSearchable={false}
-          />
-        </div>
+          {/* <div className="w-48">
+            <Select
+              options={typeOptions}
+              value={typeFilter}
+              onChange={(option) => option && setTypeFilter(option)}
+              isSearchable={false}
+            />
+          </div>
 
-        <div className="w-48">
-          <Select
-            options={statusOptions}
-            value={statusFilter}
-            onChange={(option) => option && setStatusFilter(option)}
-            isSearchable={false}
-          />
-        </div>
+          <div className="w-48">
+            <Select
+              options={statusOptions}
+              value={statusFilter}
+              onChange={(option) => option && setStatusFilter(option)}
+              isSearchable={false}
+            />
+          </div>
 
-        <div className="w-48">
-          <Select
-            options={areaOptions}
-            value={areaFilter}
-            onChange={(option) => option && setAreaFilter(option)}
-            isSearchable={false}
-          />
+          <div className="w-48">
+            <Select
+              options={areaOptions}
+              value={areaFilter}
+              onChange={(option) => option && setAreaFilter(option)}
+              isSearchable={false}
+            />
+          </div> */}
         </div>
+        <Button
+          className="flex gap-2 bg-supperagent text-white hover:bg-supperagent/90"
+          onClick={() => navigate('new')}
+          disabled={loading}
+        >
+          <Plus className="h-4 w-4" />
+          Add Service User
+        </Button>
       </div>
 
       {/* Table */}
@@ -207,7 +217,7 @@ export default function ServiceUserList() {
             users.map((user) => (
               <TableRow key={user._id}>
                 <Link to={`${user._id}/modules`}>
-                  <TableCell className="hover:text-blue-600 hover:underline">
+                  <TableCell className="text-blue-500 hover:text-blue-600 hover:underline">
                     {[user.title, user.firstName, user.initial, user.lastName]
                       .filter(Boolean)
                       .join(' ')}

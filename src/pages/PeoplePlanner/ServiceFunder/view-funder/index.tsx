@@ -167,7 +167,7 @@ const ServiceFunderDetailPage = () => {
   ).length;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="">
       <div className="mx-auto  py-8 ">
         <div className="-mt-8 mb-4 flex items-center justify-between">
           <div>

@@ -104,7 +104,7 @@ export default function ServiceUserFunder() {
           </Button>
           <Button
             className="flex gap-2 bg-supperagent text-white hover:bg-supperagent/90"
-            onClick={() => navigate('create')}
+            onClick={() => navigate('/admin/people-planner/service-funder/new')}
             disabled={loading}
           >
             <Plus className="h-4 w-4" />

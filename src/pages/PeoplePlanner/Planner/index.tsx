@@ -225,26 +225,7 @@ export default function PlannerPage() {
   // We fetched a large range, now we filter specifically for the VIEW (Main Timeline)
   // The Timeline component itself will handle filtering for the "Single User" view internally using the raw 'schedules' prop.
   const filteredSchedules = useMemo(() => {
-    // For the main timeline view (Day view), we only show TODAY.
-    // We pass the FULL schedules array to the Timeline component, but we filter what is visible 
-    // on the main board here to avoid cluttering other days.
-    
-    // However, since Timeline handles drilling down internally, we should pass the 
-    // broader dataset or ensure Timeline filters correctly for the main view.
-    
-    // Simplest approach: Pass ALL fetched schedules. 
-    // The Timeline component's main view (Day) renders columns 00:00-24:00.
-    // It should filter by date internally if it's in Day Mode.
-    // BUT, your current Timeline implementation for "All Users" loops through users and renders schedules.
-    // It filters by time position. If we pass schedules from yesterday, they will appear on today's track if we don't filter dates.
-    
-    // FIX: Filter strictly for TODAY for the main view list.
-    // The Timeline component will receive the FULL 'schedules' prop (unfiltered) if we want, 
-    // OR we pass filtered here and Timeline uses something else?
-    
-    // Actually, looking at your Timeline.tsx, it takes `schedules`. 
-    // If we filter here, the drill-down won't have past data.
-    // So we MUST return ALL fetched schedules here.
+
     return schedules; 
 
   }, [schedules]);

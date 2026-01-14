@@ -31,6 +31,7 @@ interface EditableFieldProps {
   max?: string;
   rows?: number;
   multiple?: boolean;
+  disable?:boolean;
   isMissing?: boolean; // New prop to indicate if this is a missing required field
 }
 
@@ -46,6 +47,7 @@ export const EditableField: React.FC<EditableFieldProps> = ({
   className = '',
   onUpdate,
   maxLength,
+  disable=false,
   max,
   rows = 3,
   multiple = false,
@@ -268,7 +270,7 @@ export const EditableField: React.FC<EditableFieldProps> = ({
             onBlur={handleBlur}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
-            disabled={isSaving}
+            disabled={isSaving || disable}
             required={required}
             maxLength={maxLength}
             max={max}

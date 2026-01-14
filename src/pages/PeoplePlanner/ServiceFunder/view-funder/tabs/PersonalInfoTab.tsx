@@ -24,10 +24,10 @@ const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({
   >([]);
 
   const typeOptions = [
-    { value: 'private-client', label: 'Private Client' },
-    { value: 'other-organization', label: 'Other Organization' },
-    { value: 'social-services', label: 'Social Services' }
-  ];
+  { value: 'private', label: 'Private Client' },
+  { value: 'otherOrganization', label: 'Other Organization' },
+  { value: 'socialServices', label: 'Social Services' }
+];
 
   const titleOptions = [
     { value: 'Mr', label: 'Mr' },
@@ -48,21 +48,20 @@ const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({
   const branchOptions = [
     { value: 'everycare-romford', label: 'Everycare Romford' },
     { value: 'staff-hours', label: 'Staff Hours' },
-    { value: 'north', label: 'North Branch' },
-    { value: 'south', label: 'South Branch' }
+ 
   ];
 
   // 🔹 Dynamically compute area options based on branch
   const areaOptions = useMemo(() => {
     if (formData.branch === 'everycare-romford') {
       return [
-        { value: 'care', label: 'Care' },
-        { value: 'nursing', label: 'Nursing' },
-        { value: 'work-hours', label: 'Work Hours' }
+       { value: 'romford-north', label: 'Romford North' },
+    { value: 'romford-south', label: 'Romford South' }
       ];
     }
     if (formData.branch === 'staff-hours') {
-      return [{ value: 'work-hours', label: 'Work Hours' }];
+      return [ { value: 'day-shift', label: 'Day Shift' },
+    { value: 'night-shift', label: 'Night Shift' }];
     }
   }, [formData.branch]);
 
@@ -97,6 +96,7 @@ const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({
   const isFieldMissing = (fieldKey: string) => {
     return missingFields.includes(fieldKey);
   };
+
 
   return (
     <div className="space-y-8">
@@ -157,7 +157,7 @@ const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({
             onUpdate={(value) => onUpdate('middleInitial', value)}
             isSaving={isFieldSaving.middleInitial}
             placeholder="M"
-            maxLength={1}
+            
           />
 
           <EditableField

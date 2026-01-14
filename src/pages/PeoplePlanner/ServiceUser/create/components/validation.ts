@@ -37,13 +37,12 @@ export const serviceUserSchema = z
     website: z.string().optional(),
 
     // Employment / Service Details
-    lastDutyDate: z.date({ required_error: 'Last Duty date is required' }),
+    lastDutyDate: z.date().optional(),
     startDate: z.date({ required_error: 'Start date is required' }),
     status: z.string().min(1, 'Status is required'),
     servicePriority: z.string().min(1, 'Service priority is required'),
     serviceLocationExId: z
-      .string()
-      .min(1, 'Service Location Ex ID is required'),
+      .string().optional(),
 
     timesheetSignature: z.boolean(),
 

@@ -5,10 +5,10 @@ import { ReportsSection } from './ReportsSection';
 
 export const WorkingHoursPage = () => {
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="">
       <WorkingHoursHeader />
       
-      <main className="max-w-7xl mx-auto p-4 lg:p-6">
+      <main className=" mx-auto p-4 lg:p-6">
         {/* Hours Overview Stats */}
         <div className="mb-8">
           <HoursOverview />

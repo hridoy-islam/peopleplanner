@@ -157,7 +157,7 @@ const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({
           <EditableField
             id="initial"
             label="Middle Initial"
-            value={formData.initial}
+            value={formData.middleInitial}
             onUpdate={(value) => onUpdate('initial', value)}
             isSaving={isFieldSaving.initial}
             placeholder="Enter middle initial"
@@ -206,7 +206,7 @@ const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({
             type="date"
             onUpdate={(value) => onDateChange('lastDutyDate', value)}
             isSaving={isFieldSaving.lastDutyDate}
-            required
+            
             isMissing={isFieldMissing('lastDutyDate')}
           />
 

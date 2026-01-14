@@ -26,7 +26,6 @@ export const EmploymentServiceStep: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <FormField
           label="Service Location Ex ID"
-          required
           error={errors.serviceLocationExId?.message}
         >
           <Input

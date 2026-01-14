@@ -1,7 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { countries } from '@/types';
 import { EditableField } from '../components/EditableField';
-
+import axiosInstance from '@/lib/axios';
 interface PersonalInfoTabProps {
   formData: any;
   onUpdate: (field: string, value: any) => void;
@@ -19,11 +19,15 @@ const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({
   isFieldSaving,
   getMissingFields
 }) => {
+  const [serviceUserOptions, setServiceUserOptions] = useState<
+    { value: string; label: string }[]
+  >([]);
+
   const typeOptions = [
-    { value: 'private-client', label: 'Private Client' },
-    { value: 'other-organization', label: 'Other Organization' },
-    { value: 'social-services', label: 'Social Services' }
-  ];
+  { value: 'private', label: 'Private Client' },
+  { value: 'otherOrganization', label: 'Other Organization' },
+  { value: 'socialServices', label: 'Social Services' }
+];
 
   const titleOptions = [
     { value: 'Mr', label: 'Mr' },
@@ -44,31 +48,48 @@ const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({
   const branchOptions = [
     { value: 'everycare-romford', label: 'Everycare Romford' },
     { value: 'staff-hours', label: 'Staff Hours' },
-    { value: 'north', label: 'North Branch' },
-    { value: 'south', label: 'South Branch' }
+ 
   ];
-
-
 
   // 🔹 Dynamically compute area options based on branch
   const areaOptions = useMemo(() => {
     if (formData.branch === 'everycare-romford') {
       return [
-        { value: 'care', label: 'Care' },
-        { value: 'nursing', label: 'Nursing' },
-        { value: 'work-hours', label: 'Work Hours' }
+       { value: 'romford-north', label: 'Romford North' },
+    { value: 'romford-south', label: 'Romford South' }
       ];
     }
     if (formData.branch === 'staff-hours') {
-      return [{ value: 'work-hours', label: 'Work Hours' }];
+      return [ { value: 'day-shift', label: 'Day Shift' },
+    { value: 'night-shift', label: 'Night Shift' }];
     }
-    ;
   }, [formData.branch]);
 
   const countryOptions = countries.map((country) => ({
     value: country,
     label: country
   }));
+
+  useEffect(() => {
+    const fetchServiceUsers = async () => {
+      try {
+        const res = await axiosInstance.get(
+          '/users?role=serviceUser&limit=all'
+        );
+        const users = res.data?.data?.result || [];
+        const options = users.map((user: any) => ({
+          value: user._id,
+          label:
+            `${user.title || ''} ${user.firstName || ''} ${user.lastName || ''}`.trim()
+        }));
+        setServiceUserOptions(options);
+      } catch (error) {
+        console.error('Failed to fetch service users:', error);
+      }
+    };
+
+    fetchServiceUsers();
+  }, []);
 
   const missingFields = getMissingFields('general', formData);
 
@@ -96,7 +117,16 @@ const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({
             required
             isMissing={isFieldMissing('type')}
           />
-
+          <EditableField
+            id="serviceUser"
+            label="Service User"
+            value={formData.serviceUser || ''}
+            type="select"
+            options={serviceUserOptions}
+            onUpdate={(value) => onSelectChange('serviceUser', value)}
+            isSaving={isFieldSaving.serviceUser}
+            isMissing={isFieldMissing('serviceUser')}
+          />
           <EditableField
             id="title"
             label="Title"
@@ -126,7 +156,7 @@ const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({
             onUpdate={(value) => onUpdate('middleInitial', value)}
             isSaving={isFieldSaving.middleInitial}
             placeholder="M"
-            maxLength={1}
+            
           />
 
           <EditableField
