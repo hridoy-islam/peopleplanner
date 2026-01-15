@@ -43,8 +43,7 @@ export const serviceFunderSchema = z.object({
   travelType: z.string().min(1, 'Travel type is required'),
 
   invoice: z.object({
-    linked: z
-      .boolean( { required_error: 'Linked is required' }),
+    linked: z.string().min(1, 'Linked is required'),
     type: z.string().min(1, 'Type is required'),
     name: z.string().min(1, 'Name is required'),
     address: z.string().min(1, 'Address is required'),

@@ -2,7 +2,7 @@ import React from 'react';
 import { EditableField } from '../components/EditableField';
 import { countries } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Trash } from 'lucide-react'; // ✅ Import Trash
+import { Trash } from 'lucide-react';
 
 interface EmergencyContact {
   emergencyContactName: string;
@@ -23,7 +23,7 @@ interface EmergencyContactTabProps {
   formData: any;
   onUpdate: (field: string, value: any) => void;
   isFieldSaving: Record<string, boolean>;
-  getMissingFields: (tab: string, formData: Record<string, any>) => string[]; // ✅ Ensure 'string', not 'any'
+  getMissingFields: (tab: string, formData: Record<string, any>) => string[];
 }
 
 const EmergencyContactTab: React.FC<EmergencyContactTabProps> = ({
@@ -34,7 +34,6 @@ const EmergencyContactTab: React.FC<EmergencyContactTabProps> = ({
 }) => {
   const contacts: EmergencyContact[] = formData.emergencyContacts || [];
 
-  // Define options
   const booleanOptions = [
     { value: true, label: 'Yes' },
     { value: false, label: 'No' }
@@ -85,13 +84,14 @@ const EmergencyContactTab: React.FC<EmergencyContactTabProps> = ({
     onUpdate('emergencyContacts', updated);
   };
 
-  // ✅ Add remove function
+  // ✅ Updated remove function with check
   const removeContact = (index: number) => {
+    if (contacts.length <= 1) return; // Prevent deletion if only 1 item exists
+
     const updated = contacts.filter((_, i) => i !== index);
     onUpdate('emergencyContacts', updated);
   };
 
-  // ✅ Use global validation via getMissingFields (tab = 'emergency')
   const missingFields = getMissingFields('emergency', formData);
 
   const isFieldMissing = (index: number, field: keyof EmergencyContact) => {
@@ -107,17 +107,19 @@ const EmergencyContactTab: React.FC<EmergencyContactTabProps> = ({
           key={index}
           className="rounded-lg border border-gray-300 bg-white p-6 shadow-sm"
         >
-          {/* ✅ Header with remove button */}
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900">
               Emergency Contact #{index + 1}
             </h3>
 
+            {/* ✅ Button is now disabled if length is 1 */}
             <Button
               type="button"
               variant="destructive"
               size="icon"
               onClick={() => removeContact(index)}
+              disabled={contacts.length <= 1} 
+              title={contacts.length <= 1 ? "At least one contact is required" : "Remove contact"}
             >
               <Trash className="h-4 w-4" />
             </Button>

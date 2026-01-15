@@ -9,6 +9,8 @@ interface PersonalInfoTabProps {
   onDateChange: (fieldName: string, dateStr: string) => void;
   onSelectChange: (fieldName: string, value: string) => void;
   isFieldSaving: Record<string, boolean>;
+  // Add missingFields prop
+  missingFields?: string[]; 
 }
 
 const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({
@@ -16,7 +18,8 @@ const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({
   onUpdate,
   onDateChange,
   onSelectChange,
-  isFieldSaving
+  isFieldSaving,
+  missingFields = [] // Default to empty array
 }) => {
   const titleOptions = [
     { value: 'Mr', label: 'Mr' },
@@ -54,6 +57,7 @@ const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({
             options={titleOptions}
             onUpdate={(value) => onSelectChange('title', value)}
             isSaving={isFieldSaving['title']}
+            isMissing={missingFields.includes('title')}
           />
 
           <EditableField
@@ -62,15 +66,17 @@ const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({
             value={formData.firstName}
             onUpdate={(value) => onUpdate('firstName', value)}
             isSaving={isFieldSaving['firstName']}
+            isMissing={missingFields.includes('firstName')}
             required
           />
 
           <EditableField
-            id="initial"
+            id="middleInitial"
             label="Initial"
-            value={formData.initial}
-            onUpdate={(value) => onUpdate('initial', value)}
-            isSaving={isFieldSaving['initial']}
+            value={formData.middleInitial}
+            onUpdate={(value) => onUpdate('middleInitial', value)}
+            isSaving={isFieldSaving['middleInitial']}
+            isMissing={missingFields.includes('middleInitial')}
           />
 
           <EditableField
@@ -79,6 +85,7 @@ const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({
             value={formData.lastName}
             onUpdate={(value) => onUpdate('lastName', value)}
             isSaving={isFieldSaving['lastName']}
+            isMissing={missingFields.includes('lastName')}
             required
           />
 
@@ -90,6 +97,7 @@ const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({
             onUpdate={(value) => onDateChange('dateOfBirth', value)}
             isSaving={isFieldSaving['dateOfBirth']}
             max={moment().subtract(16, 'years').format('YYYY-MM-DD')}
+            isMissing={missingFields.includes('dateOfBirth')}
           />
 
           <EditableField
@@ -100,6 +108,7 @@ const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({
             options={genderOptions}
             onUpdate={(value) => onSelectChange('gender', value)}
             isSaving={isFieldSaving['gender']}
+            isMissing={missingFields.includes('gender')}
           />
 
           <EditableField
@@ -110,6 +119,7 @@ const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({
             options={maritalStatusOptions}
             onUpdate={(value) => onSelectChange('maritalStatus', value)}
             isSaving={isFieldSaving['maritalStatus']}
+            isMissing={missingFields.includes('maritalStatus')}
           />
 
           <EditableField
@@ -118,6 +128,7 @@ const PersonalInfoTab: React.FC<PersonalInfoTabProps> = ({
             value={formData.ethnicOrigin}
             onUpdate={(value) => onUpdate('ethnicOrigin', value)}
             isSaving={isFieldSaving['ethnicOrigin']}
+            isMissing={missingFields.includes('ethnicOrigin')}
           />
         </div>
       </CardContent>

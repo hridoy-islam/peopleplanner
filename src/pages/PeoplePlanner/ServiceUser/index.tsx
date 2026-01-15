@@ -131,10 +131,13 @@ export default function ServiceUserList() {
 
   return (
     <div className="space-y-6 rounded-md bg-white p-6 shadow-md">
-      <h1 className="text-2xl font-semibold">Service Users</h1>
-
       {/* Filters */}
       <div className="mb-4 flex flex-wrap items-center justify-between">
+        <div className='flex flex-row items-center gap-4'>
+
+        
+        <h1 className="text-2xl font-semibold">Service Users</h1>
+
         <div className="items-cente flex flex-row gap-4">
           <div className="flex items-center gap-2">
             <Input
@@ -176,6 +179,8 @@ export default function ServiceUserList() {
               isSearchable={false}
             />
           </div> */}
+        </div>
+
         </div>
         <Button
           className="flex gap-2 bg-supperagent text-white hover:bg-supperagent/90"

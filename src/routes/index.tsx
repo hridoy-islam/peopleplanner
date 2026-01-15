@@ -111,6 +111,7 @@ import RightToWorkStatusPage from '@/pages/PeoplePlanner/HR-Dashboard/components
 import ProfilePage from '@/pages/PeoplePlanner/profilePage';
 import ServiceUserProfilePage from '@/pages/PeoplePlanner/profilePage/ServiceUserProfile';
 import ServicePlannerPage from '@/pages/PeoplePlanner/ServiceUser/planner';
+import CreateEmployeePage from '@/pages/PeoplePlanner/Employee/createEmployee';
 
 const SignInPage = lazy(() => import('@/pages/auth/signin'));
 
@@ -325,6 +326,10 @@ export default function AppRouter() {
             {
               path: 'employee',
               element: <Employee />
+            },
+             {
+              path: 'employee/create',
+              element: <CreateEmployeePage />
             },
             {
               path: 'employee/:id',

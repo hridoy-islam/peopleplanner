@@ -27,10 +27,12 @@ import {
   DollarSign,
   AlertCircle,
   CheckCircle,
-  Settings
+  Settings,
+  ArrowLeft
 } from 'lucide-react';
 import Select from 'react-select';
 import { TimePicker24 } from '@/components/shared/TimePicker';
+import { useNavigate } from 'react-router-dom';
 
 interface Visit {
   id: string;
@@ -110,7 +112,7 @@ export default function ServiceUserTask() {
     carerName: '',
     amount: '' // Add amount to bulk edit data
   });
-
+   const navigate = useNavigate()
   const addVisit = (dayKey: string) => {
     setEditingVisit({ dayKey, visit: null });
     setIsEditVisitOpen(true);
@@ -273,6 +275,13 @@ export default function ServiceUserTask() {
           <h1 className="mb-2 text-3xl font-bold">Mahi's Visit Schedule</h1>
         </div>
         <div className="flex gap-3">
+           <Button
+            onClick={()=> navigate(-1)}
+            size="sm"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
           <Button
             onClick={openBulkEdit}
             size="sm"

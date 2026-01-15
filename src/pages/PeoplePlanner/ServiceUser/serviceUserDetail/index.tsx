@@ -190,7 +190,7 @@ const ServiceuserDetailPage = () => {
     <div className="min-h-screen ">
       <div className="mx-auto py-8 ">
         <div className="-mt-8 mb-4 flex items-center justify-between">
-          <p className="mt-2 text-3xl font-semibold ">
+          <p className="mt-2 text-2xl font-semibold ">
             {formData.firstName && formData.lastName
               ? `${formData.title || ''} ${formData.firstName} ${formData.lastName}`.trim()
               : 'Service User'}

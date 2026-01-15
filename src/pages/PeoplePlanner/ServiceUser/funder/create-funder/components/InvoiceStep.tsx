@@ -28,8 +28,8 @@ export const InvoiceStep: React.FC = () => {
 
   // Options for select fields
   const linkedOptions = [
-    { value: true, label: 'Yes' },
-    { value: false, label: 'No' }
+    { value: 'yes', label: 'Yes' },
+    { value: 'no', label: 'No' }
   ];
 
   const typeOptions = [
@@ -60,7 +60,7 @@ export const InvoiceStep: React.FC = () => {
         <FormField label="Linked" required  error={errors.invoice?.linked?.message}>
           <Select
             value={linkedOptions.find(option => option.value === watchedLinked)}
-            onChange={(selectedOption) => setValue('invoice.linked', selectedOption?.value || false)}
+            onChange={(selectedOption) => setValue('invoice.linked', selectedOption?.value || '')}
             options={linkedOptions}
             placeholder="Select linked"
             className="react-select-container"

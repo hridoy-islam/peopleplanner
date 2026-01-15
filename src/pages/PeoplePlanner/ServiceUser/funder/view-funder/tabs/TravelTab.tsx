@@ -26,7 +26,6 @@ const TravelTab: React.FC<TravelTabProps> = ({
     return missingFields.includes(fieldKey);
   };
 
-
   return (
     <div className="space-y-8">
       <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
@@ -38,10 +37,12 @@ const TravelTab: React.FC<TravelTabProps> = ({
           <EditableField
             id="travelType"
             label="Travel Type"
-            value={formData.travelType} 
+            value={formData.travelType}
             type="select"
             options={travelTypeOptions}
-            onUpdate={(option) => onSelectChange('travelType', option?.value)} // still saves string
+            // ✅ FIX: Pass the entire 'option' object. 
+            // The hook's handleSelectChange logic extracts .value for the API automatically.
+            onUpdate={(option) => onSelectChange('travelType', option)} 
             isSaving={isFieldSaving.travelType}
             required
             isMissing={isFieldMissing('travelType')}

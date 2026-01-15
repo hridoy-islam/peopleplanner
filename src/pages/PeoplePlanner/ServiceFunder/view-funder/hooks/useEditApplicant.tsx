@@ -2,6 +2,86 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import axiosInstance from '@/lib/axios';
 
+// ✅ 1. Define Interfaces based on your specific fields
+interface FormData {
+  // General
+  type: string;
+  title: string;
+  firstName: string;
+  middleInitial: string;
+  lastName: string;
+  startDate: string;
+  lastDutyDate: string;
+  status: string;
+  servicePriority: string;
+  branch: string;
+  area: string;
+  description: string;
+  address: string;
+  city: string;
+  postCode: string;
+  country: string;
+
+  // Contact
+  phone: string;
+  fax: string;
+  email: string;
+  mobile: string;
+  otherPhone: string;
+  website: string;
+
+  // Travel
+  travelType: string;
+
+  // Service User
+  serviceUser: string;
+
+  // Invoice (Nested Object)
+  invoice: {
+    phone: string;
+    fax: string;
+    mobile: string;
+    other: string;
+    email: string;
+    website: string;
+    deliveryType: string;
+    linked: boolean | string; // Allow boolean for strict handling
+    type: string;
+    name: string;
+    address: string;
+    cityTown: string;
+    county: string;
+    postCode: string;
+    customerExternalId: string;
+    invoiceRun: string;
+    invoiceFormat: string;
+    invoiceGrouping: string;
+    [key: string]: any;
+  };
+
+  purchaseOrder: string;
+
+  // Arrays
+  travelDetails: Array<{
+    fromDate: string;
+    distance: string;
+    type: string;
+    reason: string;
+    linkedInvoiceRateSheet: string;
+  }>;
+
+  adhocInvoice: Array<{
+    invoiceStartDate: string;
+    invoiceEndDate: string;
+    invoiceType: any;
+    invoiceValue: string;
+    invoiceSummary: string;
+    note: string;
+  }>;
+
+  [key: string]: any;
+}
+
 interface ValidationResult {
   isValid: boolean;
   missingFields: string[];
@@ -12,13 +92,13 @@ interface TabValidation {
 }
 
 export const useEditApplicant = () => {
-  const [loading, setLoading] = useState(true); // ✅ Start as true while fetching
-  const { id } = useParams();
+  const [loading, setLoading] = useState(true);
+  const { id } = useParams(); // Using ID from params
   const [activeTab, setActiveTab] = useState('general');
-  const [isFieldSaving, setIsFieldSaving] = useState<Record<string, boolean>>(
-    {}
-  );
-  const [formData, setFormData] = useState({
+  const [isFieldSaving, setIsFieldSaving] = useState<Record<string, boolean>>({});
+
+  // ✅ 2. Initialize State with YOUR specific fields
+  const [formData, setFormData] = useState<FormData>({
     type: '',
     title: '',
     firstName: '',
@@ -42,7 +122,7 @@ export const useEditApplicant = () => {
     otherPhone: '',
     website: '',
     travelType: '',
-    serviceUser:'',
+    serviceUser: '',
     invoice: {
       phone: '',
       fax: '',
@@ -85,7 +165,7 @@ export const useEditApplicant = () => {
     ]
   });
 
-  // Define required fields for each tab
+  // ✅ 3. Define Required Fields Configuration
   const requiredFieldsByTab = {
     general: [
       { field: 'type', label: 'Funder Type' },
@@ -139,249 +219,91 @@ export const useEditApplicant = () => {
       { field: 'note', label: 'Note' }
     ]
   };
-  // ✅ Fetch funder data on mount
-  useEffect(() => {
-    const fetchFunderData = async () => {
-      if (!id) {
-        setLoading(false);
-        return;
-      }
 
-      try {
-        const response = await axiosInstance.get(
-          `/service-funder/${id}`
-        );
-        const data = response.data.data;
-
-        // Normalize data — ensure nested objects exist
-        setFormData({
-          type: data.type || '',
-          title: data.title || '',
-          firstName: data.firstName || '',
-          middleInitial: data.middleInitial || '',
-          lastName: data.lastName || '',
-          startDate: data.startDate || '',
-          lastDutyDate: data.lastDutyDate || '',
-          status: data.status || '',
-          servicePriority: data.servicePriority || '',
-          branch: data.branch || '',
-          area: data.area || '',
-          description: data.description || '',
-          address: data.address || '',
-          city: data.city || '',
-          postCode: data.postCode || '',
-          country: data.country || '',
-          phone: data.phone || '',
-          fax: data.fax || '',
-          email: data.email || '',
-          mobile: data.mobile || '',
-          otherPhone: data.otherPhone || '',
-          travelType: data.travelType || '',
-          website: data.website || '',
-          serviceUser: data.serviceUser ||'',
-          invoice: {
-            phone: data.invoice?.phone || '',
-            fax: data.invoice?.fax || '',
-            mobile: data.invoice?.mobile || '',
-            other: data.invoice?.other || '',
-            email: data.invoice?.email || '',
-            website: data.invoice?.website || '',
-            deliveryType: data.invoice?.deliveryType || '',
-            linked: data.invoice?.linked || '',
-            type: data.invoice?.type || '',
-            name: data.invoice?.name || '',
-            address: data.invoice?.address || '',
-            cityTown: data.invoice?.cityTown || '',
-            county: data.invoice?.county || '',
-            postCode: data.invoice?.postCode || '',
-            customerExternalId: data.invoice?.customerExternalId || '',
-            invoiceRun: data.invoice?.invoiceRun || '',
-            invoiceFormat: data.invoice?.invoiceFormat || '',
-            invoiceGrouping: data.invoice?.invoiceGrouping || ''
-          },
-          purchaseOrder: data.purchaseOrder || '',
-          travelDetails:
-            Array.isArray(data.travelDetails) && data.travelDetails.length > 0
-              ? data.travelDetails.map((td: any) => ({
-                  fromDate: td.fromDate || '',
-                  distance: td.distance || '',
-                  type: td.type || '',
-                  reason: td.reason || '',
-                  linkedInvoiceRateSheet: td.linkedInvoiceRateSheet || ''
-                }))
-              : [],
-          adhocInvoice:
-            Array.isArray(data.adhocInvoice) && data.adhocInvoice.length > 0
-              ? data.adhocInvoice.map((ai: any) => ({
-                  invoiceStartDate: ai.invoiceStartDate || '',
-                  invoiceEndDate: ai.invoiceEndDate || '',
-                  invoiceType: ai.invoiceType || undefined,
-                  invoiceValue: ai.invoiceValue || '',
-                  invoiceSummary: ai.invoiceSummary || '',
-                  note: ai.note || ''
-                }))
-              : []
-        });
-      } catch (error) {
-        console.error('Failed to fetch funder data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchFunderData();
-  }, [id]);
-
-
-  // Helper function to check if a field is empty
-const isFieldEmpty = (value: any): boolean => {
-  if (value === null || value === undefined) return true;
-  
-  if (typeof value === 'string') {
-    return value.trim() === '';
-  }
-  
-  if (typeof value === 'boolean') {
-    return false; // booleans are never "empty"
-  }
-  
-  if (Array.isArray(value)) {
-    return value.length === 0;
-  }
-  
-  if (typeof value === 'object') {
-    // Handle react-select objects {value, label}
-    if ('value' in value) {
-      return isFieldEmpty(value.value);
+  // ✅ 4. Validation Helpers (Adapted for your specific arrays)
+  const getMissingFields = (
+    tab: keyof typeof requiredFieldsByTab,
+    formData: Record<string, any>
+  ) => {
+    // Special handling for invoice tab to look inside nested object
+    if (tab === 'invoice' || tab === 'invoiceContact') {
+      return requiredFieldsByTab[tab]
+        .filter(({ field }) => {
+          const key = field.replace('invoice.', '');
+          const value = formData.invoice?.[key];
+          return isFieldEmpty(value);
+        })
+        .map(({ field }) => field);
     }
-    // Handle empty objects
-    return Object.keys(value).length === 0;
-  }
-  
-  return false;
-};
 
-
-
-const getMissingFields = (
-  tab: keyof typeof requiredFieldsByTab,
-  formData: Record<string, any>
-) => {
-  if (tab === 'invoice' || tab === 'invoiceContact') {
     return requiredFieldsByTab[tab]
-      .filter(({ field }) => {
+      .filter(({ field }) => isFieldEmpty(formData[field]))
+      .map(({ field }) => field);
+  };
+
+  const isFieldEmpty = (value: any): boolean => {
+    if (value === null || value === undefined) return true;
+    if (typeof value === 'string') return value.trim() === '';
+    if (typeof value === 'boolean') return false; // Booleans aren't empty
+    if (Array.isArray(value)) return value.length === 0;
+    if (typeof value === 'object') {
+      if ('value' in value) return isFieldEmpty(value.value);
+      return Object.keys(value).length === 0;
+    }
+    return false;
+  };
+
+  const validateTab = (tabId: string): ValidationResult => {
+    const missingFields: string[] = [];
+
+    // Specific Array Validation: Travel Details
+    if (tabId === 'travelDetails') {
+      formData.travelDetails?.forEach((info: any, index: number) => {
+        requiredFieldsByTab.travelDetails.forEach(({ field }) => {
+          if (isFieldEmpty(info[field])) {
+            missingFields.push(`${field}[${index}]`);
+          }
+        });
+      });
+      return { isValid: missingFields.length === 0, missingFields };
+    }
+
+    // Specific Array Validation: Adhoc Invoice
+    if (tabId === 'adhocInvoice') {
+      formData.adhocInvoice?.forEach((info: any, index: number) => {
+        requiredFieldsByTab.adhocInvoice.forEach(({ field }) => {
+          if (isFieldEmpty(info[field])) {
+            missingFields.push(`${field}[${index}]`);
+          }
+        });
+      });
+      return { isValid: missingFields.length === 0, missingFields };
+    }
+
+    // Specific Nested Object Validation: Invoice
+    if (tabId === 'invoice' || tabId === 'invoiceContact') {
+      const requiredFields = requiredFieldsByTab[tabId as keyof typeof requiredFieldsByTab] || [];
+      requiredFields.forEach(({ field }) => {
         const key = field.replace('invoice.', '');
         const value = formData.invoice?.[key];
-        return isFieldEmpty(value);
-      })
-      .map(({ field }) => field);
-  }
-  
-  return requiredFieldsByTab[tab]
-    .filter(({ field }) => isFieldEmpty(formData[field]))
-    .map(({ field }) => field);
-};
-
-// Function to check if a specific field is missing (for use in components)
-const isFieldMissing = (fieldName: string, tabId: string): boolean => {
-  const validation = validateTab(tabId);
-  return validation.missingFields.includes(fieldName);
-};
-
- 
-const validateTab = (tabId: string): ValidationResult => {
-  const missingFields: string[] = [];
-
-  if (tabId === 'travelDetails') {
-    formData.travelDetails?.forEach((info: any, index: number) => {
-      requiredFieldsByTab.travelDetails.forEach(({ field }) => {
-        const value = info[field];
-        const isEmpty =
-          value === null ||
-          value === undefined ||
-          (typeof value === 'string' && value.trim() === '') ||
-          (typeof value === 'object' && !value?.value);
-
-        if (isEmpty) {
-          missingFields.push(`${field}[${index}]`);
+        if (isFieldEmpty(value)) {
+          missingFields.push(field);
         }
       });
-    });
+      return { isValid: missingFields.length === 0, missingFields };
+    }
 
-    return {
-      isValid: missingFields.length === 0,
-      missingFields
-    };
-  }
-
-  if (tabId === 'invoice' || tabId === 'invoiceContact') {
+    // Generic Validation
     const requiredFields = requiredFieldsByTab[tabId as keyof typeof requiredFieldsByTab] || [];
-    
     requiredFields.forEach(({ field }) => {
-      const key = field.replace('invoice.', ''); // e.g. "invoice.email" → "email"
-      const value = formData.invoice?.[key];
-
-      // More robust empty check
-      const isEmpty = 
-        value === null ||
-        value === undefined ||
-        (typeof value === 'string' && value.trim() === '') ||
-        (typeof value === 'object' && value !== null && (
-          // For select objects with {value, label} structure
-          (!value.value || (typeof value.value === 'string' && value.value.trim() === '')) ||
-          // For empty objects
-          Object.keys(value).length === 0
-        )) ||
-        (Array.isArray(value) && value.length === 0);
-
-      if (isEmpty) {
+      if (isFieldEmpty(formData[field])) {
         missingFields.push(field);
       }
     });
 
-    return {
-      isValid: missingFields.length === 0,
-      missingFields
-    };
-  }
-
-  if (tabId === 'adhocInvoice') {
-    formData.adhocInvoice?.forEach((info: any, index: number) => {
-      requiredFieldsByTab.adhocInvoice.forEach(({ field }) => {
-        const value = info[field];
-        const isEmpty =
-          value === null ||
-          value === undefined ||
-          (typeof value === 'string' && value.trim() === '') ||
-          (typeof value === 'object' && !value?.value);
-
-        if (isEmpty) {
-          missingFields.push(`${field}[${index}]`);
-        }
-      });
-    });
-
-    return {
-      isValid: missingFields.length === 0,
-      missingFields
-    };
-  }
-
-  const requiredFields =
-    requiredFieldsByTab[tabId as keyof typeof requiredFieldsByTab] || [];
-
-  requiredFields.forEach(({ field }) => {
-    const value = formData[field];
-    if (!value || (typeof value === 'string' && value.trim() === '')) {
-      missingFields.push(field);
-    }
-  });
-
-  return {
-    isValid: missingFields.length === 0,
-    missingFields
+    return { isValid: missingFields.length === 0, missingFields };
   };
-};
+
   const getTabValidation = (): TabValidation => {
     const validation: TabValidation = {};
     Object.keys(requiredFieldsByTab).forEach((tabId) => {
@@ -390,85 +312,162 @@ const validateTab = (tabId: string): ValidationResult => {
     return validation;
   };
 
-  // ✅ Generic field update with PATCH
+  // ✅ 5. REAL API INTEGRATION (Unified Logic)
+  const updateFieldOnServer = async (field: string, value: any) => {
+    if (!id) return;
+
+    setIsFieldSaving((prev) => ({ ...prev, [field]: true }));
+
+    // 1. Optimistically Update UI (Handle Nested 'invoice.' keys)
+    const prevFormData = { ...formData }; // Backup for rollback
+    
+    setFormData((prev) => {
+      if (field.includes('.')) {
+        const [parent, child] = field.split('.');
+        return {
+          ...prev,
+          [parent]: {
+            ...(prev as any)[parent],
+            [child]: value
+          }
+        };
+      }
+      return { ...prev, [field]: value };
+    });
+
+    // 2. Prepare Payload (Extract .value if object, handle primitives)
+    let payloadValue = value;
+    if (value && typeof value === 'object' && 'value' in value) {
+      payloadValue = value.value;
+    }
+
+    try {
+      // 3. Send Request
+      // NOTE: If using nested fields like 'invoice.linked', decide if backend expects
+      // "invoice.linked": val OR "invoice": { "linked": val }
+      // Assuming your backend accepts flat keys or you format it here:
+      
+      let payload = {};
+      if (field.includes('.')) {
+         // Construct nested payload if required by backend, 
+         // OR send flat key if your backend handles "invoice.linked"
+         const [parent, child] = field.split('.');
+         payload = { [parent]: { ...formData[parent as keyof FormData], [child]: payloadValue } };
+         // OR simply: payload = { [field]: payloadValue }; depending on API
+         // Using flat update for now based on typical patterns, or full object merge:
+         await axiosInstance.patch(`/service-funder/${id}`, { [field]: payloadValue }); 
+      } else {
+         payload = { [field]: payloadValue };
+         await axiosInstance.patch(`/service-funder/${id}`, payload);
+      }
+
+      // Optional: If server returns updated data, merge it here
+      // const res = await axiosInstance.patch(...);
+      // if (res.data?.data) setFormData(prev => ({...prev, ...res.data.data}));
+
+    } catch (error) {
+      console.error(`Failed to update ${field}:`, error);
+      // Rollback UI
+      setFormData(prevFormData);
+    } finally {
+      setIsFieldSaving((prev) => ({ ...prev, [field]: false }));
+    }
+  };
+
+  // ✅ 6. Unified Handlers
   const handleFieldUpdate = async (field: string, value: any) => {
-    if (!id) return;
-
-    setIsFieldSaving((prev) => ({ ...prev, [field]: true }));
-
-    try {
-      // Optimistically update UI
-      setFormData((prev) => ({ ...prev, [field]: value }));
-
-      // Send PATCH request
-      await axiosInstance.patch(`/service-funder/${id}`, {
-        [field]: value
-      });
-    } catch (error) {
-      console.error(`Failed to update ${field}:`, error);
-      // Revert on error (optional)
-    } finally {
-      setIsFieldSaving((prev) => ({ ...prev, [field]: false }));
-    }
+    await updateFieldOnServer(field, value);
   };
 
-  // ✅ Date field update
   const handleDateChange = async (field: string, value: string) => {
-    if (!id) return;
-
-    setIsFieldSaving((prev) => ({ ...prev, [field]: true }));
-
-    try {
-      setFormData((prev) => ({ ...prev, [field]: value }));
-      await axiosInstance.patch(`/service-funder/${id}`, {
-        [field]: value
-      });
-    } catch (error) {
-      console.error(`Failed to update ${field}:`, error);
-    } finally {
-      setIsFieldSaving((prev) => ({ ...prev, [field]: false }));
-    }
+    await updateFieldOnServer(field, value);
   };
 
-  // ✅ Select field update (handles {value, label} objects)
   const handleSelectChange = async (field: string, value: any) => {
-    if (!id) return;
-
-    setIsFieldSaving((prev) => ({ ...prev, [field]: true }));
-
-    // Extract value if it's an object
-    const payloadValue =
-      typeof value === 'object' && value !== null ? value.value : value;
-
-    try {
-      setFormData((prev) => ({ ...prev, [field]: value })); // Keep full object in UI for display
-      await axiosInstance.patch(`/service-funder/${id}`, {
-        [field]: payloadValue // Send only string value to backend
-      });
-    } catch (error) {
-      console.error(`Failed to update ${field}:`, error);
-    } finally {
-      setIsFieldSaving((prev) => ({ ...prev, [field]: false }));
-    }
+    await updateFieldOnServer(field, value);
   };
 
-  // ✅ Checkbox (boolean) field update
   const handleCheckboxChange = async (field: string, value: boolean) => {
-    if (!id) return;
-
-    setIsFieldSaving((prev) => ({ ...prev, [field]: true }));
-
-    try {
-      setFormData((prev) => ({ ...prev, [field]: value }));
-      await axiosInstance.patch(`/service-funder/${id}`, {
-        [field]: value
-      });
-    } catch (error) {
-      console.error(`Failed to update ${field}:`, error);
-    } finally {
-      setIsFieldSaving((prev) => ({ ...prev, [field]: false }));
-    }
+    await updateFieldOnServer(field, value);
   };
+
+  // ✅ 7. Load Initial Data
+  useEffect(() => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+
+    const loadInitialData = async () => {
+      setLoading(true);
+      try {
+        const response = await axiosInstance.get(`/service-funder/${id}`);
+        const data = response.data.data;
+
+        // Normalize Data (Ensure nested objects exist and handle nulls)
+        setFormData({
+            type: data.type || '',
+            title: data.title || '',
+            firstName: data.firstName || '',
+            middleInitial: data.middleInitial || '',
+            lastName: data.lastName || '',
+            startDate: data.startDate || '',
+            lastDutyDate: data.lastDutyDate || '',
+            status: data.status || '',
+            servicePriority: data.servicePriority || '',
+            branch: data.branch || '',
+            area: data.area || '',
+            description: data.description || '',
+            address: data.address || '',
+            city: data.city || '',
+            postCode: data.postCode || '',
+            country: data.country || '',
+            phone: data.phone || '',
+            fax: data.fax || '',
+            email: data.email || '',
+            mobile: data.mobile || '',
+            otherPhone: data.otherPhone || '',
+            website: data.website || '',
+            travelType: data.travelType || '',
+            serviceUser: data.serviceUser || '',
+            invoice: {
+              phone: data.invoice?.phone || '',
+              fax: data.invoice?.fax || '',
+              mobile: data.invoice?.mobile || '',
+              other: data.invoice?.other || '',
+              email: data.invoice?.email || '',
+              website: data.invoice?.website || '',
+              deliveryType: data.invoice?.deliveryType || '',
+              linked: data.invoice?.linked ?? '', // Use ?? to preserve false
+              type: data.invoice?.type || '',
+              name: data.invoice?.name || '',
+              address: data.invoice?.address || '',
+              cityTown: data.invoice?.cityTown || '',
+              county: data.invoice?.county || '',
+              postCode: data.invoice?.postCode || '',
+              customerExternalId: data.invoice?.customerExternalId || '',
+              invoiceRun: data.invoice?.invoiceRun || '',
+              invoiceFormat: data.invoice?.invoiceFormat || '',
+              invoiceGrouping: data.invoice?.invoiceGrouping || ''
+            },
+            purchaseOrder: data.purchaseOrder || '',
+            travelDetails: Array.isArray(data.travelDetails) && data.travelDetails.length > 0
+              ? data.travelDetails
+              : [],
+            adhocInvoice: Array.isArray(data.adhocInvoice) && data.adhocInvoice.length > 0
+              ? data.adhocInvoice
+              : []
+        });
+
+      } catch (error) {
+        console.error('Failed to load funder data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadInitialData();
+  }, [id]);
 
   return {
     loading,

@@ -118,7 +118,7 @@ const CreateServiceUserFunderPage = () => {
 
       // Invoice
       invoice: {
-        linked: undefined,
+        linked: '',
         type: '',
         name: '',
         address: '',
@@ -240,7 +240,7 @@ const CreateServiceUserFunderPage = () => {
   const CurrentStepComponent = steps[currentStep - 1].component;
 
   return (
-    <div className=" ">
+    <div className="h-screen ">
       <div className="">
         {/* Header */}
         <div className="mb-2 rounded-xl bg-white p-6 shadow-lg">

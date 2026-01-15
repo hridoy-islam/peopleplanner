@@ -29,7 +29,7 @@ export default function Employee() {
   const { toast } = useToast();
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [entriesPerPage, setEntriesPerPage] = useState(10);
+  const [entriesPerPage, setEntriesPerPage] = useState(100);
 
   const [searchInput, setSearchInput] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
@@ -176,6 +176,7 @@ export default function Employee() {
             <Users2 className="h-6 w-6" />
             All Employees
           </h2>{' '}
+          <Button onClick={() => navigate('create')}>Create Employee</Button>
         </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5">
           <div>
@@ -241,10 +242,9 @@ export default function Employee() {
             </Button>
           </div>
         </div>
-   
 
-      {/* Employee Table */}
-     
+        {/* Employee Table */}
+
         {initialLoading ? (
           <div className="flex justify-center py-8">
             <BlinkingDots size="large" color="bg-supperagent" />
@@ -272,7 +272,9 @@ export default function Employee() {
                   <TableRow key={employee._id}>
                     <TableCell
                       onClick={() =>
-                        navigate(`/admin/people-planner/employee/${employee._id}`)
+                        navigate(
+                          `/admin/people-planner/employee/${employee._id}`
+                        )
                       }
                     >
                       {employee.title} {employee.firstName} {employee.initial}{' '}
@@ -280,28 +282,36 @@ export default function Employee() {
                     </TableCell>
                     <TableCell
                       onClick={() =>
-                        navigate(`/admin/people-planner/employee/${employee._id}`)
+                        navigate(
+                          `/admin/people-planner/employee/${employee._id}`
+                        )
                       }
                     >
                       {employee.email}
                     </TableCell>
                     <TableCell
                       onClick={() =>
-                        navigate(`/admin/people-planner/employee/${employee._id}`)
+                        navigate(
+                          `/admin/people-planner/employee/${employee._id}`
+                        )
                       }
                     >
                       {employee.mobilePhone || '–'}
                     </TableCell>
                     <TableCell
                       onClick={() =>
-                        navigate(`/admin/people-planner/employee/${employee._id}`)
+                        navigate(
+                          `/admin/people-planner/employee/${employee._id}`
+                        )
                       }
                     >
                       {employee.departmentId?.departmentName || '–'}
                     </TableCell>
                     <TableCell
                       onClick={() =>
-                        navigate(`/admin/people-planner/employee/${employee._id}`)
+                        navigate(
+                          `/admin/people-planner/employee/${employee._id}`
+                        )
                       }
                     >
                       {employee.designationId?.title || '–'}
@@ -337,7 +347,9 @@ export default function Employee() {
                         size="icon"
                         className="bg-supperagent text-white hover:bg-supperagent/90"
                         onClick={() =>
-                          navigate(`/admin/people-planner/employee/${employee._id}`)
+                          navigate(
+                            `/admin/people-planner/employee/${employee._id}`
+                          )
                         }
                       >
                         <Eye className="h-4 w-4" />
@@ -347,16 +359,19 @@ export default function Employee() {
                 ))}
               </TableBody>
             </Table>
-
-            <div className="mt-6">
-              <DynamicPagination
-                pageSize={entriesPerPage}
-                setPageSize={setEntriesPerPage}
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-              />
-            </div>
+            {employees.length > 40 && (
+              <>
+                <div className="mt-6">
+                  <DynamicPagination
+                    pageSize={entriesPerPage}
+                    setPageSize={setEntriesPerPage}
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                  />
+                </div>
+              </>
+            )}
           </>
         )}
       </div>

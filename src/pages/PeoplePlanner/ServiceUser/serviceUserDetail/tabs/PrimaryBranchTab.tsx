@@ -1,7 +1,7 @@
 import React from 'react';
 import { EditableField } from '../components/EditableField';
 import { Button } from '@/components/ui/button';
-import { Trash } from 'lucide-react'; // ✅ Import Trash icon
+import { Trash } from 'lucide-react';
 
 interface PrimaryBranchItem {
   fromDate: string;
@@ -54,8 +54,10 @@ const PrimaryBranchTab: React.FC<PrimaryBranchProps> = ({
     onUpdate('primaryBranch', updated);
   };
 
-  // ✅ Add remove function
+  // ✅ Updated remove function with check
   const removeBranch = (index: number) => {
+    if (primaryBranch.length <= 1) return; // Prevent deletion if only 1 item exists
+
     const updated = primaryBranch.filter((_, i) => i !== index);
     onUpdate('primaryBranch', updated);
   };
@@ -75,17 +77,20 @@ const PrimaryBranchTab: React.FC<PrimaryBranchProps> = ({
           key={index}
           className="rounded-lg border border-gray-300 bg-white p-6 shadow-sm"
         >
-          {/* ✅ Add header with remove button */}
+          {/* ✅ Header with remove button */}
           <div className="mb-4 flex items-center justify-between">
             <h3 className="text-lg font-semibold text-gray-900">
               Primary Branch #{index + 1}
             </h3>
 
+            {/* ✅ Button is now disabled if length is 1 */}
             <Button
               type="button"
               variant="destructive"
               size="icon"
               onClick={() => removeBranch(index)}
+              disabled={primaryBranch.length <= 1}
+              title={primaryBranch.length <= 1 ? "At least one branch is required" : "Remove branch"}
             >
               <Trash className="h-4 w-4" />
             </Button>

@@ -42,6 +42,13 @@ const EmploymentDetailsTab: React.FC<EmploymentDetailsTabProps> = ({
   useEffect(() => {
     fetchData();
   }, []);
+  const recruitmentEmploymentTypeOptions = [
+    { value: 'full-time', label: 'Full-time' },
+    { value: 'part-time', label: 'Part-time' },
+    { value: 'contractor', label: 'Contractor' },
+    { value: 'temporary', label: 'Temporary' },
+    { value: 'intern', label: 'Intern' }
+  ];
 
   const employmentTypeOptions = [
     { value: 'full-time', label: 'Full-time' },
@@ -51,13 +58,6 @@ const EmploymentDetailsTab: React.FC<EmploymentDetailsTabProps> = ({
     { value: 'intern', label: 'Intern' }
   ];
 
-  const recruitmentEmploymentTypeOptions = [
-    { value: 'full-time', label: 'Full-time' },
-    { value: 'part-time', label: 'Part-time' },
-    { value: 'contractor', label: 'Contractor' },
-    { value: 'temporary', label: 'Temporary' },
-    { value: 'intern', label: 'Intern' }
-  ];
 
   const carTravelAllowanceOptions = [
     { value: true, label: 'Yes' },

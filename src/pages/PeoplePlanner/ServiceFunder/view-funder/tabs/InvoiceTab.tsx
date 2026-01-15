@@ -11,8 +11,8 @@ interface InvoiceTabProps {
 }
 
 const linkedOptions = [
-  { value: true, label: 'Yes' },
-  { value: false, label: 'No' }
+  { value: 'yes', label: 'Yes' },
+  { value: 'no', label: 'No' }
 ];
 
 const typeOptions = [

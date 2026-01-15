@@ -21,7 +21,7 @@ interface EditableFieldProps {
     | 'textarea'
     | 'select'
     | 'checkbox';
-  options?: { value: string; label: string }[];
+  options?: { value: string | number | boolean; label: string }[];
   isSaving?: boolean;
   required?: boolean;
   placeholder?: string;

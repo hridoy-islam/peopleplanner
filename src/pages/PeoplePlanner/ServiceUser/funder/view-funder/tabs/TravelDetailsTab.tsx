@@ -100,10 +100,9 @@ const TravelRateDetailTab: React.FC<TravelRateDetailTabProps> = ({
 
             <Button
               type="button"
-              variant="default"
+              variant="destructive"
               size="icon"
               onClick={() => removeTravelDetail(index)}
-              className="hover:bg-red-500 text-red-500 hover:text-white"
             >
               <Trash className="h-4 w-4" />
             </Button>

@@ -4,13 +4,23 @@ import axiosInstance from '@/lib/axios';
 import moment from 'moment';
 import { useToast } from '@/components/ui/use-toast';
 
+// Define the validation structure
+export interface ValidationState {
+  [key: string]: {
+    isValid: boolean;
+    missingFields: string[];
+  };
+}
+
 export const useEditEmployee = () => {
   const { id } = useParams<{ id: string }>();
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('personal');
-  const [isFieldSaving, setIsFieldSaving] = useState<Record<string, boolean>>(
-    {}
-  );
+  const [isFieldSaving, setIsFieldSaving] = useState<Record<string, boolean>>({});
+  
+  // Validation State
+  const [validationErrors, setValidationErrors] = useState<ValidationState>({});
+
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -19,7 +29,7 @@ export const useEditEmployee = () => {
     // Personal Information
     title: '',
     firstName: '',
-    initial: '',
+    middleInitial: '',
     lastName: '',
     dateOfBirth: '',
     gender: '',
@@ -74,14 +84,12 @@ export const useEditEmployee = () => {
     equalityInformation: {
       nationality: '',
       religion: '',
-      hasDisability: undefined,
-      disabilityDetails: ''
     },
 
     // Disability Information
-    hasDisability: undefined,
+    hasDisability: undefined as boolean | undefined,
     disabilityDetails: '',
-    needsReasonableAdjustment: undefined,
+    needsReasonableAdjustment: undefined as boolean | undefined,
     reasonableAdjustmentDetails: '',
 
     // Beneficiary
@@ -109,10 +117,108 @@ export const useEditEmployee = () => {
     designationId: '',
     departmentId: '',
     trainingId: [] as string[],
+    passportNo: '',
+    passportExpiry: '',
 
     // Notes
     notes: ''
   });
+
+  // --- Validation Logic ---
+  const validateForm = useCallback(() => {
+    const errors: ValidationState = {};
+    const check = (val: any) => val !== null && val !== undefined && val !== '';
+
+    // 1. Personal Tab Validation
+    const personalMissing: string[] = [];
+    if (!check(formData.title)) personalMissing.push('title');
+    if (!check(formData.firstName)) personalMissing.push('firstName');
+    if (!check(formData.middleInitial)) personalMissing.push('middleInitial');
+    if (!check(formData.lastName)) personalMissing.push('lastName');
+    if (!check(formData.email)) personalMissing.push('email');
+    if (!check(formData.mobilePhone)) personalMissing.push('mobilePhone'); // Mapped 'phone' to 'mobilePhone'
+    if (!check(formData.dateOfBirth)) personalMissing.push('dateOfBirth');
+    if (!check(formData.gender)) personalMissing.push('gender');
+    if (!check(formData.maritalStatus)) personalMissing.push('maritalStatus');
+    if (!check(formData.ethnicOrigin)) personalMissing.push('ethnicOrigin');
+
+    errors['personal'] = { 
+      isValid: personalMissing.length === 0, 
+      missingFields: personalMissing 
+    };
+
+    // 2. Contact Tab Validation
+    const contactMissing: string[] = [];
+    if (!check(formData.address)) contactMissing.push('address');
+    if (!check(formData.cityOrTown)) contactMissing.push('cityOrTown');
+    if (!check(formData.stateOrProvince)) contactMissing.push('stateOrProvince');
+    if (!check(formData.postCode)) contactMissing.push('postCode');
+    if (!check(formData.country)) contactMissing.push('country');
+    // Note: Email is also listed in contact requirements, but handled in personal. 
+    // If it's editable in Contact tab too, add it here:
+    // if (!check(formData.email)) contactMissing.push('email');
+
+    errors['contact'] = { 
+      isValid: contactMissing.length === 0, 
+      missingFields: contactMissing 
+    };
+
+    // 3. Employment Tab Validation
+    const employmentMissing: string[] = [];
+    if (!check(formData.position)) employmentMissing.push('position');
+    if (!check(formData.branch)) employmentMissing.push('branch');
+    if (!check(formData.applicationDate)) employmentMissing.push('applicationDate');
+    if (!check(formData.availableFromDate)) employmentMissing.push('availableFromDate');
+    if (!check(formData.contractHours) || formData.contractHours === 0) employmentMissing.push('contractHours');
+    if (formData.carTravelAllowance === undefined || formData.carTravelAllowance === null) employmentMissing.push('carTravelAllowance');
+    
+    errors['employment'] = { 
+      isValid: employmentMissing.length === 0, 
+      missingFields: employmentMissing 
+    };
+
+    // 4. Disability/Equality Tab Validation (Assuming Disability is its own tab)
+    const disabilityMissing: string[] = [];
+    if (formData.hasDisability === undefined) disabilityMissing.push('hasDisability');
+    if (formData.needsReasonableAdjustment === undefined) disabilityMissing.push('needsReasonableAdjustment');
+
+    errors['disability'] = { 
+      isValid: disabilityMissing.length === 0, 
+      missingFields: disabilityMissing 
+    };
+
+    // 5. Beneficiary Tab Validation
+    const beneficiaryMissing: string[] = [];
+    if (!check(formData.beneficiary.fullName)) beneficiaryMissing.push('fullName');
+    if (!check(formData.beneficiary.relationship)) beneficiaryMissing.push('relationship');
+    if (!check(formData.beneficiary.email)) beneficiaryMissing.push('email');
+    if (!check(formData.beneficiary.mobile)) beneficiaryMissing.push('mobile');
+
+    errors['beneficiary'] = { 
+      isValid: beneficiaryMissing.length === 0, 
+      missingFields: beneficiaryMissing 
+    };
+
+    // 6. Settings Tab Validation
+    const settingsMissing: string[] = [];
+    if (!check(formData.designationId)) settingsMissing.push('designationId');
+    if (!check(formData.departmentId)) settingsMissing.push('departmentId');
+
+    errors['settings'] = { 
+      isValid: settingsMissing.length === 0, 
+      missingFields: settingsMissing 
+    };
+
+    setValidationErrors(errors);
+    return errors;
+  }, [formData]);
+
+  // Run validation whenever formData changes
+  useEffect(() => {
+    if (!loading) {
+      validateForm();
+    }
+  }, [formData, loading, validateForm]);
 
   useEffect(() => {
     const fetchEmployee = async () => {
@@ -126,7 +232,7 @@ export const useEditEmployee = () => {
           // Personal Information
           title: data.title || '',
           firstName: data.firstName || '',
-          initial: data.initial || '',
+          middleInitial: data.middleInitial || '',
           lastName: data.lastName || '',
           dateOfBirth: data.dateOfBirth ? moment(data.dateOfBirth) : '',
           gender: data.gender || '',
@@ -157,7 +263,7 @@ export const useEditEmployee = () => {
             : null,
           startDate: data.startDate ? moment(data.startDate) : null,
           contractHours: data.contractHours || 0,
-          carTravelAllowance: data.carTravelAllowance || false,
+          carTravelAllowance: data.carTravelAllowance ?? false, // Use ?? to preserve false
           recruitmentEmploymentType: data.recruitmentEmploymentType || '',
           area: data.area || '',
 
@@ -187,14 +293,12 @@ export const useEditEmployee = () => {
           equalityInformation: {
             nationality: data.equalityInformation?.nationality || '',
             religion: data.equalityInformation?.religion || '',
-            hasDisability: data.equalityInformation?.hasDisability || false,
-            disabilityDetails: data.equalityInformation?.disabilityDetails || ''
           },
 
           // Disability Information
-          hasDisability: data.hasDisability || false,
+          hasDisability: data.hasDisability, // Don't default to false, keep undefined if missing
           disabilityDetails: data.disabilityDetails || '',
-          needsReasonableAdjustment: data.needsReasonableAdjustment || false,
+          needsReasonableAdjustment: data.needsReasonableAdjustment, // Don't default to false
           reasonableAdjustmentDetails: data.reasonableAdjustmentDetails || '',
 
           // Beneficiary
@@ -221,7 +325,7 @@ export const useEditEmployee = () => {
           // Department, Designation, Training
           designationId: data.designationId || '',
           departmentId: data.departmentId || '',
-          training: Array.isArray(data.training) ? data.training : [],
+          trainingId: Array.isArray(data.training) ? data.training : [],
           passportNo: data.passportNo || '',
           passportExpiry: data.passportExpiry
             ? moment(data.passportExpiry)
@@ -371,6 +475,7 @@ export const useEditEmployee = () => {
     handleDateChange,
     handleSelectChange,
     handleCheckboxChange,
-    isFieldSaving
+    isFieldSaving,
+    validationErrors // Export validation state
   };
 };
