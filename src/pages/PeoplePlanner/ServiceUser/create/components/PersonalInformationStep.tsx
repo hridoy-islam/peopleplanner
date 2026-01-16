@@ -191,18 +191,14 @@ export const PersonalInformationStep: React.FC = () => {
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {/* Start Date */}
-        <FormField
-          label="Start Date"
-          required
-          error={errors.startDate?.message}
-        >
+       <FormField label="Start Date" required error={errors.startDate?.message}>
           <Controller
             control={control}
             name="startDate"
             render={({ field }) => (
               <DatePicker
-                selected={field.value ?? null} // keep as Date
-                onChange={(date) => field.onChange(date ?? null)} // pass Date object directly
+                selected={field.value ? new Date(field.value) : null}
+                onChange={(date) => field.onChange(date ?? undefined)}
                 placeholderText="Select start date"
                 className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                 dateFormat="dd-MM-yyyy"
@@ -217,14 +213,14 @@ export const PersonalInformationStep: React.FC = () => {
         </FormField>
 
         {/* Last Duty Date */}
-        <FormField label="Last Duty Date" error={errors.lastDutyDate?.message} >
+       <FormField label="Last Duty Date" error={errors.lastDutyDate?.message}>
           <Controller
             control={control}
             name="lastDutyDate"
             render={({ field }) => (
               <DatePicker
                 selected={field.value ? new Date(field.value) : null}
-                onChange={(date) => field.onChange(date ?? null)}
+                onChange={(date) => field.onChange(date ?? undefined)}
                 placeholderText="Select last duty date"
                 className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
                 dateFormat="dd-MM-yyyy"
