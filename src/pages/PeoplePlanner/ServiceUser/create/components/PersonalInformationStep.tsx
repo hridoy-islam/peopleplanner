@@ -52,7 +52,7 @@ export const PersonalInformationStep: React.FC = () => {
     <div className="space-y-6">
       <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         {/* Type */}
-        <FormField label="Service User Type" required error={errors.type?.message}>
+        <FormField label="Service User Type" required error={errors.serviceUserType?.message}>
           <Controller
             name="serviceUserType"
             control={control}
